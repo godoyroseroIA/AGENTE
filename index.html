@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación Diagnóstica - Unidad Educativa Sagrado Corazón</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#bae0fd',
+                            300: '#7cc8fc',
+                            400: '#38acf8',
+                            500: '#0e91eb',
+                            600: '#0273ca',
+                            700: '#035ca3',
+                            800: '#074f87',
+                            900: '#0c4270',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Bloqueo visual adicional para evitar selección de texto accidental */
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between antialiased">
+
+    <!-- Barra de Navegación e Identidad Institucional -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 transition-all duration-300">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-md shadow-brand-200 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold text-slate-900 tracking-tight leading-tight">Unidad Educativa Sagrado Corazón</h1>
+                    <p class="text-xs text-brand-600 font-bold tracking-wider uppercase">Evaluación diagnóstica</p>
+                </div>
+            </div>
+            
+            <!-- Cronómetro y Estado del Estudiante -->
+            <div class="flex items-center gap-3">
+                <div id="quiz-timer" class="hidden flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-700 px-3 py-1.5 rounded-xl font-mono font-bold text-sm">
+                    <svg class="w-4 h-4 animate-spin text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span id="timer-display">20:00</span>
+                </div>
+                <div id="student-badge" class="hidden flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">
+                    <div class="text-right">
+                        <p id="badge-student-name" class="text-xs font-bold text-slate-800 leading-none">Estudiante</p>
+                        <p id="badge-student-email" class="text-[10px] text-slate-500 mt-0.5 font-medium">correo@institucional.edu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal de Pantallas -->
+    <main class="flex-grow max-w-3xl w-full mx-auto px-4 py-8 flex flex-col justify-center">
+        
+        <!-- Pantalla 0: Autenticación Estudiantil Estricta -->
+        <section id="screen-auth" class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-100 border border-slate-100 transition-all duration-500 transform">
+            <div class="max-w-md mx-auto">
+                <div class="text-center mb-6">
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-100 mb-3">
+                        Portal de Acceso de Estudiantes
+                    </span>
+                    <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Iniciar Evaluación Diagnóstica</h2>
+                    <p class="text-sm text-slate-500 mt-1">Por favor, introduce tu número de cédula para validar tu identidad e iniciar de inmediato.</p>
+                </div>
+
+                <!-- Formulario de Validación -->
+                <div class="space-y-4">
+                    <div>
+                        <label for="input-cedula" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Número de Cédula (Ecuador)</label>
+                        <div class="relative rounded-xl shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M21 12h-6m6 4h-6m6-8h-4"></path>
+                                </svg>
+                            </div>
+                            <input type="text" id="input-cedula" placeholder="Ingrese su número de cédula" maxlength="10"
+                                class="block w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 font-semibold text-slate-850 placeholder-slate-400 transition-all text-base" />
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button id="btn-validate" onclick="validateAndStart()" class="w-full py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-brand-100 flex items-center justify-center gap-2">
+                            <span id="btn-validate-text">Validar e Iniciar Evaluación</span>
+                            <svg id="btn-validate-spinner" class="hidden animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pantalla 2: Cuestionario de Preguntas (Una sola a la vez, sin retorno) -->
+        <section id="screen-quiz" class="hidden flex flex-col gap-6">
+            <!-- Indicador de Progreso -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/85 flex flex-col gap-3">
+                <div class="flex items-center justify-between text-sm font-semibold text-slate-600">
+                    <span id="quiz-progress-text">Pregunta 1 de 10</span>
+                    <span class="text-brand-600">Evaluación en progreso...</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div id="quiz-progress-bar" class="bg-brand-600 h-full rounded-full transition-all duration-500 ease-out" style="width: 10%"></div>
+                </div>
+            </div>
+
+            <!-- Bloque de la Pregunta -->
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-100 border border-slate-100 flex flex-col gap-6">
+                <div>
+                    <span class="inline-block px-2.5 py-1 rounded-md text-xs font-bold tracking-wider uppercase text-brand-600 bg-brand-50 mb-3" id="question-category">
+                        Categoría
+                    </span>
+                    <h3 id="question-text" class="text-xl md:text-2xl font-bold text-slate-900 leading-snug">
+                        ¿Pregunta?
+                    </h3>
+                </div>
+
+                <!-- Contenedor de Opciones -->
+                <div id="options-container" class="grid grid-cols-1 gap-3.5">
+                    <!-- Dinámicamente inyectados -->
+                </div>
+
+                <!-- Barra de Navegación de Preguntas -->
+                <div class="flex items-center justify-end border-t border-slate-100 pt-6">
+                    <button id="next-btn" onclick="nextQuestion()" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-bold rounded-xl shadow-md transition-all duration-300 flex items-center gap-2">
+                        <span>Siguiente Pregunta</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pantalla 3: Resultados y Comprobante de Finalización -->
+        <section id="screen-results" class="hidden flex flex-col gap-6 animate-fadeIn">
+            <div class="bg-white rounded-3xl p-8 shadow-xl shadow-slate-100 border border-slate-100 flex flex-col items-center text-center">
+                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5 shadow-inner">
+                    <svg class="w-10 h-10 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Evaluación Finalizada</h2>
+                <p class="text-slate-600 max-w-md mb-6">Tus respuestas han sido enviadas y registradas con éxito de manera inalterable en la nube.</p>
+
+                <!-- Recibo Detallado de Tiempos y Calificación -->
+                <div class="bg-slate-50 border border-slate-200/60 p-5 rounded-2xl w-full max-w-md text-left space-y-3 mb-6">
+                    <h3 class="font-bold text-slate-800 text-sm border-b border-slate-200 pb-2">Comprobante Académico del Alumno</h3>
+                    <div class="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                        <span class="font-semibold text-slate-500">Estudiante:</span>
+                        <span id="receipt-student" class="text-slate-800 font-bold">ALTAFUYA AVILA...</span>
+                        
+                        <span class="font-semibold text-slate-500">Cédula:</span>
+                        <span id="receipt-cedula" class="text-slate-800 font-mono font-bold">085...</span>
+                        
+                        <span class="font-semibold text-slate-500">Nota Final:</span>
+                        <span id="receipt-score" class="text-brand-700 font-bold">10 / 10</span>
+
+                        <span class="font-semibold text-slate-500">Porcentaje:</span>
+                        <span id="receipt-percentage" class="text-slate-850 font-bold">100%</span>
+
+                        <span class="font-semibold text-slate-500">Inicio de Prueba:</span>
+                        <span id="receipt-start" class="text-slate-800 font-mono">18/05/2026, 09:12:05</span>
+
+                        <span class="font-semibold text-slate-500">Fin de Prueba:</span>
+                        <span id="receipt-end" class="text-slate-800 font-mono">18/05/2026, 09:24:12</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                    <button onclick="logoutStudent()" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-md">
+                        Volver al Portal
+                    </button>
+                    <button onclick="window.print()" class="px-6 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Imprimir Comprobante
+                    </button>
+                </div>
+            </div>
+
+            <!-- Justificación Pedagógica de Preguntas -->
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-100 border border-slate-100 text-left">
+                <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 112-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    Revisión de Preguntas
+                </h3>
+                <div id="review-list" class="flex flex-col gap-6 divide-y divide-slate-100">
+                    <!-- Dinámicamente inyectados desde JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Pantalla 4: Módulo Administrativo Docente (Gestión Total de Base de Datos) -->
+        <section id="screen-admin" class="hidden flex flex-col gap-6 animate-fadeIn">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl shadow-slate-100 border border-slate-100">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            Módulo de Control Administrativo Docente
+                        </h2>
+                        <p class="text-xs text-slate-500">Monitoreo y administración del padrón oficial en tiempo real (Base de Datos en la Nube).</p>
+                    </div>
+                    <button onclick="exitAdmin()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all">
+                        Salir de Administración
+                    </button>
+                </div>
+
+                <!-- Tarjetas Informativas y Promedio Escolar -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-brand-50 border border-brand-100 p-4 rounded-xl">
+                        <span class="block text-[11px] font-bold text-brand-700 uppercase">Evaluados en la Nube</span>
+                        <span id="admin-summary-count" class="text-2xl font-extrabold text-brand-900">0</span>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+                        <span class="block text-[11px] font-bold text-emerald-700 uppercase">Promedio General</span>
+                        <span id="admin-summary-avg" class="text-2xl font-extrabold text-emerald-900">0.0 / 10</span>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-100 p-4 rounded-xl">
+                        <span class="block text-[11px] font-bold text-purple-700 uppercase">Tiempo Máximo</span>
+                        <span class="text-2xl font-extrabold text-purple-900">20 Minutos</span>
+                    </div>
+                </div>
+
+                <!-- Tabla de Resultados de Firestore (Orden Secuencial Cronológico) -->
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                                <th class="p-3">Cédula</th>
+                                <th class="p-3">Estudiante</th>
+                                <th class="p-3">Calificación Final</th>
+                                <th class="p-3">Duración e Historial de Tiempos</th>
+                                <th class="p-3 text-center">Acciones de Control</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-attempts-rows" class="divide-y divide-slate-100 text-slate-700">
+                            <tr>
+                                <td colspan="5" class="p-4 text-center text-slate-400">Cargando registros oficiales desde Firestore...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modales Interactivos del Sistema (Reemplazo seguro de diálogos nativos) -->
+    <!-- 1. Modal de Validación Clave Docente -->
+    <div id="modal-teacher-auth" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full border border-slate-100 text-center animate-scaleIn">
+            <div class="w-12 h-12 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Acceso Docente</h3>
+            <p class="text-slate-500 text-xs mb-4">Ingrese la clave de seguridad para ingresar al panel administrativo:</p>
+            <input type="password" id="input-admin-password" placeholder="Clave de seguridad" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl mb-4 text-center focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold" />
+            <div class="flex gap-2">
+                <button onclick="closeTeacherModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-all">Cancelar</button>
+                <button onclick="submitTeacherPassword()" class="w-1/2 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm transition-all">Ingresar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Modal de Confirmación para Acciones de Base de Datos -->
+    <div id="modal-confirm" class="hidden fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-950/65 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full border border-slate-100 text-center">
+            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">¿Confirmar Acción?</h3>
+            <p id="confirm-modal-text" class="text-slate-600 text-xs mb-6 leading-relaxed">¿Seguro que desea realizar esta acción en la base de datos?</p>
+            <div class="flex gap-2">
+                <button id="btn-confirm-cancel" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-all">Cancelar</button>
+                <button id="btn-confirm-ok" class="w-1/2 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-sm transition-all">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de Página Institucional con Llave de Acceso Docente -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-center text-xs print:hidden">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="text-left">
+                <p class="font-bold text-slate-300">Unidad Educativa Sagrado Corazón</p>
+                <p class="mt-0.5 text-[11px]">Esmeraldas, Ecuador — Gestión de Evaluaciones Académicas</p>
+            </div>
+            <div>
+                <button onclick="promptTeacherAccess()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white font-bold rounded-lg border border-slate-700 transition-all">
+                    🔑 Acceso Docente
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK & Módulos en Tiempo Real -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configuración de Entorno de Datos en la Nube
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "",
+            authDomain: "mock-auth-domain.firebaseapp.com",
+            projectId: "mock-project-id",
+            storageBucket: "mock-project-id.appspot.com",
+            messagingSenderId: "12345",
+            appId: "1-12345-web"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sagrado-corazon-diagnostica-v1';
+
+        // Inicializar Servicios
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Padrón de Estudiantes Oficial (Nombres Completos y Correo Institucional)
+        const studentDatabase = {
+            "0850055276": { name: "ALTAFUYA AVILA ALVARO DAVID", email: "altafuyaavila8103@sagradocorazon.edu.ec" },
+            "0804494771": { name: "ANGULO MEDRANDA LUIS ALFREDO", email: "angulomedranda8133@sagradocorazon.edu.ec" },
+            "0850144775": { name: "ARDELA GASPAR BRIANNA NAYLI", email: "ardelagaspar8363@sagradocorazon.edu.ec" },
+            "0850723222": { name: "BONE VILLA TYSON RAFAEL", email: "bonevilla8118@sagradocorazon.edu.ec" },
+            "0850225699": { name: "CADENA BARAHONA MAYTTE RAFAELA", email: "cadenabarahona7739@sagradocorazon.edu.ec" },
+            "0850220765": { name: "CASTILLO CASTILLO BRYAN ISAAC", email: "castillocastillo5468@sagradocorazon.edu.ec" },
+            "0850048612": { name: "CEDEÑO MARIN RENATA ABIGAIL", email: "cedenomarin8467@sagradocorazon.edu.ec" },
+            "1600592222": { name: "CHINEVER VEGA EDGAR YERICO", email: "chinevervega8768@sagradocorazon.edu.ec" },
+            "0804343275": { name: "CISNEROS MONTENEGRO STEVEN GERARD", email: "cisnerosmontenegro8092@sagradocorazon.edu.ec" },
+            "0850589649": { name: "CRUZ ZAMBRANO KARELYS CAMILE", email: "cruzzambrano8123@sagradocorazon.edu.ec" },
+            "0850493693": { name: "DIAZ PANEZO YULIANA VALENTINA", email: "diazpanezo8444@sagradocorazon.edu.ec" },
+            "0850670910": { name: "GORDON BUJASE AARON ALEJANDRO", email: "gordonbujase2527@sagradocorazon.edu.ec" },
+            "0850713686": { name: "GRUEZO ESPAÑA ROMINA ANGELINA", email: "gruezoespana8066@sagradocorazon.edu.ec" },
+            "0803898857": { name: "GUAJAN VALENCIA JOEL ARIEL", email: "guajanvalencia5466@sagradocorazon.edu.ec" },
+            "0851174417": { name: "LARA CAICEDO SEBASTIAN KELLER", email: "laracaicedo8421@sagradocorazon.edu.ec" },
+            "0850089566": { name: "MARTINEZ VILLEGA LISANIA JAMILETH", email: "martinezvillega7302@sagradocorazon.edu.ec" },
+            "0803574284": { name: "MEDINA MORALES ANGEL DAVID", email: "medinamorales7908@sagradocorazon.edu.ec" },
+            "0850619206": { name: "MONTAÑO GUAGUA SCARLETH GISSEL", email: "montanoguagua8386@sagradocorazon.edu.ec" },
+            "0850617606": { name: "MORCILLO SANCHEZ DAVID FRANCISCO", email: "morcillosanchez3095@sagradocorazon.edu.ec" },
+            "0804429264": { name: "ORTIZ GILER CARLOS JESÚS", email: "ortizgiler5952@sagradocorazon.edu.ec" },
+            "0804272227": { name: "OSORIO BONE KAINY VALESKA", email: "osoriobone2103@sagradocorazon.edu.ec" },
+            "0852719111": { name: "PARRALES BURGOS ELKIN FABRICIO", email: "parralesburgos8122@sagradocorazon.edu.ec" },
+            "0850293648": { name: "PIANCHICHE CIPRIANO JEREMY AGUSTIN", email: "pianchichecipriano3205@sagradocorazon.edu.ec" },
+            "0850205907": { name: "RAMIREZ MENDEZ ADRIANA NICOLE", email: "ramirezmendez7514@sagradocorazon.edu.ec" },
+            "0850621903": { name: "ULPO GONGORA DUBRASKA LLUNANG", email: "ulpogongora8125@sagradocorazon.edu.ec" },
+            "0850347779": { name: "VERNAZA HOLGUIN CESAR ANDRES", email: "vernazaholguin8110@sagradocorazon.edu.ec" },
+            "0850067665": { name: "VINUEZA ORBEA DYLAN MATHEO" }
+        };
+
+        // Estado del estudiante en sesión
+        let currentStudent = null;
+        let currentUserFirebase = null;
+        let evaluationStartTime = null;
+        let timerInterval = null;
+        let totalTimeSeconds = 20 * 60; // 20 minutos
+        let timeRemaining = totalTimeSeconds;
+
+        // Algoritmo de validación de cédulas ecuatorianas (Módulo 10)
+        function checkEcuadorianCedula(ced) {
+            if (ced.length !== 10) return false;
+            if (!/^\d+$/.test(ced)) return false;
+
+            const prov = parseInt(ced.substring(0, 2), 10);
+            if (prov < 1 || (prov > 24 && prov !== 30)) return false;
+
+            const thirdDigit = parseInt(ced.charAt(2), 10);
+            if (thirdDigit >= 6) return false;
+
+            const checkDigit = parseInt(ced.charAt(9), 10);
+            const coefficients = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+            let sum = 0;
+
+            for (let i = 0; i < 9; i++) {
+                let val = parseInt(ced.charAt(i), 10) * coefficients[i];
+                if (val > 9) {
+                    val -= 9;
+                }
+                sum += val;
+            }
+
+            const remainder = sum % 10;
+            const computedCheckDigit = remainder === 0 ? 0 : 10 - remainder;
+
+            return computedCheckDigit === checkDigit;
+        }
+
+        // Inicializar Autenticación de Firebase (REGLA 3)
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Error al autenticar en los servicios de datos:", error);
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            currentUserFirebase = user;
+            if (user) {
+                listenToHistoricalAttempts();
+            }
+        });
+
+        initAuth();
+
+        // Validar e Iniciar el Examen (Verifica padrón y estado de intento único)
+        window.validateAndStart = async function() {
+            const inputVal = document.getElementById('input-cedula').value.trim();
+            const btnText = document.getElementById('btn-validate-text');
+            const btnSpinner = document.getElementById('btn-validate-spinner');
+            const btn = document.getElementById('btn-validate');
+
+            // 1. Validación de estructura de la Cédula
+            if (!checkEcuadorianCedula(inputVal)) {
+                alertBox("❌ Cédula ecuatoriana inválida matemáticamente. Por favor, verifique el dígito verificador.");
+                return;
+            }
+
+            // 2. Control de Padrón Estricto
+            if (!studentDatabase[inputVal]) {
+                alertBox("🚫 Acceso Denegado: Su número de cédula no se encuentra registrado en el padrón oficial de la U.E. Sagrado Corazón.");
+                return;
+            }
+
+            // Cambiar estado visual del botón
+            btn.disabled = true;
+            btnText.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+
+            try {
+                if (!currentUserFirebase) {
+                    await initAuth();
+                }
+
+                // 3. Validación de Intento Único consultando Firestore (REGLA 2)
+                const pathCollection = collection(db, 'artifacts', appId, 'public', 'data', 'evaluaciones_diagnosticas');
+                const querySnapshot = await getDocs(pathCollection);
+                let alreadyCompleted = false;
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.cedula === inputVal) {
+                        alreadyCompleted = true;
+                    }
+                });
+
+                if (alreadyCompleted) {
+                    alertBox("⚠️ Intento Duplicado: Usted ya ha rendido esta evaluación diagnóstica. Solo se permite 1 intento por estudiante.");
+                    btn.disabled = false;
+                    btnText.classList.remove('hidden');
+                    btnSpinner.classList.add('hidden');
+                    return;
+                }
+
+                // 4. Iniciar Evaluación y Capturar Tiempo de Inicio de Precisión
+                const student = studentDatabase[inputVal];
+                currentStudent = {
+                    cedula: inputVal,
+                    name: student.name,
+                    email: student.email
+                };
+
+                evaluationStartTime = new Date();
+
+                // Establecer indicadores en cabecera
+                document.getElementById('badge-student-name').innerText = currentStudent.name;
+                document.getElementById('badge-student-email').innerText = currentStudent.email;
+                document.getElementById('student-badge').classList.remove('hidden');
+
+                // Cambiar pantallas
+                document.getElementById('screen-auth').classList.add('hidden');
+                document.getElementById('screen-quiz').classList.remove('hidden');
+
+                // Iniciar contador de 20 minutos
+                startTestTimer();
+                window.startQuestionnaireEngine();
+
+            } catch (err) {
+                console.error("Error al validar intento único en Firestore:", err);
+                alertBox("Se produjo un error al conectarse a la base de datos en la nube. Intente nuevamente.");
+            } finally {
+                btn.disabled = false;
+                btnText.classList.remove('hidden');
+                btnSpinner.classList.add('hidden');
+            }
+        }
+
+        // Cuenta regresiva del examen
+        function startTestTimer() {
+            const timerDiv = document.getElementById('quiz-timer');
+            const timerDisplay = document.getElementById('timer-display');
+            timerDiv.classList.remove('hidden');
+
+            timeRemaining = totalTimeSeconds;
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerDisplay.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (timeRemaining <= 60) {
+                    timerDiv.className = "flex items-center gap-2 bg-rose-500 text-white px-3 py-1.5 rounded-xl font-mono font-bold text-sm animate-pulse";
+                }
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerDiv.classList.add('hidden');
+                    alertBox("⏳ ¡Tiempo límite de 20 minutos agotado! Tus respuestas han sido enviadas de forma automática al servidor.");
+                    window.forceQuizSubmit();
+                }
+            }, 1000);
+        }
+
+        // Guardar Intentos y Resultados con Precisión de Milisegundos en Firestore (REGLA 1)
+        window.saveResultToCloud = async function(score, percentage) {
+            if (!currentUserFirebase || !currentStudent) return;
+            
+            clearInterval(timerInterval);
+            document.getElementById('quiz-timer').classList.add('hidden');
+
+            const now = new Date();
+
+            try {
+                const pathCollection = collection(db, 'artifacts', appId, 'public', 'data', 'evaluaciones_diagnosticas');
+                await addDoc(pathCollection, {
+                    cedula: currentStudent.cedula,
+                    name: currentStudent.name,
+                    email: currentStudent.email,
+                    score: score,
+                    percentage: percentage,
+                    startTime: evaluationStartTime.toISOString(),
+                    endTime: now.toISOString(),
+                    timestamp: now.toISOString()
+                });
+
+                // Cargar datos en el comprobante imprimible del alumno
+                document.getElementById('receipt-student').innerText = currentStudent.name;
+                document.getElementById('receipt-cedula').innerText = currentStudent.cedula;
+                document.getElementById('receipt-score').innerText = `${score} / 10`;
+                document.getElementById('receipt-percentage').innerText = `${percentage}%`;
+                document.getElementById('receipt-start').innerText = formatLocalDate(evaluationStartTime);
+                document.getElementById('receipt-end').innerText = formatLocalDate(now);
+
+            } catch (err) {
+                console.error("Fallo de guardado en la nube:", err);
+            }
+        }
+
+        // Módulo Docente: Listener en Tiempo Real con Carga Cronológica (REGLA 2)
+        function listenToHistoricalAttempts() {
+            if (!currentUserFirebase) return;
+
+            const pathCollection = collection(db, 'artifacts', appId, 'public', 'data', 'evaluaciones_diagnosticas');
+            onSnapshot(pathCollection, (snapshot) => {
+                const records = [];
+                snapshot.forEach((doc) => {
+                    records.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Ordenar cronológicamente de forma estricta (más antiguo a más nuevo) en memoria de JS
+                records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                const tbody = document.getElementById('admin-attempts-rows');
+                const avgSpan = document.getElementById('admin-summary-avg');
+                const countSpan = document.getElementById('admin-summary-count');
+
+                countSpan.innerText = records.length;
+
+                if (records.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No hay registros oficiales ingresados en el sistema en este momento.</td></tr>`;
+                    avgSpan.innerText = "0.0 / 10";
+                    return;
+                }
+
+                let totalClassScore = 0;
+                tbody.innerHTML = '';
+
+                records.forEach(rec => {
+                    totalClassScore += rec.score;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/50 transition-colors";
+                    
+                    const startFormatted = formatLocalDate(new Date(rec.startTime));
+                    const endFormatted = formatLocalDate(new Date(rec.endTime));
+                    
+                    // Cálculo preciso de la duración de resolución
+                    const diffMs = new Date(rec.endTime) - new Date(rec.startTime);
+                    const diffSec = Math.floor(diffMs / 1000);
+                    const minutes = Math.floor(diffSec / 60);
+                    const seconds = diffSec % 60;
+                    const durationStr = `${minutes}m ${seconds}s`;
+
+                    tr.innerHTML = `
+                        <td class="p-3 font-mono font-bold text-slate-900">${rec.cedula}</td>
+                        <td class="p-3">
+                            <p class="font-bold text-slate-800">${rec.name}</p>
+                            <p class="text-[10px] text-slate-500 font-medium">${rec.email}</p>
+                        </td>
+                        <td class="p-3">
+                            <span class="font-black text-slate-900">${rec.score} / 10</span>
+                            <span class="text-slate-500">(${rec.percentage}%)</span>
+                        </td>
+                        <td class="p-3">
+                            <p class="font-medium text-slate-600"><span class="text-slate-400">Inicio:</span> ${startFormatted}</p>
+                            <p class="font-medium text-slate-600"><span class="text-slate-400">Fin:</span> ${endFormatted}</p>
+                            <p class="text-[11px] text-brand-600 font-bold mt-1">Duración: ${durationStr}</p>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button onclick="resetStudentAttempt('${rec.id}', '${rec.name}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg transition-all border border-rose-200">
+                                Resetear Intento
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const average = (totalClassScore / records.length).toFixed(1);
+                avgSpan.innerText = `${average} / 10`;
+
+            }, (error) => {
+                console.error("Error al escuchar cambios en base de datos:", error);
+            });
+        }
+
+        // Modal de doble acción interactivo para evitar window.confirm en iframes
+        function customConfirm(message, onConfirm) {
+            const modal = document.getElementById('modal-confirm');
+            const text = document.getElementById('confirm-modal-text');
+            const btnCancel = document.getElementById('btn-confirm-cancel');
+            const btnOk = document.getElementById('btn-confirm-ok');
+
+            text.innerText = message;
+            modal.classList.remove('hidden');
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                btnCancel.onclick = null;
+                btnOk.onclick = null;
+            };
+
+            btnCancel.onclick = () => {
+                cleanup();
+            };
+
+            btnOk.onclick = () => {
+                cleanup();
+                onConfirm();
+            };
+        }
+
+        // Módulo de Reset: Elimina intento específico del estudiante de Firestore
+        window.resetStudentAttempt = function(id, name) {
+            customConfirm(`¿Está seguro de eliminar el intento de ${name}? El estudiante podrá volver a ingresar e iniciar la prueba desde cero.`, async () => {
+                const pathDoc = doc(db, 'artifacts', appId, 'public', 'data', 'evaluaciones_diagnosticas', id);
+                try {
+                    await deleteDoc(pathDoc);
+                    alertBox("✅ Intento reseteado de la base de datos con éxito.");
+                } catch (err) {
+                    console.error("Fallo de reseteo de intento:", err);
+                    alertBox("❌ Error al intentar resetear el intento en la nube.");
+                }
+            });
+        }
+
+        // Convertir formato de fecha de Ecuador (es-EC) con segundos
+        function formatLocalDate(dateObj) {
+            return dateObj.toLocaleString('es-EC', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Disparar Modal de Autenticación Docente
+        window.promptTeacherAccess = function() {
+            document.getElementById('input-admin-password').value = '';
+            document.getElementById('modal-teacher-auth').classList.remove('hidden');
+            document.getElementById('input-admin-password').focus();
+        }
+
+        window.closeTeacherModal = function() {
+            document.getElementById('modal-teacher-auth').classList.add('hidden');
+        }
+
+        window.submitTeacherPassword = function() {
+            const password = document.getElementById('input-admin-password').value;
+            // Clave institucional solicitada: "Uesc2026.*"
+            if (password === "Uesc2026.*") {
+                document.getElementById('modal-teacher-auth').classList.add('hidden');
+                clearInterval(timerInterval);
+                if (document.getElementById('quiz-timer')) {
+                    document.getElementById('quiz-timer').classList.add('hidden');
+                }
+                document.getElementById('screen-auth').classList.add('hidden');
+                document.getElementById('screen-quiz').classList.add('hidden');
+                document.getElementById('screen-results').classList.add('hidden');
+                document.getElementById('screen-admin').classList.remove('hidden');
+            } else {
+                alertBox("❌ Clave de seguridad incorrecta. Acceso denegado.");
+            }
+        }
+
+        window.exitAdmin = function() {
+            document.getElementById('screen-admin').classList.add('hidden');
+            document.getElementById('screen-auth').classList.remove('hidden');
+            logoutStudent();
+        }
+
+        window.logoutStudent = function() {
+            currentStudent = null;
+            clearInterval(timerInterval);
+            document.getElementById('student-badge').classList.add('hidden');
+            document.getElementById('quiz-timer').classList.add('hidden');
+            document.getElementById('screen-results').classList.add('hidden');
+            document.getElementById('screen-quiz').classList.add('hidden');
+            document.getElementById('screen-auth').classList.remove('hidden');
+            document.getElementById('input-cedula').value = "";
+        }
+
+        // Modal personalizado para reemplazar window.alert
+        function alertBox(message) {
+            const container = document.createElement('div');
+            container.className = "fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fadeIn";
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 shadow-2xl max-w-sm w-full border border-slate-100 text-center animate-scaleIn">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Notificación</h3>
+                    <p class="text-slate-600 text-xs mb-6 leading-relaxed">${message}</p>
+                    <button id="alert-ok-btn" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-sm transition-all focus:outline-none">Entendido</button>
+                </div>
+            `;
+            document.body.appendChild(container);
+            document.getElementById('alert-ok-btn').focus();
+            document.getElementById('alert-ok-btn').addEventListener('click', () => {
+                container.remove();
+            });
+        }
+    </script>
+
+    <!-- Banco de Preguntas Diagnósticas Oficiales -->
+    <script>
+        // Array base de preguntas
+        const baseQuestions = [
+            {
+                id: 1,
+                category: "Seguridad Digital",
+                question: "¿Cuál de las siguientes contraseñas cumple mejor con criterios de seguridad digital?",
+                options: [
+                    { key: "A", text: "12345678" },
+                    { key: "B", text: "contraseña2026" },
+                    { key: "C", text: "Cg#89Lm!2x" },
+                    { key: "D", text: "qwerty" }
+                ],
+                correct: "C",
+                explanation: "La contraseña 'Cg#89Lm!2x' es la única que cumple con criterios de complejidad robustos: incluye letras mayúsculas, minúsculas, números y símbolos especiales de forma aleatoria, evitando patrones predecibles o palabras del diccionario."
+            },
+            {
+                id: 2,
+                category: "Seguridad Digital",
+                question: "¿Cuál es la principal función de la autenticación en seguridad digital?",
+                options: [
+                    { key: "A", text: "Acelerar el acceso a páginas web" },
+                    { key: "B", text: "Verificar la identidad del usuario" },
+                    { key: "C", text: "Guardar contraseñas automáticamente" },
+                    { key: "D", text: "Eliminar virus" }
+                ],
+                correct: "B",
+                explanation: "La autenticación es el proceso de verificar que un usuario que intenta acceder a un sistema es realmente quien dice ser (por ejemplo, a través de contraseñas, PINs o factores biométricos)."
+            },
+            {
+                id: 3,
+                category: "Ética e IA",
+                question: "¿Cuál de las siguientes prácticas representa un uso ético de la inteligencia artificial en educación?",
+                options: [
+                    { key: "A", text: "Copiar tareas generadas por IA sin revisión" },
+                    { key: "B", text: "Usar IA para generar ideas y luego analizarlas críticamente" },
+                    { key: "C", text: "Presentar contenido de IA como propio sin citar" },
+                    { key: "D", text: "Evitar el uso de IA completamente" }
+                ],
+                correct: "B",
+                explanation: "El uso ético de la IA radica en emplearla como un copiloto de aprendizaje: estimula la creatividad y asiste en procesos, pero siempre requiere de una evaluación crítica del estudiante para dar valor real y original."
+            },
+            {
+                id: 4,
+                category: "Seguridad Digital",
+                question: "¿Qué elemento NO es recomendable al crear una contraseña segura?",
+                options: [
+                    { key: "A", text: "Uso de símbolos" },
+                    { key: "B", text: "Combinación de letras y números" },
+                    { key: "C", text: "Información personal (nombre, fecha de nacimiento)" },
+                    { key: "D", text: "Longitud mayor a 8 caracteres" }
+                ],
+                correct: "C",
+                explanation: "Evita siempre usar información personal en tus contraseñas. Los atacantes o herramientas de ingeniería social pueden descubrir fácilmente nombres de familiares, mascotas o fechas de nacimiento."
+            },
+            {
+                id: 5,
+                category: "Estructura Web",
+                question: "¿Cuál es la estructura básica de una página web?",
+                options: [
+                    { key: "A", text: "Texto – Imagen – Video" },
+                    { key: "B", text: "Inicio – Contenido – Navegación" },
+                    { key: "C", text: "Archivo – Carpeta – Sistema" },
+                    { key: "D", text: "Entrada – Proceso – Salida" }
+                ],
+                correct: "B",
+                explanation: "Desde la perspectiva del diseño de experiencia y navegación, la arquitectura básica consta de la página de inicio (landing), los contenidos y la barra de navegación para conectar la información de forma coherente."
+            },
+            {
+                id: 6,
+                category: "Organización Digital",
+                question: "¿Qué se entiende por organización de contenido digital?",
+                options: [
+                    { key: "A", text: "Guardar archivos sin orden" },
+                    { key: "B", text: "Diseñar solo con imágenes" },
+                    { key: "C", text: "Estructurar información de manera clara y lógica" },
+                    { key: "D", text: "Usar únicamente texto" }
+                ],
+                correct: "C",
+                explanation: "Organizar contenido digital consiste en ordenar la información para que el usuario o lector pueda encontrar lo que busca con el menor esfuerzo cognitivo posible, generando coherencia y accesibilidad."
+            },
+            {
+                id: 7,
+                category: "Diseño Digital",
+                question: "¿Cuál de las siguientes acciones mejora la presentación de una página web?",
+                options: [
+                    { key: "A", text: "Usar colores al azar" },
+                    { key: "B", text: "No incluir títulos" },
+                    { key: "C", text: "Mantener coherencia visual y jerarquía" },
+                    { key: "D", text: "Colocar toda la información junta" }
+                ],
+                correct: "C",
+                explanation: "La jerarquía visual (como el uso correcto de encabezados H1, H2, H3, fuentes, y contrastes estables) ayuda a guiar el ojo del lector a través de los bloques informativos más importantes."
+            },
+            {
+                id: 8,
+                category: "Diseño Digital",
+                question: "¿Qué característica define una página web funcional?",
+                options: [
+                    { key: "A", text: "Tiene solo texto" },
+                    { key: "B", text: "No posee enlaces" },
+                    { key: "C", text: "Permite navegar entre secciones correctamente" },
+                    { key: "D", text: "Usa muchos colores" }
+                ],
+                correct: "C",
+                explanation: "Una página web es funcional cuando cumple el objetivo para el cual fue creada de manera fluida, lo que incluye que sus enlaces y menús de navegación guíen correctamente al usuario sin fallas."
+            },
+            {
+                id: 9,
+                category: "Diseño Digital",
+                question: "¿Cuál es el propósito del diseño digital básico?",
+                options: [
+                    { key: "A", text: "Decorar sin intención" },
+                    { key: "B", text: "Organizar y presentar información de forma atractiva" },
+                    { key: "C", text: "Reducir el contenido" },
+                    { key: "D", text: "Eliminar imágenes" }
+                ],
+                correct: "B",
+                explanation: "El diseño digital básico equilibra estética y utilidad: se encarga de estructurar el contenido de tal forma que visualmente invite a la lectura, garantizando usabilidad."
+            },
+            {
+                id: 10,
+                category: "Pensamiento Crítico",
+                question: "¿Qué acción evidencia pensamiento crítico frente al uso de IA?",
+                options: [
+                    { key: "A", text: "Copiar sin analizar" },
+                    { key: "B", text: "Usar IA sin comprender resultados" },
+                    { key: "C", text: "Evaluar y validar la información generada" },
+                    { key: "D", text: "Evitar toda tecnología" }
+                ],
+                correct: "C",
+                explanation: "El pensamiento crítico exige dudar y verificar la veracidad, sesgos o 'alucinaciones' que las Inteligencias Artificiales generativas puedan llegar a producir, garantizando que el resultado sea veraz."
+            }
+        ];
+
+        // Esta lista será la que se mezcle dinámicamente al iniciar la evaluación
+        let questions = [];
+
+        let currentQuestionIndex = 0;
+        let selectedAnswers = {}; // { questionIndex: optionKey }
+
+        // Función para barajar un array usando el algoritmo Fisher-Yates
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Inicializar motor del cuestionario con preguntas aleatorias
+        window.startQuestionnaireEngine = function() {
+            // Clona el array de preguntas original para no modificar la referencia base
+            questions = JSON.parse(JSON.stringify(baseQuestions));
+            
+            // 1. Mezcla el orden de las preguntas de forma aleatoria
+            shuffleArray(questions);
+
+            // 2. Mezcla de forma aleatoria las opciones de respuesta dentro de cada pregunta
+            questions.forEach(q => {
+                const correctOptionText = q.options.find(opt => opt.key === q.correct).text;
+                
+                // Mezcla los objetos de las opciones
+                shuffleArray(q.options);
+                
+                // Reasigna las letras identificadoras de opciones (A, B, C, D) secuencialmente tras mezclar
+                const keys = ["A", "B", "C", "D"];
+                q.options.forEach((opt, idx) => {
+                    opt.key = keys[idx];
+                });
+
+                // Encuentra cuál es la nueva letra asignada a la respuesta correcta
+                const newCorrectOpt = q.options.find(opt => opt.text === correctOptionText);
+                q.correct = newCorrectOpt.key;
+            });
+
+            currentQuestionIndex = 0;
+            selectedAnswers = {};
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestionIndex];
+            
+            // Renderizar progreso de la prueba
+            document.getElementById('quiz-progress-text').innerText = `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+            document.getElementById('quiz-progress-bar').style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+            document.getElementById('question-category').innerText = q.category;
+            document.getElementById('question-text').innerText = q.question;
+
+            // Inyectar opciones de respuesta
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.id = `opt-${opt.key}`;
+                btn.onclick = () => selectOption(opt.key);
+                btn.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 transition-all duration-200 flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-brand-400";
+                
+                btn.innerHTML = `
+                    <span class="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs uppercase">
+                        ${opt.key}
+                    </span>
+                    <span class="text-slate-700 font-semibold text-sm pt-0.5">${opt.text}</span>
+                `;
+                container.appendChild(btn);
+            });
+
+            // Botón inhabilitado hasta que seleccionen
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = true;
+            nextBtn.className = "px-6 py-3 bg-slate-200 text-slate-400 cursor-not-allowed font-bold rounded-xl flex items-center gap-2 transition-all duration-200";
+            
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.querySelector('span').innerText = "Finalizar y Enviar";
+            } else {
+                nextBtn.querySelector('span').innerText = "Siguiente Pregunta";
+            }
+        }
+
+        function selectOption(key) {
+            const q = questions[currentQuestionIndex];
+            
+            // Limpiar selección previa
+            q.options.forEach(opt => {
+                const optElement = document.getElementById(`opt-${opt.key}`);
+                if (optElement) {
+                    optElement.className = "w-full text-left p-4 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 transition-all duration-200 flex items-start gap-4 focus:outline-none focus:ring-2 focus:ring-brand-400";
+                    optElement.querySelector('span').className = "flex-shrink-0 w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 font-bold flex items-center justify-center text-xs uppercase";
+                }
+            });
+
+            // Resaltar opción seleccionada
+            const activeOpt = document.getElementById(`opt-${key}`);
+            activeOpt.className = "w-full text-left p-4 rounded-xl border-2 border-brand-500 bg-brand-50/20 flex items-start gap-4 focus:outline-none";
+            activeOpt.querySelector('span').className = "flex-shrink-0 w-7 h-7 rounded-lg bg-brand-600 border border-brand-700 text-white font-bold flex items-center justify-center text-xs uppercase";
+
+            selectedAnswers[currentQuestionIndex] = key;
+            enableNextButton();
+        }
+
+        function enableNextButton() {
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = false;
+            nextBtn.className = "px-6 py-3 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-bold rounded-xl shadow-md transition-all duration-200 flex items-center gap-2 cursor-pointer";
+        }
+
+        window.nextQuestion = function() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                submitQuizAnswers();
+            }
+        }
+
+        // Auto-envío del examen
+        window.forceQuizSubmit = function() {
+            submitQuizAnswers();
+        }
+
+        async function submitQuizAnswers() {
+            // Ocultar pantalla de cuestionario
+            document.getElementById('screen-quiz').classList.add('hidden');
+            
+            // Calcular puntajes finales
+            let totalCorrect = 0;
+            questions.forEach((q, idx) => {
+                if (selectedAnswers[idx] === q.correct) {
+                    totalCorrect++;
+                }
+            });
+
+            const scorePercent = Math.round((totalCorrect / questions.length) * 100);
+
+            // Guardar el intento en Firestore
+            if (typeof window.saveResultToCloud === 'function') {
+                await window.saveResultToCloud(totalCorrect, scorePercent);
+            }
+
+            // Mostrar pantalla de confirmación
+            document.getElementById('screen-results').classList.remove('hidden');
+
+            // Renderizar la revisión detallada para el comprobante del alumno
+            const reviewList = document.getElementById('review-list');
+            reviewList.innerHTML = '';
+
+            questions.forEach((q, idx) => {
+                const userChoice = selectedAnswers[idx] || "No Respondido";
+                const isCorrect = userChoice === q.correct;
+                
+                const userChoiceText = q.options.find(o => o.key === userChoice)?.text || "Ninguna seleccionada";
+                const correctChoiceText = q.options.find(o => o.key === q.correct).text;
+
+                const row = document.createElement('div');
+                row.className = "pt-6 flex flex-col gap-3";
+                row.innerHTML = `
+                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-2">
+                        <div class="max-w-xl">
+                            <span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-extrabold uppercase bg-slate-100 text-slate-600 mb-1.5">${q.category}</span>
+                            <h4 class="text-base font-bold text-slate-900">${q.id}. ${q.question}</h4>
+                        </div>
+                        <div class="flex-shrink-0">
+                            ${isCorrect ? 
+                                `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    ✓ Correcto
+                                 </span>` : 
+                                `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                    ✗ Incorrecto
+                                 </span>`
+                            }
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                        <div class="p-3 rounded-lg ${isCorrect ? 'bg-emerald-50/50 border border-emerald-100' : 'bg-rose-50/50 border border-rose-100'}">
+                            <p class="font-bold text-slate-500 uppercase tracking-wide text-[10px] mb-0.5">Tu respuesta:</p>
+                            <p class="${isCorrect ? 'text-emerald-900' : 'text-rose-950'} font-semibold">(${userChoice}) ${userChoiceText}</p>
+                        </div>
+                        ${!isCorrect ? `
+                        <div class="p-3 rounded-lg bg-emerald-50/50 border border-emerald-100">
+                            <p class="font-bold text-slate-500 uppercase tracking-wide text-[10px] mb-0.5">Respuesta correcta:</p>
+                            <p class="text-emerald-900 font-semibold">(${q.correct}) ${correctChoiceText}</p>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200/50 rounded-xl p-4 text-xs text-slate-600 leading-relaxed">
+                        <strong class="text-slate-800 font-bold block mb-1">💡 Justificación pedagógica:</strong>
+                        ${q.explanation}
+                    </div>
+                `;
+                reviewList.appendChild(row);
+            });
+        }
+    </script>
+
+    <!-- Script de Bloqueo de Código Fuente (Control de Seguridad Antifraude) -->
+    <script>
+        // 1. Bloquear Clic Derecho (Menú contextual)
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        }, false);
+
+        // 2. Bloquear combinaciones de teclas para Herramientas de Desarrollo e Inspección
+        document.addEventListener('keydown', function(e) {
+            // F12 (Consola de desarrollador)
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J (Atajos de Inspección y Consola)
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c' || e.key === 'J' || e.key === 'j')) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+U (Ver código fuente)
+            if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+S (Intentar guardar la página localmente)
+            if (e.ctrlKey && (e.key === 'S' || e.key === 's')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // 3. Script Detector de apertura de herramientas de desarrollo (DevTools)
+        // Detecta la diferencia de resolución si la consola se abre acoplada
+        (function() {
+            const threshold = 160;
+            setInterval(function() {
+                if (window.outerWidth - window.innerWidth > threshold || 
+                    window.outerHeight - window.innerHeight > threshold) {
+                    // Si se detecta un posible inspector abierto, se puede limpiar la pantalla o alertar
+                    console.clear();
+                }
+            }, 1000);
+        })();
+    </script>
+</body>
+</html>
