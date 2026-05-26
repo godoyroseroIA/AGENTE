@@ -41,13 +41,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* Deshabilitar selección de texto global excepto en campos de entrada de datos */
+        /* Deshabilitar selección de texto global excepto en campos de entrada de datos legítimos */
         * {
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
             outline: none;
+            -webkit-user-drag: none;
         }
         input, textarea, select {
             -webkit-user-select: text;
@@ -57,16 +58,16 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between antialiased font-sans font-medium">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between antialiased font-sans font-medium font-semibold">
 
     <!-- Pantalla de bloqueo absoluto por seguridad institucional (Intento de inspección) -->
-    <div id="security-block-screen" class="hidden fixed inset-0 bg-rose-950 text-white z-[9999] flex flex-col items-center justify-center p-6 text-center backdrop-blur-md">
+    <div id="security-block-screen" class="hidden fixed inset-0 bg-slate-950 text-white z-[9999] flex flex-col items-center justify-center p-6 text-center backdrop-blur-md">
         <div class="w-24 h-24 bg-rose-600 rounded-full flex items-center justify-center mb-6 animate-pulse">
             <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
         </div>
-        <h2 class="text-3xl font-black tracking-tight">ACCESO DENEGADO</h2>
+        <h2 class="text-3xl font-black tracking-tight font-extrabold uppercase">SISTEMA BLOQUEADO</h2>
         <p class="text-rose-200 text-sm mt-3 max-w-lg leading-relaxed">
-            Se ha detectado un intento de inspección de código o apertura de herramientas de desarrollo. Por políticas estrictas de seguridad de la Unidad Educativa Fiscomisional Sagrado Corazón y probidad académica, su sesión ha sido bloqueada. El reporte de este suceso ha sido registrado en la base de datos permanente con su identificador de red.
+            Se ha detectado un intento de inspección de código o apertura de herramientas de desarrollo. Por políticas estrictas de seguridad de la Unidad Educativa Fiscomisional Sagrado Corazón y probidad académica, su sesión ha sido inhabilitada.
         </p>
         <button onclick="window.location.reload()" class="mt-8 px-6 py-3 bg-white text-rose-900 font-extrabold rounded-xl text-xs hover:bg-slate-100 transition-all uppercase tracking-wider">
             Reintentar Acceso Seguro
@@ -75,10 +76,13 @@
 
     <!-- Encabezado de la Institución -->
     <header id="main-header" class="bg-white border-b border-slate-200 py-4 shadow-sm">
-        <!-- Banner de advertencia de modo local / Demo externo -->
-        <div id="db-demo-banner" class="hidden bg-amber-500 text-white text-center py-2 px-4 text-xs font-bold flex items-center justify-center gap-2 animate-pulse">
-            <span>⚠️ Modo Demostración Local: Los datos no se guardarán en la nube. Haz clic en el botón de la derecha para conectar tu base de datos externa de Firebase.</span>
-            <button onclick="abrirConfiguracionBaseDatosModal()" class="bg-white text-amber-600 px-3 py-1 rounded text-[10px] font-extrabold hover:bg-amber-50 transition-all uppercase tracking-wider">Configurar Conexión Nube</button>
+        <!-- Banner de advertencia de modo local / Demo externo (REUBICADO EXCLUSIVAMENTE PARA EL DOCENTE) -->
+        <div id="db-demo-banner-docente" class="hidden bg-amber-500 text-white text-center py-3.5 px-5 rounded-2xl mb-6 flex flex-col md:flex-row items-center justify-between gap-3 shadow-md shadow-amber-100 animate-pulse">
+            <div class="flex items-center gap-2 text-left">
+                <span class="text-lg">⚠️</span>
+                <p class="text-xs leading-relaxed font-bold"><strong>Modo Demostración Activo:</strong> Los datos se almacenan temporalmente en la memoria del navegador. Configure sus credenciales de Firebase para habilitar el guardado definitivo en la nube.</p>
+            </div>
+            <button onclick="abrirConfiguracionBaseDatosModal()" class="bg-white text-amber-700 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-50 transition-all uppercase tracking-wider flex-shrink-0">Configurar Conexión Nube</button>
         </div>
 
         <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -132,14 +136,10 @@
                 </button>
             </div>
 
-            <!-- Botones de administración ocultos en el pie de ingreso -->
+            <!-- Pie de ingreso con acceso docente privado -->
             <div class="border-t border-slate-100 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p class="text-xs text-slate-400 text-center sm:text-left">Asignatura: <strong class="text-slate-600">Informática Aplicada</strong> • Docente: <strong class="text-slate-600">Ing. César Godoy Rosero, Mgt.</strong></p>
                 <div class="flex items-center gap-3">
-                    <button onclick="abrirConfiguracionBaseDatosModal()" class="text-xs font-bold text-violet-600 hover:text-violet-800 flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-all font-bold">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                        Conexión Nube
-                    </button>
                     <button onclick="mostrarAccesoDocente()" class="text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-all font-bold">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                         Acceso Docente
@@ -181,6 +181,15 @@
         <!-- PANTALLA: PANEL DE CONTROL DOCENTE (ADMIN) -->
         <div id="screen-docente-panel" class="hidden w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 md:p-8 transition-all duration-300">
             
+            <!-- Banner de advertencia de modo local / Demo externo -->
+            <div id="db-demo-banner-docente" class="hidden bg-amber-500 text-white text-center py-3.5 px-5 rounded-2xl mb-6 flex flex-col md:flex-row items-center justify-between gap-3 shadow-md shadow-amber-100 animate-pulse">
+                <div class="flex items-center gap-2 text-left">
+                    <span class="text-lg">⚠️</span>
+                    <p class="text-xs leading-relaxed font-bold"><strong>Modo Demostración Activo:</strong> Los datos se almacenan temporalmente en la memoria del navegador. Configure sus credenciales de Firebase para habilitar el guardado definitivo en la nube.</p>
+                </div>
+                <button onclick="abrirConfiguracionBaseDatosModal()" class="bg-white text-amber-700 px-4 py-2 rounded-xl text-[10px] font-black hover:bg-amber-50 transition-all uppercase tracking-wider flex-shrink-0">Configurar Conexión Nube</button>
+            </div>
+
             <!-- Cabecera del Panel Docente -->
             <div class="flex flex-col lg:flex-row lg:items-center justify-between pb-6 border-b border-slate-200 gap-4 mb-6">
                 <div>
@@ -188,10 +197,10 @@
                     <h3 class="text-2xl font-black text-slate-900 mt-1">Gestión de Evaluaciones BGU</h3>
                     <div class="flex items-center gap-2 mt-2">
                         <span class="text-xs text-slate-500 font-bold">Filtro Activo de Consulta:</span>
-                        <select id="select-filtro-curso" onchange="cambiarFiltroCursoParalelo()" class="px-2 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs rounded-lg font-bold focus:outline-none animate-fade-in">
+                        <select id="select-filtro-curso" onchange="cambiarFiltroCursoParalelo()" class="px-2 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs rounded-lg font-bold focus:outline-none">
                             <!-- Inyectado dinámicamente -->
                         </select>
-                        <select id="select-filtro-paralelo" onchange="cambiarFiltroCursoParalelo()" class="px-2 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs rounded-lg font-bold focus:outline-none animate-fade-in">
+                        <select id="select-filtro-paralelo" onchange="cambiarFiltroCursoParalelo()" class="px-2 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs rounded-lg font-bold focus:outline-none">
                             <!-- Inyectado dinámicamente -->
                         </select>
                     </div>
@@ -221,7 +230,7 @@
             </div>
 
             <!-- Fila de Tarjetas de Métricas de Filtro Específico -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 font-semibold">
                 <div class="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl">
                     <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Total Estudiantes</span>
                     <p id="metric-total-est" class="text-2xl font-extrabold text-slate-800 mt-1">0</p>
@@ -279,21 +288,21 @@
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-100">
                                 <tr>
-                                    <th class="p-4 w-12 font-bold font-bold font-bold font-bold font-bold font-bold">No.</th>
+                                    <th class="p-4 w-12 font-bold font-bold font-bold font-bold">No.</th>
                                     <th class="p-4 font-bold">Estudiante</th>
                                     <th class="p-4 font-bold">Cédula</th>
-                                    <th class="p-4 font-bold">Curso / Paralelo</th>
-                                    <th class="p-4 font-bold">Fecha/Hora de Envío</th>
+                                    <th class="p-4 font-bold font-bold font-bold font-bold">Curso / Paralelo</th>
+                                    <th class="p-4 font-bold font-bold font-bold">Fecha/Hora de Envío</th>
                                     <th class="p-4 text-center font-bold">Respuestas Correctas</th>
                                     <th class="p-4 text-right font-bold">Nota Final</th>
                                 </tr>
                             </thead>
-                            <tbody id="table-body-calificaciones" class="divide-y divide-slate-100 font-medium">
+                            <tbody id="table-body-calificaciones" class="divide-y divide-slate-100 font-medium font-semibold">
                                 <!-- Dinámico -->
                             </tbody>
                         </table>
                     </div>
-                    <div id="no-data-alert" class="hidden p-8 text-center text-slate-400 font-normal font-normal">
+                    <div id="no-data-alert" class="hidden p-8 text-center text-slate-400 font-normal font-normal font-medium">
                         <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         <span>No existen registros de calificaciones ingresados en este momento.</span>
                     </div>
@@ -303,7 +312,7 @@
             <!-- CONTENIDO DE TAB: NÓMINA -->
             <div id="tab-content-estudiantes" class="hidden space-y-6">
                 <!-- Secciones de Gestión de Nómina -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 font-semibold font-semibold">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 font-semibold font-semibold font-semibold">
                     
                     <!-- Formulario de carga masiva por medio de Archivo o Pegado -->
                     <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-4 lg:col-span-2">
@@ -316,12 +325,12 @@
                         </div>
                         
                         <!-- Cargar por Archivo -->
-                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 bg-white hover:border-brand-400 transition-all text-center relative">
+                        <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 bg-white hover:border-brand-400 transition-all text-center relative font-semibold font-semibold">
                             <input type="file" id="file-import-nomina" accept=".csv, .txt" onchange="importarArchivoNomina(event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
                             <div class="space-y-1">
                                 <svg class="w-8 h-8 text-slate-400 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                 <p class="text-xs font-bold text-slate-700">Haz clic aquí para seleccionar o arrastra tu archivo CSV / Texto (.csv, .txt)</p>
-                                <p class="text-[10px] text-slate-400">Debe contener las columnas separadas por comas o punto y coma</p>
+                                <p class="text-[10px] text-slate-400 font-semibold font-semibold">Debe contener las columnas separadas por comas o punto y coma</p>
                             </div>
                         </div>
 
@@ -348,14 +357,14 @@
                     <!-- Agregar estudiante individual -->
                     <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/80 space-y-4 max-h-[460px] overflow-y-auto no-scrollbar font-semibold">
                         <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wide font-bold">Agregar Individual</h4>
-                        <div class="space-y-3 font-semibold text-slate-700 font-semibold font-semibold">
+                        <div class="space-y-3 font-semibold text-slate-700">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nómina (Nombre Completo)</label>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-bold">Nómina (Nombre Completo)</label>
                                 <input type="text" id="add-est-nombre" placeholder="Ej. ALAVA ORTIZ BERTHA ANAHIS" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-850">
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Curso o Grado</label>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-bold">Curso o Grado</label>
                                     <select id="add-est-curso" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-800 font-bold">
                                         <option value="1do.">1do.</option>
                                         <option value="2do">2do</option>
@@ -363,8 +372,8 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Paralelo</label>
-                                    <select id="add-est-paralelo" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-800 font-bold">
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-bold">Paralelo</label>
+                                    <select id="add-est-paralelo" class="w-full px-3 py-2.5 border border-slate-200 bg-white rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 text-slate-805 font-bold">
                                         <option value="A">A</option>
                                         <option value="B">B</option>
                                         <option value="C">C</option>
@@ -377,7 +386,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 font-bold">
+                            <div class="grid grid-cols-2 gap-2 font-bold font-bold">
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-bold">Cédula del Estudiante</label>
                                     <input type="text" id="add-est-cedula" maxlength="10" placeholder="Ej. 0850812348" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
@@ -388,23 +397,23 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Correo Institucional</label>
-                                <input type="email" id="add-est-correo" placeholder="alavaortiz8141@sagradocorazon.edu.ec" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-bold font-bold font-bold font-bold">Correo Institucional</label>
+                                <input type="email" id="add-est-correo" placeholder="alavaortiz8141@sagradocorazon.edu.ec" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold font-semibold">
                             </div>
                             <div class="border-t border-slate-200 my-2 pt-2">
                                 <span class="text-[10px] font-bold text-brand-600 block mb-2 font-bold">DATOS DEL REPRESENTANTE:</span>
                                 <div class="space-y-3 font-semibold">
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nombre Representante</label>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-bold">Nombre Representante</label>
                                         <input type="text" id="add-est-rep-nombre" placeholder="Ej. ORTIZ MINA YIMMABEL ROCIO" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold">
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2">
+                                    <div class="grid grid-cols-2 gap-2 font-semibold font-semibold font-semibold">
                                         <div>
-                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cédula R.</label>
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-bold">Cédula R.</label>
                                             <input type="text" id="add-est-rep-cedula" maxlength="10" placeholder="Ej. 0802348219" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
                                         </div>
                                         <div>
-                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Celular Rep.</label>
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-bold">Celular Rep.</label>
                                             <input type="text" id="add-est-rep-celular" maxlength="10" placeholder="Ej. 0996313327" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500">
                                         </div>
                                     </div>
@@ -422,7 +431,7 @@
                 </div>
 
                 <div class="flex items-center justify-between border-t border-slate-100 pt-6">
-                    <p class="text-xs text-slate-400" id="label-nomina-resumen">Listado actual de estudiantes en sistema: <strong id="nomina-count" class="text-slate-700 font-bold">0</strong></p>
+                    <p class="text-xs text-slate-400" id="label-nomina-resumen">Listado actual de estudiantes en sistema: <strong id="nomina-count" class="text-slate-700 font-bold font-bold font-bold font-bold font-bold font-bold font-semibold">0</strong></p>
                     <button onclick="limpiarNominaCompleta()" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2 px-4 rounded-xl border border-rose-200/40 transition-all font-bold">
                         Vaciar Nómina
                     </button>
@@ -431,13 +440,13 @@
                 <!-- Tabla de Nómina en el mismo orden de los campos de Excel -->
                 <div class="border border-slate-100 rounded-2xl overflow-hidden bg-white">
                     <div class="overflow-x-auto max-h-[500px]">
-                        <table class="w-full text-left text-xs whitespace-nowrap font-semibold font-semibold font-semibold">
+                        <table class="w-full text-left text-xs whitespace-nowrap font-semibold font-semibold font-semibold font-semibold font-semibold font-semibold">
                             <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-100 sticky top-0">
                                 <tr>
-                                    <th class="p-4 w-12 font-bold font-bold font-bold font-bold">No.</th>
-                                    <th class="p-4 font-bold">Nómina (Estudiante)</th>
-                                    <th class="p-4 font-bold">Curso</th>
-                                    <th class="p-4 font-bold">Paralelo</th>
+                                    <th class="p-4 w-12 font-bold font-bold font-bold font-bold font-bold font-bold font-semibold">No.</th>
+                                    <th class="p-4 font-bold font-bold font-bold">Nómina (Estudiante)</th>
+                                    <th class="p-4 font-bold font-bold">Curso</th>
+                                    <th class="p-4 font-bold font-bold">Paralelo</th>
                                     <th class="p-4 font-bold font-mono">Cédula</th>
                                     <th class="p-4 font-bold font-medium">Fecha Nac</th>
                                     <th class="p-4 font-bold">Correo Institucional</th>
@@ -446,10 +455,10 @@
                                     <th class="p-4 font-bold">Cel. Representante</th>
                                     <th class="p-4 font-bold">Observaciones</th>
                                     <th class="p-4 font-bold text-center">Estado</th>
-                                    <th class="p-4 font-bold text-center w-24">Acciones</th>
+                                    <th class="p-4 font-bold text-center w-24 font-bold font-bold font-bold font-bold font-bold font-bold font-bold">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="table-body-estudiantes" class="divide-y divide-slate-100 font-medium">
+                            <tbody id="table-body-estudiantes" class="divide-y divide-slate-100 font-medium font-semibold font-semibold font-semibold">
                                 <!-- Dinámico -->
                             </tbody>
                         </table>
@@ -469,7 +478,7 @@
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-50 rounded-2xl mb-4">
                     <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-400 uppercase tracking-wider text-xs font-bold">Bienvenido/a a la Evaluación</h3>
+                <h3 class="text-xl font-bold text-slate-400 uppercase tracking-wider text-xs font-bold font-bold font-bold font-bold font-bold">Bienvenido/a a la Evaluación</h3>
                 <h4 id="student-name" class="text-2xl font-black text-slate-900 mt-1">Estudiante</h4>
                 <div class="mt-4 flex flex-wrap gap-2 justify-center">
                     <span class="px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold" id="welcome-student-curso">Curso: 2do BGU</span>
@@ -496,7 +505,7 @@
             </div>
 
             <button onclick="comenzarEvaluacion()" 
-                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-emerald-200 hover:shadow-xl transition-all flex items-center justify-center gap-2 font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold">
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-emerald-200 hover:shadow-xl transition-all flex items-center justify-center gap-2 font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold">
                 <span>Comenzar Evaluación</span>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </button>
@@ -528,7 +537,7 @@
             <!-- Controles de Navegación -->
             <div class="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-slate-100">
                 <button id="btn-next" onclick="preguntaSiguiente()" 
-                    class="w-full sm:w-auto px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md shadow-brand-100 transition-all font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold">
+                    class="w-full sm:w-auto px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md shadow-brand-100 transition-all font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold">
                     Siguiente
                 </button>
             </div>
@@ -564,7 +573,7 @@
 
             <!-- Bloque de Reporte Detallado de Preguntas -->
             <div id="reporte-detallado-container" class="mt-6 text-left max-w-2xl mx-auto hidden font-medium font-semibold leading-relaxed font-semibold">
-                <h4 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2 flex items-center justify-between font-bold font-bold font-bold font-bold">
+                <h4 class="text-sm font-black text-slate-900 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2 flex items-center justify-between font-bold">
                     <span>Revisión de la Evaluación</span>
                     <span class="text-[10px] px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md">General Completado</span>
                 </h4>
@@ -586,17 +595,17 @@
 
     </main>
 
-    <!-- FICHA DETALLES ESTUDIANTE TUTOR (VINCULADO CORRECTAMENTE AL ID ai-tutor-modal) -->
+    <!-- FICHA DETALLES ESTUDIANTE TUTOR -->
     <div id="ai-tutor-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-200 font-medium">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 font-bold font-bold">
-            <div class="border-b border-slate-200 pb-3 flex justify-between items-center font-bold">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 font-bold font-bold font-bold font-bold font-bold font-bold">
+            <div class="border-b border-slate-200 pb-3 flex justify-between items-center font-bold font-bold font-bold">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white font-bold animate-pulse">
                         ✨
                     </div>
                     <div>
-                        <h4 class="text-sm font-black text-slate-900 font-bold font-bold font-bold font-bold font-bold">Tutor Virtual ✨ IA</h4>
-                        <p class="text-[10px] text-violet-600 font-bold bg-violet-50 px-1.5 py-0.5 rounded font-bold font-bold">Asesoría de Refuerzo</p>
+                        <h4 class="text-sm font-black text-slate-900 font-bold font-bold font-bold font-bold font-bold font-bold font-semibold">Tutor Virtual ✨ IA</h4>
+                        <p class="text-[10px] text-violet-600 font-bold bg-violet-50 px-1.5 py-0.5 rounded font-bold font-bold font-bold">Asesoría de Refuerzo</p>
                     </div>
                 </div>
                 <button onclick="cerrarTutorIA()" class="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-1 rounded-lg transition-all font-bold">
@@ -610,26 +619,26 @@
                     <div class="w-8 h-8 border-3 border-violet-100 border-t-violet-600 rounded-full animate-spin"></div>
                     <p class="text-[11px] text-slate-500 font-semibold animate-pulse font-semibold">Conectando con el Tutor de Informática...</p>
                 </div>
-                <div id="ai-tutor-dialog" class="hidden p-4 bg-slate-50 rounded-2xl border border-slate-150 text-slate-800 max-h-[300px] overflow-y-auto no-scrollbar whitespace-pre-wrap font-semibold leading-relaxed font-semibold font-semibold font-semibold font-semibold">
+                <div id="ai-tutor-dialog" class="hidden p-4 bg-slate-50 rounded-2xl border border-slate-150 text-slate-800 max-h-[300px] overflow-y-auto no-scrollbar whitespace-pre-wrap font-semibold leading-relaxed font-semibold font-semibold font-semibold font-semibold font-semibold">
                     <!-- Mensaje del tutor inyectado dinámicamente -->
                 </div>
             </div>
 
             <div class="flex justify-end border-t border-slate-100 pt-3">
-                <button onclick="cerrarTutorIA()" class="px-4 py-2 bg-slate-800 hover:bg-slate-955 text-white font-bold rounded-xl text-xs shadow-md transition-all font-bold font-bold font-bold font-bold font-bold font-bold">Entendido</button>
+                <button onclick="cerrarTutorIA()" class="px-4 py-2 bg-slate-800 hover:bg-slate-955 text-white font-bold rounded-xl text-xs shadow-md transition-all font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold font-bold">Entendido</button>
             </div>
         </div>
     </div>
 
     <!-- FICHA DETALLES ESTUDIANTE MODAL -->
-    <div id="details-modal-student" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-200">
+    <div id="details-modal-student" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-200 font-medium">
         <div class="bg-white rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 flex flex-col gap-6 max-h-[90vh] overflow-y-auto no-scrollbar font-medium font-medium">
             <div class="flex justify-between items-start border-b border-slate-150 pb-4">
                 <div>
                     <span class="text-[10px] uppercase font-bold text-brand-600 tracking-wider bg-brand-50 px-2.5 py-1 rounded-md">Ficha Detallada del Estudiante</span>
                     <h4 id="detail-nombre" class="text-lg md:text-xl font-black text-slate-900 mt-2 font-black">ALAVA ORTIZ BERTHA ANAHIS</h4>
                 </div>
-                <button onclick="cerrarFichaDetalles()" class="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-1.5 rounded-xl transition-all font-bold">
+                <button onclick="cerrarFichaDetalles()" class="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-1.5 rounded-xl transition-all font-bold font-bold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -663,7 +672,7 @@
                         <span class="text-[10px] text-slate-400 uppercase font-bold">Nombre del Representante</span>
                         <p id="detail-rep-nombre" class="font-semibold text-slate-800 text-sm mt-0.5">-</p>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-2 font-semibold">
                         <div>
                             <span class="text-[10px] text-slate-400 uppercase font-bold">Cédula R.</span>
                             <p id="detail-rep-cedula" class="font-semibold text-slate-800 font-mono mt-0.5">-</p>
@@ -678,14 +687,14 @@
 
             <!-- Observaciones -->
             <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 text-xs font-semibold">
-                <span class="text-[10px] text-amber-600 uppercase font-bold tracking-wide font-bold font-bold font-bold font-bold font-bold font-bold font-bold">Observaciones / Antecedentes</span>
+                <span class="text-[10px] text-amber-600 uppercase font-bold tracking-wide font-bold font-bold font-bold font-bold font-bold">Observaciones / Antecedentes</span>
                 <p id="detail-observaciones" class="text-slate-700 mt-1 whitespace-pre-wrap font-semibold leading-relaxed"></p>
             </div>
         </div>
     </div>
 
     <!-- VENTANA MODAL DE CURSO Y PARALELO (REQUISITO PREVIO DE IMPORTACIÓN - SELECTS CON LA LISTA RESTRINGIDA) -->
-    <div id="course-setup-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-200 font-medium">
+    <div id="course-setup-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-200 font-medium font-medium">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 font-medium">
             <div class="border-b border-slate-100 pb-3">
                 <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wide font-bold font-bold">Configuración del Curso / Paralelo de Carga</h4>
@@ -716,17 +725,17 @@
                 </div>
             </div>
             <div class="flex justify-end gap-3 border-t border-slate-100 pt-3">
-                <button onclick="cancelarConfiguracionCurso()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all font-medium font-bold">Cancelar</button>
+                <button onclick="cancelarConfiguracionCurso()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all font-medium font-bold font-bold font-bold font-bold">Cancelar</button>
                 <button onclick="confirmarConfiguracionCurso()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-md transition-all font-bold">Confirmar e Importar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL DE CONFIGURACIÓN DE CLAVE MAESTRA -->
-    <div id="change-pass-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-200">
+    <div id="change-pass-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-200 font-medium">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 font-medium">
             <div class="border-b border-slate-100 pb-3">
-                <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wide font-bold">Cambio de Contraseña Docente</h4>
+                <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wide font-bold font-bold">Cambio de Contraseña Docente</h4>
                 <p class="text-[11px] text-slate-500 mt-1">La contraseña se almacena de forma segura y permanente en la Base de Datos Nube (Firestore).</p>
             </div>
             <div class="space-y-4 py-2">
@@ -736,11 +745,11 @@
                 </div>
                 <div>
                     <label for="new-pass" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nueva Contraseña</label>
-                    <input type="password" id="new-pass" placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-semibold text-slate-800">
+                    <input type="password" id="new-pass" placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-semibold text-slate-800 font-bold">
                 </div>
             </div>
             <div class="flex justify-end gap-3 border-t border-slate-100 pt-3">
-                <button onclick="cerrarConfiguracionClaveModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all font-medium font-bold">Cancelar</button>
+                <button onclick="cerrarConfiguracionClaveModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all font-medium font-bold font-bold font-bold font-bold">Cancelar</button>
                 <button onclick="guardarNuevaClaveDocente()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-md transition-all font-bold">Cambiar Contraseña</button>
             </div>
         </div>
@@ -750,42 +759,42 @@
     <div id="db-config-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-200 overflow-y-auto font-medium">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 font-medium my-8">
             <div class="border-b border-slate-100 pb-3">
-                <h4 class="text-sm font-black text-violet-700 uppercase tracking-wide font-bold">🌐 Configuración de Conexión Base de Datos Nube</h4>
-                <p class="text-[11px] text-slate-500 mt-1">Ingresa las credenciales del proyecto de tu cuenta de Google Firebase para activar la sincronización internacional permanente de calificaciones y nómina.</p>
+                <h4 class="text-sm font-black text-violet-700 uppercase tracking-wide font-bold font-bold">🌐 Configuración de Conexión Base de Datos Nube</h4>
+                <p class="text-[11px] text-slate-500 mt-1">Ingresa las credenciales del proyecto de tu cuenta de Google Firebase para activar la Sincronización en la nube permanente de calificaciones y nómina.</p>
             </div>
-            <div class="space-y-3 py-2 text-xs text-slate-700 font-bold">
+            <div class="space-y-3 py-2 text-xs text-slate-700 font-bold font-bold font-bold">
                 <div>
-                    <label for="db-api-key" class="block font-bold uppercase tracking-wider mb-1 font-bold font-bold font-bold font-bold font-bold font-bold">API Key</label>
-                    <input type="text" id="db-api-key" placeholder="AIzaSy..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold">
+                    <label for="db-api-key" class="block font-bold uppercase tracking-wider mb-1 font-bold">API Key</label>
+                    <input type="text" id="db-api-key" placeholder="AIzaSy..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold font-semibold">
                 </div>
                 <div>
-                    <label for="db-auth-domain" class="block font-bold uppercase tracking-wider mb-1">Auth Domain</label>
-                    <input type="text" id="db-auth-domain" placeholder="nombre-proyecto.firebaseapp.com" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold">
+                    <label for="db-auth-domain" class="block font-bold uppercase tracking-wider mb-1 font-bold">Auth Domain</label>
+                    <input type="text" id="db-auth-domain" placeholder="nombre-proyecto.firebaseapp.com" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold">
                 </div>
                 <div class="grid grid-cols-2 gap-2 font-bold font-bold">
                     <div>
-                        <label for="db-project-id" class="block font-bold uppercase tracking-wider mb-1">Project ID</label>
-                        <input type="text" id="db-project-id" placeholder="nombre-proyecto" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold">
+                        <label for="db-project-id" class="block font-bold uppercase tracking-wider mb-1 font-bold">Project ID</label>
+                        <input type="text" id="db-project-id" placeholder="nombre-proyecto" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold">
                     </div>
                     <div>
-                        <label for="db-storage-bucket" class="block font-bold uppercase tracking-wider mb-1">Storage Bucket</label>
+                        <label for="db-storage-bucket" class="block font-bold uppercase tracking-wider mb-1 font-bold">Storage Bucket</label>
                         <input type="text" id="db-storage-bucket" placeholder="nombre-proyecto.appspot.com" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2 font-bold">
+                <div class="grid grid-cols-2 gap-2 font-bold font-bold font-bold">
                     <div>
-                        <label for="db-messaging-id" class="block font-bold uppercase tracking-wider mb-1">Messaging Sender ID</label>
+                        <label for="db-messaging-id" class="block font-bold uppercase tracking-wider mb-1 font-bold">Messaging Sender ID</label>
                         <input type="text" id="db-messaging-id" placeholder="1234567890" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold">
                     </div>
                     <div>
                         <label for="db-app-id" class="block font-bold uppercase tracking-wider mb-1">App ID</label>
-                        <input type="text" id="db-app-id" placeholder="1:123:web:abc" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold">
+                        <input type="text" id="db-app-id" placeholder="1:123:web:abc" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold">
                     </div>
                 </div>
                 <div>
-                    <label for="db-custom-app-id" class="block font-bold uppercase tracking-wider mb-1 font-bold">ID de Aula / Aplicación Personalizado</label>
-                    <input type="text" id="db-custom-app-id" placeholder="Ej. colegio-sagrado-corazon" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold">
-                    <p class="text-[9px] text-slate-400 mt-1">Este ID separa los datos de tu institución del resto en el almacenamiento Firestore de Google.</p>
+                    <label for="db-custom-app-id" class="block font-bold uppercase tracking-wider mb-1 font-bold font-bold">ID de Aula / Aplicación Personalizado</label>
+                    <input type="text" id="db-custom-app-id" placeholder="Ej. uesc-aula-2bgu" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-500 font-semibold font-semibold">
+                    <p class="text-[9px] text-slate-400 mt-1">Este ID separa los datos de tu institución del resto en el almacenamiento de Google Firebase de tu aula.</p>
                 </div>
             </div>
             <div class="flex justify-end gap-3 border-t border-slate-100 pt-3">
@@ -821,7 +830,7 @@
             </div>
 
             <div class="flex justify-end border-t border-slate-100 pt-3">
-                <button onclick="cerrarReportePedagogicoIA()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-955 text-white font-bold rounded-xl text-xs shadow-md transition-all font-bold font-bold font-bold font-bold">Cerrar Análisis</button>
+                <button onclick="cerrarReportePedagogicoIA()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-955 text-white font-bold rounded-xl text-xs shadow-md transition-all font-bold font-bold">Cerrar Análisis</button>
             </div>
         </div>
     </div>
@@ -833,15 +842,15 @@
                 <h4 id="modal-title" class="text-base font-bold text-slate-950 font-bold">Confirmación</h4>
                 <p id="modal-message" class="text-xs text-slate-500 mt-2 font-semibold">¿Estás seguro de continuar?</p>
             </div>
-            <div class="flex justify-end gap-3 mt-2 font-bold font-bold font-semibold font-bold">
+            <div class="flex justify-end gap-3 mt-2 font-bold font-bold font-semibold">
                 <button id="modal-btn-cancel" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all font-bold">Cancelar</button>
-                <button id="modal-btn-confirm" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-all font-bold">Aceptar</button>
+                <button id="modal-btn-confirm" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition-all font-bold font-bold">Aceptar</button>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400 font-medium">
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400 font-medium font-medium">
         <div class="max-w-5xl mx-auto px-4 space-y-2">
             <p>© 2026 Unidad Educativa Fiscomisional Sagrado Corazón • Esmeraldas • Todos los derechos reservados.</p>
             <p class="font-medium text-slate-300 font-bold">Desarrollado y administrado de forma segura bajo la supervisión del área de Informática.</p>
@@ -850,6 +859,81 @@
 
     <!-- LÓGICA DE FIREBASE COMPAT, ANTI-CHEAT Y CUESTIONARIO -->
     <script>
+        // =========================================================
+        // MOTOR DE BLINDAJE DE SEGURIDAD EXTREMA Y CONFIDENCIALIDAD
+        // =========================================================
+
+        // 1. Bloqueo de Clic Derecho (Menú Contextual)
+        document.addEventListener('contextmenu', function(event) { event.preventDefault(); });
+
+        // 2. Bloqueo de Atajos del Teclado (F12, Ctrl+U, Ctrl+S, Ctrl+P, Copia)
+        document.addEventListener('keydown', function(e) {
+            // F12 (Consola de desarrollador)
+            if (e.key === 'F12' || e.keyCode === 123) {
+                e.preventDefault();
+                bloquearPorInspector();
+                return false;
+            }
+            // Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J, Ctrl+Shift+K (Atajos de Inspección y Consola)
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c' || e.key === 'J' || e.key === 'j' || e.key === 'K' || e.key === 'k')) {
+                e.preventDefault();
+                bloquearPorInspector();
+                return false;
+            }
+            // Ctrl+U (Ver código fuente)
+            if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
+                e.preventDefault();
+                bloquearPorInspector();
+                return false;
+            }
+            // Ctrl+S (Intentar guardar la página localmente)
+            if (e.ctrlKey && (e.key === 'S' || e.key === 's')) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+P (Intentar imprimir / capturar la pantalla como PDF)
+            if (e.ctrlKey && (e.key === 'P' || e.key === 'p')) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+C (Bloqueo de copia de seguridad)
+            if (e.ctrlKey && (e.key === 'C' || e.key === 'c')) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+X (Cortar)
+            if (e.ctrlKey && (e.key === 'X' || e.key === 'x')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // 3. Bloqueo de arrastre y soltado de elementos
+        document.addEventListener('dragstart', function(event) { event.preventDefault(); });
+        document.addEventListener('drop', function(event) { event.preventDefault(); });
+
+        // 4. Bloqueo por redimensionamiento (DevTools acopladas)
+        var threshold = 160;
+        setInterval(function() {
+            if (window.self !== window.top) return; // Permitir en Iframe seguro de Canvas
+            if (window.outerWidth - window.innerWidth > threshold || 
+                window.outerHeight - window.innerHeight > threshold) {
+                console.clear();
+                bloquearPorInspector();
+            }
+        }, 1000);
+
+        function bloquearPorInspector() {
+            var blockScreen = document.getElementById('security-block-screen');
+            if (blockScreen) blockScreen.classList.remove('hidden');
+            
+            var header = document.getElementById('main-header');
+            if (header) header.classList.add('hidden');
+            
+            var mainEl = document.querySelector('main');
+            if (mainEl) mainEl.classList.add('hidden');
+        }
+
         // =========================================================
         // MOTOR INTELIGENTE DE DETECCIÓN Y PERSISTENCIA DE ENTORNO
         // =========================================================
@@ -869,7 +953,7 @@
             appId = __app_id;
         }
 
-        // 2. Si no corre en Canvas (Carga externa/Local), buscar credenciales guardadas de forma segura en LocalStorage
+        // 2. Buscar credenciales guardadas de forma segura en LocalStorage
         if (!firebaseConfig || firebaseConfig.apiKey === "placeholder") {
             var savedConfig = localStorage.getItem('external_firebase_config');
             if (savedConfig) {
@@ -885,7 +969,7 @@
             }
         }
 
-        // 3. Si no existe ninguna configuración, inicializar en modo Demostración Segura
+        // 3. Si no existe ninguna configuración o es marcador de posición, forzar Modo Demostración Segura
         if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "placeholder") {
             isDemoMode = true;
             firebaseConfig = {
@@ -913,9 +997,9 @@
             }
         }
 
-        // Mostrar u ocultar banner de demostración local
+        // Mostrar u ocultar banner de demostración local (REUBICADO EXCLUSIVAMENTE AL DOCENTE EN SU PANEL)
         document.addEventListener("DOMContentLoaded", function() {
-            var banner = document.getElementById('db-demo-banner');
+            var banner = document.getElementById('db-demo-banner-docente');
             if (banner) {
                 if (isDemoMode) {
                     banner.classList.remove('hidden');
@@ -1531,7 +1615,7 @@
             if (docKey) docKey.value = '';
             if (err) err.classList.add('hidden');
             
-            mostrarPantapan = mostrarPantalla;
+            window.mostrarPantalla = mostrarPantalla;
             mostrarPantalla('screen-login');
         }
 
@@ -1703,7 +1787,7 @@
 
             calificacionesArray.forEach(function(item, index) {
                 var tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-all font-medium";
+                tr.className = "hover:bg-slate-50 transition-all font-medium font-semibold";
                 var notaColor = item.nota >= 7.0 ? 'text-emerald-600 font-bold' : 'text-rose-500 font-bold';
 
                 var estAsociado = estudiantes.find(function(e) {
@@ -1713,11 +1797,11 @@
 
                 tr.innerHTML = `
                     <td class="p-4 text-slate-400 font-bold">${index + 1}</td>
-                    <td class="p-4 font-bold text-slate-800">${item.nombre}</td>
+                    <td class="p-4 font-bold">${item.nombre}</td>
                     <td class="p-4 text-slate-500 font-mono">${item.cedula}</td>
                     <td class="p-4 text-slate-500 font-bold">${cursoTexto}</td>
                     <td class="p-4 text-slate-500">${item.fecha}</td>
-                    <td class="p-4 text-center text-slate-600">${item.correctas} / 10</td>
+                    <td class="p-4 text-center font-bold">${item.correctas} / 10</td>
                     <td class="p-4 text-right ${notaColor}">${item.nota.toFixed(2)}</td>
                 `;
                 tbody.appendChild(tr);
@@ -1763,7 +1847,7 @@
                     <td class="p-4 font-mono text-slate-600">${est.repCelular || '-'}</td>
                     <td class="p-4 text-slate-500 italic truncate max-w-[150px]" title="${est.observaciones || ''}">${est.observaciones || '-'}</td>
                     <td class="p-4 text-center">${badge}</td>
-                    <td class="p-4 text-center">
+                    <td class="p-4 text-center font-bold">
                         <div class="flex items-center justify-center gap-1.5">
                             <button onclick="verFichaDetalles('${est.cedula}')" class="text-brand-600 hover:text-brand-800 font-bold text-[10px] bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded transition-all font-bold">
                                 Ficha
@@ -1852,7 +1936,7 @@
                 return;
             }
 
-            eventoArchivoTemporal = null;
+            archivoTemporal = null;
             importacionMasivaManualTemporal = true;
 
             var inputC = document.getElementById('setup-curso');
@@ -1864,6 +1948,7 @@
             if (modal) modal.classList.remove('hidden');
         }
 
+        // Cancelar intermediación de carga
         function cancelarConfiguracionCurso() {
             var modal = document.getElementById('course-setup-modal');
             if (modal) modal.classList.add('hidden');
@@ -1874,6 +1959,7 @@
             importacionMasivaManualTemporal = false;
         }
 
+        // Confirmar intermediación de carga
         async function confirmarConfiguracionCurso() {
             var cInput = document.getElementById('setup-curso');
             var pInput = document.getElementById('setup-paralelo');
@@ -1891,7 +1977,7 @@
 
             // Guardar en Firestore la combinación curso/paralelo configurada de forma segura (camino par de 6 segmentos)
             try {
-                if (appId && !isDemoMode) {
+                if (appId && !isDemoMode && db) {
                     db.collection('artifacts').doc(appId).collection('public').doc('data').collection('configuracion_curso').doc('main')
                     .set({
                         curso: cursoFiltrado,
@@ -1917,6 +2003,11 @@
                 };
                 lector.readAsText(archivoTemporal);
             }
+        }
+
+        // NUEVA FUNCIÓN CORREGIDA: Declaración física y de alto nivel de importarArchivoNomina para mapear al onchange
+        function importarArchivoNomina(event) {
+            verificarDatosCursoAntesDeArchivo(event);
         }
 
 
@@ -1986,7 +2077,7 @@
             }
 
             try {
-                if (safeCedula && appId) {
+                if (safeCedula && appId && db) {
                     db.collection('artifacts').doc(appId).collection('public').doc('data').collection('estudiantes_registrados').doc(safeCedula)
                     .set(nuevoEstudiante).then(function() {
                         cursoFiltrado = cursoInput;
@@ -2012,13 +2103,7 @@
             }
         }
 
-        // Lector y cargador masivo de archivos (CSV/Txt)
-        function importarArchivoNomina(event) {
-            // Este método ahora es gestionado por la intermediación del modal de confirmación
-            verificarDatosCursoAntesDeArchivo(event);
-        }
-
-        // Función experta para dividir líneas de CSV autodetectando coma, punto y coma, o tabulador
+        // FUNCIONES DE UTILIDAD DE ANÁLISIS DE CSV Y DECODIFICACIÓN
         function dividirLineaCSV(linea) {
             let delimitador = ',';
             if (linea.includes('\t')) {
@@ -2046,7 +2131,6 @@
             return columnas;
         }
 
-        // Función para limpiar mojibake del texto en español (Excel ANSI a UTF-8)
         function limpiarMojibake(texto) {
             return texto
                 .replace(/Ã‘/g, 'Ñ')
@@ -2073,7 +2157,7 @@
                 await initAuth();
                 if (auth.currentUser) user = auth.currentUser;
                 else {
-                    mostrarAlertaRapida("Error de sincronización con la base de datos. Por favor reintenta.");
+                    mostrarAlertaRapida("Error de Sincronización: No se pudo verificar la sesión con Google Firebase.");
                     return;
                 }
             }
@@ -2095,7 +2179,7 @@
             }
 
             if (inicioIndice === -1) {
-                mostrarAlertaRapida("Error: No se encontró la fila inicial con el Ord. 1 en el archivo.");
+                mostrarAlertaRapida("Error de Análisis: No se localizó la fila que inicia con el Ord: 1 en el archivo.");
                 var fileEl = document.getElementById('file-import-nomina');
                 if (fileEl) fileEl.value = "";
                 archivoTemporal = null;
@@ -2177,7 +2261,7 @@
                             }
                         } else {
                             try {
-                                if (safeCedula && appId) {
+                                if (safeCedula && appId && db) {
                                     db.collection('artifacts').doc(appId).collection('public').doc('data').collection('estudiantes_registrados').doc(safeCedula)
                                     .set({
                                         nombre: nombre,
@@ -2255,7 +2339,7 @@
                     }
                     try {
                         var safeCedula = cedula.trim().replace(/[^a-zA-Z0-9_-]/g, "");
-                        if (safeCedula && appId) {
+                        if (safeCedula && appId && db) {
                             db.collection('artifacts').doc(appId).collection('public').doc('data').collection('estudiantes_registrados').doc(safeCedula)
                             .delete().then(function() {
                                 mostrarAlertaRapida("Estudiante retirado de la nómina.");
@@ -2289,7 +2373,7 @@
                         var alumnosAEliminar = obtenerEstudiantesFiltrados();
                         for (var est of alumnosAEliminar) {
                             var safeCedula = est.cedula.trim().replace(/[^a-zA-Z0-9_-]/g, "");
-                            if (safeCedula && appId) {
+                            if (safeCedula && appId && db) {
                                 db.collection('artifacts').doc(appId).collection('public').doc('data').collection('estudiantes_registrados').doc(safeCedula).delete();
                             }
                         }
@@ -2317,7 +2401,7 @@
                         var notesToDelete = obtenerCalificacionesFiltradas();
                         for (var cal of notesToDelete) {
                             var safeCedula = cal.cedula.trim().replace(/[^a-zA-Z0-9_-]/g, "");
-                            if (safeCedula && appId) {
+                            if (safeCedula && appId && db) {
                                 db.collection('artifacts').doc(appId).collection('public').doc('data').collection('calificaciones_registradas').doc(safeCedula).delete();
                             }
                         }
@@ -2359,7 +2443,7 @@
                 } else {
                     try {
                         var safeCedula = est.cedula.trim().replace(/[^a-zA-Z0-9_-]/g, "");
-                        if (safeCedula && appId) {
+                        if (safeCedula && appId && db) {
                             db.collection('artifacts').doc(appId).collection('public').doc('data').collection('calificaciones_registradas').doc(safeCedula).set(simDoc);
                         }
                     } catch (e) {
@@ -2445,6 +2529,7 @@
             if (modal) modal.classList.remove('hidden');
         }
 
+        // Cerrar modal de clave
         function cerrarConfiguracionClaveModal() {
             var modal = document.getElementById('change-pass-modal');
             if (modal) modal.classList.add('hidden');
@@ -2513,7 +2598,6 @@
             }
         }
 
-        // Cerrar modal de configuración
         function cerrarConfiguracionBaseDatosModal() {
             var modal = document.getElementById('db-config-modal');
             if (modal) modal.classList.add('hidden');
@@ -2551,6 +2635,173 @@
             }, 1500);
         }
 
+        // INTEGRACIÓN DE LLAMADAS DE INTELIGENCIA ARTIFICIAL (GEMINI API)
+        async function llamarGemini(prompt, systemInstruction = "") {
+            var apiKey = ""; 
+            var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=" + apiKey;
+            
+            var payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+            if (systemInstruction) {
+                payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+            }
+
+            var delay = 1000;
+            for (var i = 0; i < 5; i++) {
+                try {
+                    var response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (response.ok) {
+                        var result = await response.json();
+                        return result.candidates?.[0]?.content?.parts?.[0]?.text || "No se pudo obtener respuesta del modelo.";
+                    }
+                    
+                    if (response.status === 429 || response.status >= 500) {
+                        await new Promise(function(resolve) { setTimeout(resolve, delay); });
+                        delay *= 2;
+                        continue;
+                    }
+                    
+                    var errorDetails = await response.json();
+                    throw new Error(errorDetails.error?.message || "Error al llamar a Gemini");
+                } catch (error) {
+                    if (i === 4) throw error;
+                    await new Promise(function(resolve) { setTimeout(resolve, delay); });
+                    delay *= 2;
+                }
+            }
+            throw new Error("Surgió un error tras agotar todos los intentos de conexión.");
+        }
+
+        async function abrirReportePedagogicoIA() {
+            var calificacionesFiltradas = obtenerCalificacionesFiltradas();
+            if (calificacionesFiltradas.length === 0) {
+                mostrarAlertaRapida("Debe haber calificaciones registradas en este paralelo antes de generar el informe.");
+                return;
+            }
+
+            var modal = document.getElementById('ai-report-modal');
+            var loader = document.getElementById('ai-report-loader');
+            var content = document.getElementById('ai-report-content');
+
+            if (modal) modal.classList.remove('hidden');
+            if (loader) loader.classList.remove('hidden');
+            if (content) content.classList.add('hidden');
+
+            var resumenNotas = calificacionesFiltradas.map(function(c) {
+                return {
+                    nota: c.nota,
+                    fecha: c.fecha
+                };
+            });
+
+            var totalAprobados = calificacionesFiltradas.filter(function(c) { return c.nota >= 7.0; }).length;
+            var tasaAprobacion = ((totalAprobados / calificacionesFiltradas.length) * 100).toFixed(1);
+
+            var prompt = `Analiza los siguientes resultados de evaluaciones diagnósticas del curso ${cursoFiltrado} "${paraleloFiltrado}" de la asignatura Informática Aplicada.
+            
+            DATOS GENERALES DEL CURSO:
+            - Estudiantes Matriculados: ${obtenerEstudiantesFiltrados().length}
+            - Estudiantes Evaluados: ${calificacionesFiltradas.length}
+            - Aprobados (Nota >= 7): ${totalAprobados} (${tasaAprobacion}%)
+            
+            HISTORIAL DE CALIFICACIONES INDIVIDUALES (ANÓNIMO):
+            ${JSON.stringify(resumenNotas)}
+
+            TEMÁTICA DEL CUESTIONARIO (10 Preguntas):
+            1. Seguridad digital (contraseñas complejas)
+            2. Autenticación de identidad
+            3. Uso ético de la Inteligencia Artificial (educación y pensamiento crítico)
+            4. Prácticas seguras para passwords
+            5. Estructura básica web (Inicio-Contenido-Navegación)
+            6. Organización lógica de contenidos digitales
+            7. Coherencia visual y jerarquía web
+            8. Navegabilidad y páginas web funcionales
+            9. Propósito del diseño digital básico
+            10. Pensamiento crítico y validación de información de IA
+
+            Por favor, genera un análisis pedagógico estructurado y detallado para mí (el docente). Incluye:
+            1. Un diagnóstico general del curso (Nivel de competencia general).
+            2. Fortalezas colectivas destacadas.
+            3. Debilidades conceptuales críticas que requieren nivelación prioritaria.
+            4. Un plan estratégico de nivelación con actividades específicas para abordar las falencias del curso.
+            Proporciona tu respuesta con un tono amigable, formal y altamente enfocado en la mejora académica del Sagrado Corazón.`;
+
+            var systemInstruction = "Eres un Asesor Pedagógico y Especialista de Currículo en Ciencias de la Computación e Informática. Escribe con excelente ortografía en español y formato estructurado.";
+
+            try {
+                var respuesta = await llamarGemini(prompt, systemInstruction);
+                if (loader) loader.classList.add('hidden');
+                if (content) {
+                    content.innerText = respuesta;
+                    content.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error(error);
+                if (loader) loader.classList.add('hidden');
+                if (content) {
+                    content.innerText = "Error al conectar con Gemini: " + error.message;
+                    content.classList.remove('hidden');
+                }
+            }
+        }
+
+        function cerrarReportePedagogicoIA() {
+            var modal = document.getElementById('ai-report-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function abrirTutorIA(pregunta, respuestaEstudiante, respuestaCorrecta) {
+            var modal = document.getElementById('ai-tutor-modal');
+            var loader = document.getElementById('ai-tutor-loader');
+            var dialog = document.getElementById('ai-tutor-dialog');
+
+            if (modal) modal.classList.remove('hidden');
+            if (loader) loader.classList.remove('hidden');
+            if (dialog) dialog.classList.add('hidden');
+
+            var prompt = `Ayúdame a entender el concepto de Informática Aplicada en el que fallé en mi evaluación diagnóstica.
+            
+            LA PREGUNTA FUE:
+            "${pregunta}"
+
+            MI RESPUESTA FUE:
+            "${respuestaEstudiante}"
+
+            LA RESPUESTA CORRECTA ES:
+            "${respuestaCorrecta}"
+
+            Por favor, explícame con paciencia el concepto detrás de esta pregunta. Dime por qué mi respuesta no es la ideal y por qué la correcta sí lo es. Mantén la explicación corta (máximo 2 párrafos), utiliza un tono muy amigable y alentador. Al final de tu explicación, hazme una pequeña pregunta interactiva rápida para comprobar si comprendí tu explicación.`;
+
+            var systemInstruction = `Eres el Tutor Virtual de Informática Aplicada de la Unidad Educativa Fiscomisional Sagrado Corazón de Esmeraldas. Tu objetivo es guiar y motivar al estudiante a desarrollar su pensamiento crítico digital de forma empática y reflexiva. Dirígete al estudiante en español de Ecuador de forma respetuosa.`;
+
+            try {
+                var respuesta = await llamarGemini(prompt, systemInstruction);
+                if (loader) loader.classList.add('hidden');
+                if (dialog) {
+                    dialog.innerText = respuesta;
+                    dialog.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error(error);
+                if (loader) loader.classList.add('hidden');
+                if (dialog) {
+                    dialog.innerText = "Lo siento, ha ocurrido un error al conectar con tu tutor virtual: " + error.message;
+                    dialog.classList.remove('hidden');
+                }
+            }
+        }
+
+        function cerrarTutorIA() {
+            var modal = document.getElementById('ai-tutor-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
         // Operación de render de opciones corregido a español
         function corregirOpcionesPreguntas() {
             preguntas.forEach(function(p) {
@@ -2561,9 +2812,54 @@
         }
         corregirOpcionesPreguntas();
 
-        // Inicialización de Autenticación automática de Firebase
-        iniciarAutenticacion();
-
         // Mapeo seguro de funciones asíncronas e interactivas al contexto global (Type Module compatible)
         window.verificarEstudiante = verificarEstudiante;
-        window.comenzarEvalu
+        window.comenzarEvaluacion = comenzarEvaluacion;
+        window.seleccionarOpcion = seleccionarOpcion;
+        window.preguntaSiguiente = preguntaSiguiente;
+        window.volverAlInicio = volverAlInicio;
+        window.mostrarAccesoDocente = mostrarAccesoDocente;
+        window.validarAccesoDocente = validarAccesoDocente;
+        window.switchAdminTab = switchAdminTab;
+        window.filtrarTablaCalificaciones = filtrarTablaCalificaciones;
+        window.exportarResultadosCSV = exportarResultadosCSV;
+        window.generarDataSimulada = generarDataSimulada;
+        window.limpiarRegistros = limpiarRegistros;
+        window.importarListaMasiva = importarListaMasiva;
+        window.agregarEstudianteIndividual = agregarEstudianteIndividual;
+        window.eliminarEstudiante = eliminarEstudiante;
+        window.limpiarNominaCompleta = limpiarNominaCompleta;
+        window.cerrarSesionDocente = cerrarSesionDocente;
+        window.verFichaDetalles = verFichaDetalles;
+        window.cerrarFichaDetalles = cerrarFichaDetalles;
+        window.importarArchivoNomina = importarArchivoNomina;
+        window.descargarPlantillaCSV = descargarPlantillaCSV;
+
+        // Manejadores de intermediación de curso y paralelo
+        window.verificarDatosCursoAntesDeArchivo = verificarDatosCursoAntesDeArchivo;
+        window.verificarDatosCursoAntesDePegar = verificarDatosCursoAntesDePegar;
+        window.cancelarConfiguracionCurso = cancelarConfiguracionCurso;
+        window.confirmarConfiguracionCurso = confirmarConfiguracionCurso;
+        window.cambiarFiltroCursoParalelo = cambiarFiltroCursoParalelo;
+
+        // Manejadores globales para las funciones de la clave de administrador
+        window.abrirConfiguracionClaveModal = abrirConfiguracionClaveModal;
+        window.cerrarConfiguracionClaveModal = cerrarConfiguracionClaveModal;
+        window.guardarNuevaClaveDocente = guardarNuevaClaveDocente;
+
+        // Manejadores globales para el Asistente de Configuración de Base de Datos Nube
+        window.abrirConfiguracionBaseDatosModal = abrirConfiguracionBaseDatosModal;
+        window.cerrarConfiguracionBaseDatosModal = cerrarConfiguracionBaseDatosModal;
+        window.guardarConfiguracionBaseDatos = guardarConfiguracionBaseDatos;
+
+        // Manejadores globales para las funciones de Gemini API
+        window.abrirReportePedagogicoIA = abrirReportePedagogicoIA;
+        window.cerrarReportePedagogicoIA = cerrarReportePedagogicoIA;
+        window.abrirTutorIA = abrirTutorIA;
+        window.cerrarTutorIA = cerrarTutorIA;
+
+        // Inicialización de Autenticación automática de Firebase
+        iniciarAutenticacion();
+    </script>
+</body>
+</html>
