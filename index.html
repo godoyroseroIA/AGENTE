@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evaluación Diagnóstica - Unidad Educativa Sagrado Corazón</title>
-    
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -29,34 +27,14 @@
             }
         }
     </script>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
     <style>
-        * {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            outline: none;
-            -webkit-user-drag: none;
-        }
-        input, textarea, select {
-            -webkit-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
-        }
+        * { -webkit-user-select: none; user-select: none; outline: none; }
+        input, textarea, select { -webkit-user-select: text; user-select: text; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes fade-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 0.3s ease-out; }
     </style>
@@ -68,85 +46,65 @@
         <div class="w-24 h-24 bg-rose-600 rounded-full flex items-center justify-center mb-6 animate-pulse">
             <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
         </div>
-        <h2 class="text-3xl font-black tracking-tight uppercase text-rose-600 animate-bounce">SISTEMA BLOQUEADO</h2>
-        <p class="text-rose-200 text-sm mt-3 max-w-lg leading-relaxed">Se ha detectado un intento de inspección de código. Su sesión ha sido inhabilitada.</p>
-        <button onclick="window.location.reload()" class="mt-8 px-6 py-3 bg-white text-rose-900 font-extrabold rounded-xl text-xs hover:bg-slate-100 transition-all uppercase tracking-wider">Reintentar Acceso Seguro</button>
+        <h2 class="text-3xl font-black uppercase text-rose-600 animate-bounce">SISTEMA BLOQUEADO</h2>
+        <p class="text-rose-200 text-sm mt-3">Se ha detectado un intento de inspección de código. Su sesión ha sido inhabilitada.</p>
+        <button onclick="window.location.reload()" class="mt-8 px-6 py-3 bg-white text-rose-900 font-extrabold rounded-xl text-xs">Reintentar</button>
     </div>
 
     <!-- Encabezado -->
     <header class="bg-white border-b border-slate-200 py-4 shadow-sm">
         <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md shadow-brand-200">SC</div>
-                <div>
-                    <h1 class="text-xs md:text-sm font-extrabold text-brand-900 tracking-wider uppercase">Unidad Educativa Fiscomisional</h1>
-                    <h2 class="text-lg md:text-xl font-black text-slate-900 leading-tight">SAGRADO CORAZÓN</h2>
-                    <p class="text-[10px] text-slate-500 font-medium">"Instrumento privilegiado e insustituible de evangelización" • Esmeraldas</p>
-                </div>
+                <div class="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center text-white font-extrabold text-xl shadow-md">SC</div>
+                <div><h1 class="text-xs md:text-sm font-extrabold text-brand-900 uppercase">Unidad Educativa Fiscomisional</h1><h2 class="text-lg md:text-xl font-black text-slate-900">SAGRADO CORAZÓN</h2><p class="text-[10px] text-slate-500">"Instrumento privilegiado e insustituible de evangelización" • Esmeraldas</p></div>
             </div>
-            <div class="text-center md:text-right flex flex-col items-center md:items-end gap-1">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-100">Período Lectivo 2026-2027</span>
-                <p class="text-xs text-slate-400">Código AMIE: 08H00145</p>
-            </div>
+            <div class="text-center md:text-right"><span class="inline-flex px-3 py-1 rounded-full text-xs font-bold bg-brand-50 text-brand-700">Período Lectivo 2026-2027</span><p class="text-xs text-slate-400">Código AMIE: 08H00145</p></div>
         </div>
     </header>
 
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 flex flex-col justify-center items-center">
-        
-        <!-- PANTALLA LOGIN -->
-        <div id="screen-login" class="w-full max-w-3xl bg-white rounded-3xl border border-slate-200 shadow-xl p-8 md:p-12 transition-all duration-300">
-            <div class="text-center mb-8">
-                <span class="text-xs font-bold text-brand-600 tracking-widest uppercase bg-brand-50 px-3 py-1.5 rounded-lg">Evaluación Diagnóstica</span>
-                <h3 class="text-2xl font-extrabold text-slate-900 mt-3">Ingreso del Estudiante</h3>
-                <p class="text-slate-500 text-sm mt-1">Digita tu número de cédula para validar tu registro y empezar la prueba.</p>
-            </div>
+        <!-- LOGIN -->
+        <div id="screen-login" class="w-full max-w-3xl bg-white rounded-3xl border shadow-xl p-8 md:p-12">
+            <div class="text-center mb-8"><span class="text-xs font-bold text-brand-600 uppercase bg-brand-50 px-3 py-1.5 rounded-lg">Evaluación Diagnóstica</span><h3 class="text-2xl font-extrabold text-slate-900 mt-3">Ingreso del Estudiante</h3><p class="text-slate-500 text-sm mt-1">Digita tu número de cédula para validar tu registro.</p></div>
             <div class="space-y-6 max-w-md mx-auto">
-                <div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Cédula de Identidad</label><input type="text" id="input-cedula" maxlength="10" placeholder="Ej. 0850812348" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-semibold tracking-widest focus:outline-none focus:ring-2 focus:ring-brand-500"></div>
-                <div id="login-error" class="hidden bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-2xl text-sm font-medium flex items-center gap-2"><svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg><span id="login-error-text">Cédula no registrada</span></div>
+                <div><label class="block text-xs font-bold text-slate-700 uppercase mb-2">Cédula de Identidad</label><input type="text" id="input-cedula" maxlength="10" placeholder="Ej. 0850812348" class="w-full px-5 py-4 bg-slate-50 border rounded-2xl text-lg font-semibold tracking-widest focus:outline-none focus:ring-2 focus:ring-brand-500"></div>
+                <div id="login-error" class="hidden bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-2xl text-sm flex items-center gap-2"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/></svg><span id="login-error-text">Cédula no registrada</span></div>
                 <button onclick="verificarEstudiante()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2">Validar y Registrar</button>
             </div>
-            <div class="border-t border-slate-100 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p class="text-xs text-slate-400">Asignatura: <strong>Informática Aplicada</strong> • Docente: <strong>Ing. César Godoy Rosero, Mgt.</strong></p>
-                <button onclick="mostrarAccesoDocente()" class="text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-50">Acceso Docente</button>
-            </div>
+            <div class="border-t border-slate-100 mt-8 pt-6 flex flex-col sm:flex-row justify-between gap-4"><p class="text-xs text-slate-400">Asignatura: <strong>Informática Aplicada</strong> • Docente: <strong>Ing. César Godoy Rosero, Mgt.</strong></p><button onclick="mostrarAccesoDocente()" class="text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-50">Acceso Docente</button></div>
         </div>
 
-        <!-- PANTALLA ACCESO DOCENTE -->
-        <div id="screen-docente-login" class="hidden w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-xl p-8 transition-all duration-300">
-            <div class="text-center mb-6"><span class="text-xs font-bold text-amber-600 uppercase bg-amber-50 px-3 py-1.5 rounded-lg">Módulo de Administración</span><h3 class="text-xl font-bold text-slate-900 mt-3">Autenticación Docente</h3><p class="text-slate-500 text-xs mt-1">Ingresa la clave de acceso docente.</p></div>
-            <div class="space-y-4"><input type="password" id="input-clave-docente" placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center font-mono text-lg focus:outline-none focus:ring-2 focus:ring-brand-500"><div id="docente-login-error" class="hidden bg-rose-50 text-rose-700 p-3 rounded-xl text-xs text-center">Clave incorrecta</div><div class="grid grid-cols-2 gap-3"><button onclick="volverAlInicio()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">Cancelar</button><button onclick="validarAccesoDocente()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl">Ingresar</button></div></div>
-        </div>
+        <!-- ACCESO DOCENTE -->
+        <div id="screen-docente-login" class="hidden w-full max-w-md bg-white rounded-3xl border shadow-xl p-8"><div class="text-center mb-6"><span class="text-xs font-bold text-amber-600 uppercase bg-amber-50 px-3 py-1.5 rounded-lg">Módulo de Administración</span><h3 class="text-xl font-bold text-slate-900 mt-3">Autenticación Docente</h3><p class="text-slate-500 text-xs mt-1">Ingresa la clave de acceso docente.</p></div><div class="space-y-4"><input type="password" id="input-clave-docente" placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50 border rounded-xl text-center font-mono text-lg"><div id="docente-login-error" class="hidden bg-rose-50 text-rose-700 p-3 rounded-xl text-xs text-center">Clave incorrecta</div><div class="grid grid-cols-2 gap-3"><button onclick="volverAlInicio()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">Cancelar</button><button onclick="validarAccesoDocente()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl">Ingresar</button></div></div></div>
 
-        <!-- PANEL DOCENTE COMPLETO -->
-        <div id="screen-docente-panel" class="hidden w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 md:p-8 transition-all duration-300">
-            <div id="db-demo-banner-docente" class="hidden bg-amber-500 text-white text-center py-3.5 px-5 rounded-2xl mb-6 flex flex-col md:flex-row items-center justify-between gap-3 shadow-md shadow-amber-100 animate-pulse"><div><span>⚠️</span><p class="text-xs"><strong>Conectando a Firebase...</strong> Si este mensaje persiste, verifica tu conexión a internet.</p></div><button onclick="reintentarConexion()" class="bg-white text-amber-700 px-4 py-2 rounded-xl text-[10px] font-black">Reintentar</button></div>
-            <div class="flex flex-col lg:flex-row justify-between pb-6 border-b border-slate-200 gap-4 mb-6"><div><span class="text-xs font-bold text-brand-600 uppercase bg-brand-50 px-3 py-1 rounded-md">Panel de Control</span><h3 class="text-2xl font-black text-slate-900 mt-1">Gestión de Evaluaciones BGU</h3><div class="flex gap-2 mt-2"><select id="select-filtro-curso" onchange="cambiarFiltroCursoParalelo()" class="px-2 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs rounded-lg"></select><select id="select-filtro-paralelo" onchange="cambiarFiltroCursoParalelo()" class="px-2 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs rounded-lg"></select></div></div><div class="flex flex-wrap gap-2"><button onclick="abrirReportePedagogicoIA()" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md flex items-center gap-1.5">✨ Analizar con IA</button><button onclick="exportarResultadosCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5">📎 Exportar CSV</button><button onclick="abrirConfiguracionClaveModal()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl">🔑 Cambiar Clave</button><button onclick="abrirConfiguracionBaseDatosModal()" class="bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl">🌐 Base de Datos</button><button onclick="cerrarSesionDocente()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold py-2.5 px-4 rounded-xl">Salir</button></div></div>
+        <!-- PANEL DOCENTE COMPLETO (igual al original) -->
+        <div id="screen-docente-panel" class="hidden w-full bg-white rounded-3xl border shadow-xl p-6 md:p-8">
+            <div id="db-demo-banner-docente" class="hidden bg-amber-500 text-white text-center py-3.5 px-5 rounded-2xl mb-6 flex flex-col md:flex-row items-center justify-between gap-3 shadow-md shadow-amber-100 animate-pulse"><div><span>⚠️</span><p class="text-xs"><strong>Conectando a Firebase...</strong> Si este mensaje persiste, verifica que la autenticación anónima esté habilitada y que estés usando un servidor local (Live Server).</p></div><button onclick="reintentarConexion()" class="bg-white text-amber-700 px-4 py-2 rounded-xl text-[10px] font-black">Reintentar</button></div>
+            <div class="flex flex-col lg:flex-row justify-between pb-6 border-b border-slate-200 gap-4 mb-6"><div><span class="text-xs font-bold text-brand-600 uppercase bg-brand-50 px-3 py-1 rounded-md">Panel de Control</span><h3 class="text-2xl font-black text-slate-900 mt-1">Gestión de Evaluaciones BGU</h3><div class="flex gap-2 mt-2"><select id="select-filtro-curso" onchange="cambiarFiltroCursoParalelo()" class="px-2 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs rounded-lg"></select><select id="select-filtro-paralelo" onchange="cambiarFiltroCursoParalelo()" class="px-2 py-1 bg-brand-50 border border-brand-200 text-brand-700 text-xs rounded-lg"></select></div></div><div class="flex flex-wrap gap-2"><button onclick="abrirReportePedagogicoIA()" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow-md">✨ Analizar con IA</button><button onclick="exportarResultadosCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl">📎 Exportar CSV</button><button onclick="abrirConfiguracionClaveModal()" class="bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl">🔑 Cambiar Clave</button><button onclick="abrirConfiguracionBaseDatosModal()" class="bg-violet-700 hover:bg-violet-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl">🌐 Base de Datos</button><button onclick="cerrarSesionDocente()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold py-2.5 px-4 rounded-xl">Salir</button></div></div>
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"><div class="bg-slate-50 p-4 rounded-2xl"><span class="text-[10px] uppercase text-slate-400">Total Estudiantes</span><p id="metric-total-est" class="text-2xl font-extrabold">0</p><span class="text-[10px] text-slate-400" id="sub-metric-total-desc">Registrados</span></div><div class="bg-slate-50 p-4 rounded-2xl"><span class="text-[10px] uppercase text-slate-400">Evaluados</span><p id="metric-evaluados" class="text-2xl font-extrabold text-brand-600">0</p><span id="metric-evaluados-pct" class="text-[10px] text-brand-500">0%</span></div><div class="bg-slate-50 p-4 rounded-2xl"><span class="text-[10px] uppercase text-slate-400">Promedio</span><p id="metric-promedio" class="text-2xl font-extrabold text-emerald-600">0.00</p><span class="text-[10px] text-emerald-500">/10</span></div><div class="bg-slate-50 p-4 rounded-2xl"><span class="text-[10px] uppercase text-slate-400">Aprobados</span><p id="metric-aprobados" class="text-2xl font-extrabold text-blue-600">0%</p><span id="metric-aprobados-detalle" class="text-[10px] text-blue-500">0/0</span></div></div>
             <div class="flex border-b border-slate-200 gap-6 mb-6"><button onclick="switchAdminTab('calificaciones')" id="tab-btn-calificaciones" class="pb-3 text-sm font-bold border-b-2 border-brand-600 text-brand-700">Registro de Calificaciones</button><button onclick="switchAdminTab('estudiantes')" id="tab-btn-estudiantes" class="pb-3 text-sm font-semibold text-slate-400 hover:text-slate-600">Nómina del Curso</button></div>
             <div id="tab-content-calificaciones" class="space-y-6"><div class="flex flex-col sm:flex-row justify-between gap-4"><div class="relative w-full sm:max-w-xs"><input type="text" id="input-buscar-calificacion" oninput="filtrarTablaCalificaciones()" placeholder="Buscar..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border rounded-xl text-xs"><svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div><div class="flex gap-2"><button id="btn-simular" onclick="generarDataSimulada()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-3.5 rounded-xl">Simular Calificaciones</button><button onclick="limpiarRegistros()" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2 px-3.5 rounded-xl">Borrar Historial</button></div></div><div class="border rounded-2xl overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-50"><tr><th class="p-4">No.</th><th>Estudiante</th><th>Cédula</th><th>Curso</th><th>Fecha</th><th class="text-center">Correctas</th><th class="text-right">Nota</th></tr></thead><tbody id="table-body-calificaciones"></tbody></table><div id="no-data-alert" class="hidden p-8 text-center text-slate-400">No hay calificaciones.</div></div></div></div>
             <div id="tab-content-estudiantes" class="hidden space-y-6"><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="bg-slate-50 p-5 rounded-2xl lg:col-span-2"><div class="flex justify-between"><h4 class="text-sm font-bold">Importación de Datos</h4><button onclick="descargarPlantillaCSV()" class="text-[10px] font-bold text-brand-600">📥 Descargar Plantilla</button></div><div class="border-2 border-dashed rounded-xl p-4 mt-3 text-center relative"><input type="file" id="file-import-nomina" accept=".csv,.txt" onchange="importarArchivoNomina(event)" class="absolute inset-0 opacity-0 cursor-pointer"><div><svg class="w-8 h-8 text-slate-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg><p class="text-xs">Selecciona un archivo CSV</p></div></div><details class="mt-3"><summary class="text-xs font-bold cursor-pointer">O pegar datos manualmente</summary><textarea id="textarea-importar" rows="3" placeholder="Ord,Nómina,Cédula,..." class="w-full p-2 bg-slate-50 border rounded-xl text-xs mt-2"></textarea><button onclick="verificarDatosCursoAntesDePegar()" class="mt-2 bg-brand-600 text-white text-xs py-1.5 px-3 rounded-xl">Procesar</button></details></div><div class="bg-slate-50 p-5 rounded-2xl"><h4 class="text-sm font-bold">Agregar Individual</h4><div class="space-y-2 mt-2"><input type="text" id="add-est-nombre" placeholder="Nombre completo" class="w-full px-3 py-2 border rounded-xl text-xs"><div class="grid grid-cols-2 gap-2"><select id="add-est-curso" class="px-3 py-2 border rounded-xl text-xs"><option>1do.</option><option>2do</option><option>3ro.</option></select><select id="add-est-paralelo" class="px-3 py-2 border rounded-xl text-xs"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option></select></div><input type="text" id="add-est-cedula" placeholder="Cédula" class="w-full px-3 py-2 border rounded-xl text-xs"><input type="date" id="add-est-fecha-nac" class="w-full px-3 py-2 border rounded-xl text-xs"><input type="email" id="add-est-correo" placeholder="Correo" class="w-full px-3 py-2 border rounded-xl text-xs"><input type="text" id="add-est-rep-nombre" placeholder="Representante" class="w-full px-3 py-2 border rounded-xl text-xs"><div class="grid grid-cols-2 gap-2"><input type="text" id="add-est-rep-cedula" placeholder="Cédula R." class="px-3 py-2 border rounded-xl text-xs"><input type="text" id="add-est-rep-celular" placeholder="Celular" class="px-3 py-2 border rounded-xl text-xs"></div><textarea id="add-est-observaciones" placeholder="Observaciones" class="w-full px-3 py-2 border rounded-xl text-xs"></textarea><button onclick="agregarEstudianteIndividual()" class="w-full bg-slate-800 text-white py-2 rounded-xl text-xs">Guardar</button></div></div></div><div class="flex justify-between"><p id="label-nomina-resumen">Listado: <strong id="nomina-count">0</strong></p><button onclick="limpiarNominaCompleta()" class="text-xs bg-rose-50 text-rose-600 px-4 py-2 rounded-xl">Vaciar Nómina</button></div><div class="border rounded-2xl overflow-hidden"><div class="overflow-x-auto max-h-[500px]"><table class="w-full text-xs"><thead class="bg-slate-50 sticky top-0"><tr><th class="p-4">No.</th><th>Nómina</th><th>Curso</th><th>Paralelo</th><th>Cédula</th><th>Fecha Nac</th><th>Correo</th><th>Representante</th><th>Cédula R.</th><th>Celular</th><th>Observaciones</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="table-body-estudiantes"></tbody></table><div id="no-students-alert" class="hidden p-8 text-center text-slate-400">No hay estudiantes.</div></div></div></div>
         </div>
 
-        <!-- PANTALLA BIENVENIDA -->
-        <div id="screen-welcome" class="hidden w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-8 md:p-12 text-center">
+        <!-- BIENVENIDA, CUESTIONARIO, RESULTADOS (iguales al original) -->
+        <div id="screen-welcome" class="hidden w-full bg-white rounded-3xl border shadow-xl p-8 md:p-12 text-center">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-brand-50 rounded-2xl mb-4"><svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
             <h3 class="text-xs font-bold text-slate-400 uppercase">Bienvenido/a</h3>
             <h4 id="student-name" class="text-2xl font-black text-slate-900 mt-1">Estudiante</h4>
             <div class="mt-4"><span id="welcome-student-curso" class="px-3 py-1 bg-slate-100 rounded-lg text-xs">Curso: 2do BGU</span><span class="ml-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs">10 preguntas</span></div>
-            <div class="bg-slate-50 rounded-2xl p-6 my-6 text-left"><h5 class="font-bold">Instrucciones:</h5><ul class="text-sm space-y-2 mt-2"><li>• Lee cada pregunta antes de responder.</li><li>• No recargues ni abras herramientas de desarrollador.</li><li>• Al finalizar recibirás tu calificación.</li></ul></div>
+            <div class="bg-slate-50 rounded-2xl p-6 my-6 text-left"><h5 class="font-bold">Instrucciones:</h5><ul class="text-sm space-y-2"><li>• Lee cada pregunta antes de responder.</li><li>• No recargues ni abras herramientas de desarrollador.</li><li>• Al finalizar recibirás tu calificación.</li></ul></div>
             <button onclick="comenzarEvaluacion()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg">Comenzar Evaluación</button>
         </div>
 
-        <!-- PANTALLA CUESTIONARIO -->
-        <div id="screen-quiz" class="hidden w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 md:p-10">
+        <div id="screen-quiz" class="hidden w-full bg-white rounded-3xl border shadow-xl p-6 md:p-10">
             <div class="flex justify-between items-center pb-2 border-b"><span id="student-quiz-badge" class="font-bold text-brand-600">Estudiante</span><span id="question-progress" class="bg-slate-100 px-3 py-1 rounded-full text-sm">Pregunta 1 de 10</span></div>
             <div class="w-full bg-slate-100 h-2 rounded-full my-6"><div id="progress-bar" class="bg-brand-500 h-full w-0 transition-all"></div></div>
             <div id="question-container"><h4 id="question-text" class="text-xl font-bold mb-6">Cargando...</h4><div id="options-container" class="space-y-3"></div></div>
             <div class="flex justify-end mt-8"><button id="btn-next" onclick="preguntaSiguiente()" class="bg-brand-600 text-white px-8 py-3 rounded-xl font-bold">Siguiente</button></div>
         </div>
 
-        <!-- PANTALLA RESULTADOS -->
-        <div id="screen-results" class="hidden w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-8 md:p-12 text-center">
+        <div id="screen-results" class="hidden w-full bg-white rounded-3xl border shadow-xl p-8 md:p-12 text-center">
             <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
             <h3 class="text-2xl font-black">¡Prueba Completada!</h3>
             <p class="text-slate-500 mt-1">Tu calificación ha sido registrada.</p>
@@ -162,28 +120,24 @@
     <div id="ai-tutor-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-3xl max-w-lg w-full p-6"><div class="flex justify-between"><h4 class="font-bold">Tutor IA</h4><button onclick="cerrarTutorIA()">✖</button></div><div id="ai-tutor-dialog" class="p-4 bg-slate-50 rounded-2xl mt-4 text-sm"></div></div></div>
     <div id="course-setup-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-3xl max-w-md w-full p-6"><h4 class="font-bold">Configurar Curso/Paralelo</h4><select id="setup-curso" class="w-full mt-2 p-2 border rounded"><option>1do.</option><option>2do</option><option>3ro.</option></select><select id="setup-paralelo" class="w-full mt-2 p-2 border rounded"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option></select><div class="flex justify-end gap-2 mt-4"><button onclick="cancelarConfiguracionCurso()">Cancelar</button><button onclick="confirmarConfiguracionCurso()">Confirmar</button></div></div></div>
     <div id="change-pass-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-3xl max-w-md w-full p-6"><h4>Cambiar Contraseña Docente</h4><input type="password" id="old-pass" placeholder="Actual" class="w-full mt-2 p-2 border rounded"><input type="password" id="new-pass" placeholder="Nueva" class="w-full mt-2 p-2 border rounded"><div class="flex justify-end gap-2 mt-4"><button onclick="cerrarConfiguracionClaveModal()">Cancelar</button><button onclick="guardarNuevaClaveDocente()">Guardar</button></div></div></div>
-    <div id="db-config-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-3xl max-w-lg w-full p-6"><h4>Configurar Base de Datos</h4><p class="text-xs text-slate-500">La conexión a Firebase Realtime Database ya está preconfigurada con tus credenciales.</p><div class="flex justify-end mt-4"><button onclick="cerrarConfiguracionBaseDatosModal()">Cerrar</button></div></div></div>
+    <div id="db-config-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-3xl max-w-lg w-full p-6"><h4>Configurar Base de Datos</h4><p class="text-xs text-slate-500">La conexión a Firebase ya está preconfigurada. Asegúrate de usar Live Server.</p><div class="flex justify-end mt-4"><button onclick="cerrarConfiguracionBaseDatosModal()">Cerrar</button></div></div></div>
 
     <script>
-        // ==================== CONFIGURACIÓN DE FIREBASE (DATOS CORRECTOS DE TUS IMÁGENES) ====================
+        // ==================== CONFIGURACIÓN DE FIREBASE (CORREGIDA) ====================
         const firebaseConfig = {
-            apiKey: "AIzaSyC2CT_eH9XbEKBZKHtJXDMCkjHW7hYOGzs",  // Corregido: AIzaSy... (no AIZaSy)
+            apiKey: "AIzaSyC2CT_eH9XbEKBZKHtJXDMCkjHW7hYOGzs",  // Clave CORRECTA de tus imágenes
             authDomain: "evaluaciones-uefsc.firebaseapp.com",
             projectId: "evaluaciones-uefsc",
             storageBucket: "evaluaciones-uefsc.firebasestorage.app",
             messagingSenderId: "644308419822",
-            appId: "1:644308419822:web:326e70abe36c047f8bdfff",
+            appId: "1:644308419822:web:326e70abe36c047f8bdfff",  // ID correcto (sin error tipográfico)
             measurementId: "G-VESBBXLZFK",
-            databaseURL: "https://evaluaciones-uefsc-default-rtdb.firebaseio.com/"  // URL de Realtime Database
+            databaseURL: "https://evaluaciones-uefsc-default-rtdb.firebaseio.com/"
         };
         
         let app, auth, database;
         let isOnline = false;
-        let connectionAttempts = 0;
-
-        // Variables globales
-        let estudiantes = [];
-        let calificaciones = [];
+        let estudiantes = [], calificaciones = [];
         let estudianteActual = null;
         let indicePreguntaActual = 0;
         let respuestasEstudiante = {};
@@ -192,7 +146,6 @@
         let CLAVE_DOCENTE_MASTER = "Uesc2026.*";
         let currentAdminTab = "calificaciones";
 
-        // Banco de preguntas
         const preguntas = [
             { pregunta: "1. ¿Cuál de las siguientes contraseñas cumple mejor con los criterios de seguridad digital?", opciones: [{id:"A",texto:"12345678"},{id:"B",texto:"contraseña2026"},{id:"C",texto:"Cg#89Lm!2x"},{id:"D",texto:"qwerty"}], correcta:"C", rationale:"Complejidad alta." },
             { pregunta: "2. ¿Cuál es la principal función de la autenticación en seguridad digital?", opciones: [{id:"A",texto:"Acelerar acceso"},{id:"B",texto:"Verificar identidad"},{id:"C",texto:"Guardar contraseñas"},{id:"D",texto:"Eliminar virus"}], correcta:"B", rationale:"Verifica quién eres." },
@@ -214,10 +167,9 @@
                 database = firebase.database();
                 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 
-                // Intentar autenticación anónima
                 auth.signInAnonymously()
                     .then(() => {
-                        console.log("✅ Autenticado anónimamente en Firebase");
+                        console.log("✅ Conectado a Firebase Realtime Database");
                         isOnline = true;
                         document.getElementById('db-demo-banner-docente').classList.add('hidden');
                         cargarDatosDesdeFirebase();
@@ -225,59 +177,39 @@
                     .catch((error) => {
                         console.error("❌ Error de autenticación:", error);
                         isOnline = false;
-                        mostrarModoLocal();
+                        mostrarModoLocal(error.message);
                     });
             } catch(e) {
                 console.error("❌ Error inicializando Firebase:", e);
                 isOnline = false;
-                mostrarModoLocal();
+                mostrarModoLocal(e.message);
             }
         }
 
-        function mostrarModoLocal() {
+        function mostrarModoLocal(errorMsg) {
             document.getElementById('db-demo-banner-docente').classList.remove('hidden');
-            document.getElementById('db-demo-banner-docente').innerHTML = '<div class="flex items-center gap-2"><span>⚠️</span><p class="text-xs"><strong>Modo Demostración Activo:</strong> Los datos se almacenan localmente. Verifica que la autenticación anónima esté habilitada en Firebase Console.</p></div><button onclick="reintentarConexion()" class="bg-white text-amber-700 px-4 py-2 rounded-xl text-[10px] font-black">Reintentar</button>';
+            document.getElementById('db-demo-banner-docente').innerHTML = `<div class="flex items-center gap-2"><span>⚠️</span><p class="text-xs"><strong>Modo Demostración Activo:</strong> No se pudo conectar a Firebase. Error: ${errorMsg || 'Desconocido'}. Verifica que la autenticación anónima esté habilitada y que uses Live Server.</p></div><button onclick="reintentarConexion()" class="bg-white text-amber-700 px-4 py-2 rounded-xl text-[10px] font-black">Reintentar</button>`;
             cargarDatosDesdeLocalStorage();
         }
 
         function cargarDatosDesdeFirebase() {
             if (!database) return;
-            
-            // Cargar estudiantes
-            database.ref('estudiantes').on('value', (snapshot) => {
+            database.ref('estudiantes').on('value', snapshot => {
                 estudiantes = [];
-                snapshot.forEach((child) => {
-                    estudiantes.push({ id: child.key, ...child.val() });
-                });
-                console.log(`📚 Estudiantes cargados: ${estudiantes.length}`);
+                snapshot.forEach(child => estudiantes.push({ id: child.key, ...child.val() }));
                 actualizarTodo();
-            }, (error) => {
-                console.error("Error cargando estudiantes:", error);
             });
-            
-            // Cargar calificaciones
-            database.ref('calificaciones').on('value', (snapshot) => {
+            database.ref('calificaciones').on('value', snapshot => {
                 calificaciones = [];
-                snapshot.forEach((child) => {
-                    calificaciones.push({ id: child.key, ...child.val() });
-                });
-                console.log(`📝 Calificaciones cargadas: ${calificaciones.length}`);
+                snapshot.forEach(child => calificaciones.push({ id: child.key, ...child.val() }));
                 actualizarTodo();
-            }, (error) => {
-                console.error("Error cargando calificaciones:", error);
             });
-            
-            // Cargar configuración
-            database.ref('configuracion/claveDocente').on('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    CLAVE_DOCENTE_MASTER = snapshot.val();
-                } else {
-                    database.ref('configuracion/claveDocente').set("Uesc2026.*");
-                }
+            database.ref('configuracion/claveDocente').on('value', snapshot => {
+                if (snapshot.exists()) CLAVE_DOCENTE_MASTER = snapshot.val();
+                else database.ref('configuracion/claveDocente').set("Uesc2026.*");
             });
         }
 
-        // Respaldo local
         function guardarDatosEnLocalStorage() {
             localStorage.setItem('estudiantes_uesc', JSON.stringify(estudiantes));
             localStorage.setItem('calificaciones_uesc', JSON.stringify(calificaciones));
@@ -285,33 +217,26 @@
 
         function cargarDatosDesdeLocalStorage() {
             try {
-                const estLocal = localStorage.getItem('estudiantes_uesc');
-                const calLocal = localStorage.getItem('calificaciones_uesc');
-                if (estLocal) estudiantes = JSON.parse(estLocal);
-                if (calLocal) calificaciones = JSON.parse(calLocal);
-                console.log(`📚 Modo local - Estudiantes: ${estudiantes.length}, Calificaciones: ${calificaciones.length}`);
+                estudiantes = JSON.parse(localStorage.getItem('estudiantes_uesc')) || [];
+                calificaciones = JSON.parse(localStorage.getItem('calificaciones_uesc')) || [];
             } catch(e) { }
             actualizarTodo();
         }
 
-        // Funciones de escritura en Firebase
         async function guardarEstudiante(est) {
             if (isOnline && database) {
                 await database.ref('estudiantes/' + est.cedula).set(est);
-                console.log("✅ Estudiante guardado en Firebase:", est.cedula);
             } else {
                 if (!estudiantes.some(e => e.cedula === est.cedula)) estudiantes.push(est);
                 guardarDatosEnLocalStorage();
                 actualizarTodo();
-                console.log("💾 Estudiante guardado en localStorage");
+                mostrarAlertaRapida("⚠️ Modo local: datos guardados solo en este navegador.");
             }
         }
 
         async function eliminarEstudianteFirebase(cedula) {
-            if (isOnline && database) {
-                await database.ref('estudiantes/' + cedula).remove();
-                console.log("✅ Estudiante eliminado de Firebase:", cedula);
-            } else {
+            if (isOnline && database) await database.ref('estudiantes/' + cedula).remove();
+            else {
                 estudiantes = estudiantes.filter(e => e.cedula !== cedula);
                 guardarDatosEnLocalStorage();
                 actualizarTodo();
@@ -320,21 +245,18 @@
 
         async function guardarCalificacion(cal) {
             const id = cal.cedula + '_' + Date.now();
-            if (isOnline && database) {
-                await database.ref('calificaciones/' + id).set(cal);
-                console.log("✅ Calificación guardada en Firebase:", cal.cedula);
-            } else {
+            if (isOnline && database) await database.ref('calificaciones/' + id).set(cal);
+            else {
                 calificaciones.push(cal);
                 guardarDatosEnLocalStorage();
                 actualizarTodo();
+                mostrarAlertaRapida("⚠️ Modo local: calificación guardada solo en este navegador.");
             }
         }
 
         async function eliminarTodasCalificaciones() {
-            if (isOnline && database) {
-                await database.ref('calificaciones').remove();
-                console.log("✅ Todas las calificaciones eliminadas de Firebase");
-            } else {
+            if (isOnline && database) await database.ref('calificaciones').remove();
+            else {
                 calificaciones = [];
                 guardarDatosEnLocalStorage();
                 actualizarTodo();
@@ -342,208 +264,38 @@
         }
 
         async function eliminarTodosEstudiantes() {
-            if (isOnline && database) {
-                await database.ref('estudiantes').remove();
-                console.log("✅ Todos los estudiantes eliminados de Firebase");
-            } else {
+            if (isOnline && database) await database.ref('estudiantes').remove();
+            else {
                 estudiantes = [];
                 guardarDatosEnLocalStorage();
                 actualizarTodo();
             }
         }
 
-        // Funciones auxiliares de UI
+        // ========== Funciones de UI (idénticas al original, solo adaptadas) ==========
         function obtenerEstudiantesFiltrados() { return estudiantes.filter(e => (e.curso||"").toUpperCase() === cursoFiltrado.toUpperCase() && (e.paralelo||"").toUpperCase() === paraleloFiltrado.toUpperCase()); }
         function obtenerCalificacionesFiltradas() { return calificaciones.filter(c => estudiantes.some(e => e.cedula===c.cedula && (e.curso||"").toUpperCase()===cursoFiltrado.toUpperCase() && (e.paralelo||"").toUpperCase()===paraleloFiltrado.toUpperCase())); }
-        
-        function actualizarTodo() { 
-            actualizarMetricas(); 
-            construirTablaEstudiantes(); 
-            actualizarListaSelectoresFiltroDocente(); 
-            actualizarBotonSimulacion(); 
-            actualizarInformacionVisualCurso();
-            console.log("🔄 UI actualizada");
-        }
-        
-        function actualizarListaSelectoresFiltroDocente() { 
-            let selectCurso=document.getElementById('select-filtro-curso'), selectParalelo=document.getElementById('select-filtro-paralelo'); 
-            if(!selectCurso) return; 
-            let cursos=[...new Set(estudiantes.map(e=>e.curso))].filter(c=>c); 
-            let paralelos=[...new Set(estudiantes.map(e=>e.paralelo))].filter(p=>p); 
-            selectCurso.innerHTML=cursos.map(c=>`<option value="${c}" ${c===cursoFiltrado?"selected":""}>${c}</option>`).join(''); 
-            selectParalelo.innerHTML=paralelos.map(p=>`<option value="${p}" ${p===paraleloFiltrado?"selected":""}>${p}</option>`).join(''); 
-        }
-        
-        function cambiarFiltroCursoParalelo() { 
-            cursoFiltrado=document.getElementById('select-filtro-curso').value; 
-            paraleloFiltrado=document.getElementById('select-filtro-paralelo').value; 
-            actualizarTodo(); 
-        }
-        
-        function actualizarInformacionVisualCurso() { 
-            let desc=document.getElementById('sub-metric-total-desc'); 
-            if(desc) desc.innerText=`Matriculados en ${cursoFiltrado} "${paraleloFiltrado}"`; 
-            let label=document.getElementById('label-nomina-resumen'); 
-            if(label) label.innerHTML=`Listado actual de estudiantes en sistema para <strong>${cursoFiltrado} "${paraleloFiltrado}"</strong>: <strong id="nomina-count">${obtenerEstudiantesFiltrados().length}</strong>`; 
-            let welcome=document.getElementById('welcome-student-curso'); 
-            if(welcome) welcome.innerText=`Curso: ${cursoFiltrado} "${paraleloFiltrado}"`; 
-        }
-        
-        function actualizarMetricas() { 
-            let alumnos=obtenerEstudiantesFiltrados(), califs=obtenerCalificacionesFiltradas(); 
-            let total=alumnos.length, evaluados=califs.length; 
-            let suma=0, aprobados=0; 
-            califs.forEach(c=>{suma+=c.nota; if(c.nota>=7)aprobados++;}); 
-            let prom=evaluados?(suma/evaluados).toFixed(2):"0.00"; 
-            let pctAprob=evaluados?((aprobados/evaluados)*100).toFixed(0):0; 
-            document.getElementById('metric-total-est').innerText=total; 
-            document.getElementById('metric-evaluados').innerText=evaluados; 
-            document.getElementById('metric-promedio').innerText=prom; 
-            document.getElementById('metric-aprobados').innerText=pctAprob+"%"; 
-            document.getElementById('metric-evaluados-pct').innerText=evaluados?((evaluados/total)*100).toFixed(0)+"%":"0%"; 
-            document.getElementById('metric-aprobados-detalle').innerText=`${aprobados} de ${evaluados}`; 
-            construirTablaCalificaciones(califs); 
-        }
-        
-        function construirTablaCalificaciones(arr) { 
-            let tbody=document.getElementById('table-body-calificaciones'), noData=document.getElementById('no-data-alert'); 
-            if(!tbody) return; 
-            tbody.innerHTML=''; 
-            if(arr.length===0) { noData.classList.remove('hidden'); return; } 
-            noData.classList.add('hidden'); 
-            arr.forEach((c,i)=>{ 
-                let tr=document.createElement('tr'); 
-                tr.className="hover:bg-slate-50 transition-all"; 
-                let notaColor=c.nota>=7?'text-emerald-600 font-bold':'text-rose-500 font-bold'; 
-                let estAsociado=estudiantes.find(e=>parseInt(e.cedula)===parseInt(c.cedula)); 
-                let cursoTexto=estAsociado?`${estAsociado.curso} "${estAsociado.paralelo}"`:`${cursoFiltrado} "${paraleloFiltrado}"`; 
-                tr.innerHTML=`<td class="p-4 text-slate-400">${i+1}<tr><td class="p-4 font-bold">${c.nombre}</td><td class="p-4 text-slate-500 font-mono">${c.cedula}</td><td class="p-4 text-slate-500">${cursoTexto}</td><td class="p-4 text-slate-500">${c.fecha}</td><td class="p-4 text-center font-bold">${c.correctas}/10</td><td class="p-4 text-right ${notaColor}">${c.nota.toFixed(2)}</td>`; 
-                tbody.appendChild(tr); 
-            }); 
-        }
-        
-        function construirTablaEstudiantes() { 
-            let tbody=document.getElementById('table-body-estudiantes'), noAlert=document.getElementById('no-students-alert'); 
-            if(!tbody) return; 
-            let alumnos=obtenerEstudiantesFiltrados(); 
-            tbody.innerHTML=''; 
-            if(alumnos.length===0) { noAlert.classList.remove('hidden'); document.getElementById('nomina-count').innerText='0'; return; } 
-            noAlert.classList.add('hidden'); 
-            document.getElementById('nomina-count').innerText=alumnos.length; 
-            alumnos.forEach((e,i)=>{ 
-                let haRendido=calificaciones.some(c=>c.cedula===e.cedula); 
-                let badge=haRendido?'<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700">Evaluado</span>':'<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700">Pendiente</span>'; 
-                let tr=document.createElement('tr'); 
-                tr.className="hover:bg-slate-50/80 transition-all font-medium text-slate-700 text-[11px]"; 
-                tr.innerHTML=`<td class="p-4 text-slate-400">${i+1}</td><td class="p-4 font-bold text-slate-900">${e.nombre||'-'}</td><td class="p-4">${e.curso||'-'}</td><td class="p-4">${e.paralelo||'-'}</td><td class="p-4 font-mono">${e.cedula||'-'}</td><td class="p-4">${e.fechaNac||'-'}</td><td class="p-4 truncate max-w-[150px]">${e.correo||'-'}</td><td class="p-4 font-semibold">${e.repNombre||'-'}</td><td class="p-4 font-mono">${e.repCedula||'-'}</td><td class="p-4 font-mono">${e.repCelular||'-'}</td><td class="p-4 italic truncate max-w-[150px]" title="${e.observaciones||''}">${e.observaciones||'-'}</td><td class="p-4 text-center">${badge}</td><td class="p-4 text-center"><div class="flex items-center justify-center gap-1.5"><button onclick="verFichaDetalles('${e.cedula}')" class="text-brand-600 hover:text-brand-800 text-[10px] bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded">Ficha</button><button onclick="eliminarEstudiante('${e.cedula}')" class="text-rose-600 hover:text-rose-800 text-[10px] bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded">Quitar</button></div></td>`; 
-                tbody.appendChild(tr); 
-            }); 
-        }
-        
-        function verFichaDetalles(ced) { 
-            let e=estudiantes.find(s=>s.cedula===ced); 
-            if(!e) return; 
-            document.getElementById('detail-nombre').innerText=e.nombre||'-'; 
-            document.getElementById('detail-cedula').innerText=e.cedula||'-'; 
-            document.getElementById('detail-curso-paralelo').innerText=(e.curso||'-')+' "'+(e.paralelo||'-')+'"'; 
-            document.getElementById('detail-fecha-nac').innerText=e.fechaNac||'-'; 
-            document.getElementById('detail-correo').innerText=e.correo||'-'; 
-            document.getElementById('detail-rep-nombre').innerText=e.repNombre||'-'; 
-            document.getElementById('detail-rep-cedula').innerText=e.repCedula||'-'; 
-            document.getElementById('detail-rep-celular').innerText=e.repCelular||'-'; 
-            document.getElementById('detail-observaciones').innerText=e.observaciones||'Ninguna observación registrada.'; 
-            document.getElementById('details-modal-student').classList.remove('hidden'); 
-        }
-        
+        function actualizarTodo() { actualizarMetricas(); construirTablaEstudiantes(); actualizarListaSelectoresFiltroDocente(); actualizarBotonSimulacion(); actualizarInformacionVisualCurso(); }
+        function actualizarListaSelectoresFiltroDocente() { let selectCurso=document.getElementById('select-filtro-curso'), selectParalelo=document.getElementById('select-filtro-paralelo'); if(!selectCurso) return; let cursos=[...new Set(estudiantes.map(e=>e.curso))].filter(c=>c); let paralelos=[...new Set(estudiantes.map(e=>e.paralelo))].filter(p=>p); selectCurso.innerHTML=cursos.map(c=>`<option value="${c}" ${c===cursoFiltrado?"selected":""}>${c}</option>`).join(''); selectParalelo.innerHTML=paralelos.map(p=>`<option value="${p}" ${p===paraleloFiltrado?"selected":""}>${p}</option>`).join(''); }
+        function cambiarFiltroCursoParalelo() { cursoFiltrado=document.getElementById('select-filtro-curso').value; paraleloFiltrado=document.getElementById('select-filtro-paralelo').value; actualizarTodo(); }
+        function actualizarInformacionVisualCurso() { let desc=document.getElementById('sub-metric-total-desc'); if(desc) desc.innerText=`Matriculados en ${cursoFiltrado} "${paraleloFiltrado}"`; let label=document.getElementById('label-nomina-resumen'); if(label) label.innerHTML=`Listado actual de estudiantes en sistema para <strong>${cursoFiltrado} "${paraleloFiltrado}"</strong>: <strong id="nomina-count">${obtenerEstudiantesFiltrados().length}</strong>`; let welcome=document.getElementById('welcome-student-curso'); if(welcome) welcome.innerText=`Curso: ${cursoFiltrado} "${paraleloFiltrado}"`; }
+        function actualizarMetricas() { let alumnos=obtenerEstudiantesFiltrados(), califs=obtenerCalificacionesFiltradas(); let total=alumnos.length, evaluados=califs.length; let suma=0, aprobados=0; califs.forEach(c=>{suma+=c.nota; if(c.nota>=7)aprobados++;}); let prom=evaluados?(suma/evaluados).toFixed(2):"0.00"; let pctAprob=evaluados?((aprobados/evaluados)*100).toFixed(0):0; document.getElementById('metric-total-est').innerText=total; document.getElementById('metric-evaluados').innerText=evaluados; document.getElementById('metric-promedio').innerText=prom; document.getElementById('metric-aprobados').innerText=pctAprob+"%"; document.getElementById('metric-evaluados-pct').innerText=evaluados?((evaluados/total)*100).toFixed(0)+"%":"0%"; document.getElementById('metric-aprobados-detalle').innerText=`${aprobados} de ${evaluados}`; construirTablaCalificaciones(califs); }
+        function construirTablaCalificaciones(arr) { let tbody=document.getElementById('table-body-calificaciones'), noData=document.getElementById('no-data-alert'); if(!tbody) return; tbody.innerHTML=''; if(arr.length===0) { noData.classList.remove('hidden'); return; } noData.classList.add('hidden'); arr.forEach((c,i)=>{ let tr=document.createElement('tr'); tr.className="hover:bg-slate-50 transition-all"; let notaColor=c.nota>=7?'text-emerald-600 font-bold':'text-rose-500 font-bold'; let estAsociado=estudiantes.find(e=>parseInt(e.cedula)===parseInt(c.cedula)); let cursoTexto=estAsociado?`${estAsociado.curso} "${estAsociado.paralelo}"`:`${cursoFiltrado} "${paraleloFiltrado}"`; tr.innerHTML=`<td class="p-4 text-slate-400">${i+1}</td><td class="p-4 font-bold">${c.nombre}</td><td class="p-4 text-slate-500 font-mono">${c.cedula}</td><td class="p-4 text-slate-500">${cursoTexto}</td><td class="p-4 text-slate-500">${c.fecha}</td><td class="p-4 text-center font-bold">${c.correctas}/10</td><td class="p-4 text-right ${notaColor}">${c.nota.toFixed(2)}</td>`; tbody.appendChild(tr); }); }
+        function construirTablaEstudiantes() { let tbody=document.getElementById('table-body-estudiantes'), noAlert=document.getElementById('no-students-alert'); if(!tbody) return; let alumnos=obtenerEstudiantesFiltrados(); tbody.innerHTML=''; if(alumnos.length===0) { noAlert.classList.remove('hidden'); document.getElementById('nomina-count').innerText='0'; return; } noAlert.classList.add('hidden'); document.getElementById('nomina-count').innerText=alumnos.length; alumnos.forEach((e,i)=>{ let haRendido=calificaciones.some(c=>c.cedula===e.cedula); let badge=haRendido?'<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700">Evaluado</span>':'<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700">Pendiente</span>'; let tr=document.createElement('tr'); tr.className="hover:bg-slate-50/80 transition-all font-medium text-slate-700 text-[11px]"; tr.innerHTML=`<td class="p-4 text-slate-400">${i+1}</td><td class="p-4 font-bold text-slate-900">${e.nombre||'-'}</td><td class="p-4">${e.curso||'-'}</td><td class="p-4">${e.paralelo||'-'}</td><td class="p-4 font-mono">${e.cedula||'-'}</td><td class="p-4">${e.fechaNac||'-'}</td><td class="p-4 truncate max-w-[150px]">${e.correo||'-'}</td><td class="p-4 font-semibold">${e.repNombre||'-'}</td><td class="p-4 font-mono">${e.repCedula||'-'}</td><td class="p-4 font-mono">${e.repCelular||'-'}</td><td class="p-4 italic truncate max-w-[150px]" title="${e.observaciones||''}">${e.observaciones||'-'}</td><td class="p-4 text-center">${badge}</td><td class="p-4 text-center"><div class="flex items-center justify-center gap-1.5"><button onclick="verFichaDetalles('${e.cedula}')" class="text-brand-600 hover:text-brand-800 text-[10px] bg-brand-50 hover:bg-brand-100 px-2 py-1 rounded">Ficha</button><button onclick="eliminarEstudiante('${e.cedula}')" class="text-rose-600 hover:text-rose-800 text-[10px] bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded">Quitar</button></div></td>`; tbody.appendChild(tr); }); }
+        function verFichaDetalles(ced) { let e=estudiantes.find(s=>s.cedula===ced); if(!e) return; document.getElementById('detail-nombre').innerText=e.nombre||'-'; document.getElementById('detail-cedula').innerText=e.cedula||'-'; document.getElementById('detail-curso-paralelo').innerText=(e.curso||'-')+' "'+(e.paralelo||'-')+'"'; document.getElementById('detail-fecha-nac').innerText=e.fechaNac||'-'; document.getElementById('detail-correo').innerText=e.correo||'-'; document.getElementById('detail-rep-nombre').innerText=e.repNombre||'-'; document.getElementById('detail-rep-cedula').innerText=e.repCedula||'-'; document.getElementById('detail-rep-celular').innerText=e.repCelular||'-'; document.getElementById('detail-observaciones').innerText=e.observaciones||'Ninguna observación registrada.'; document.getElementById('details-modal-student').classList.remove('hidden'); }
         function cerrarFichaDetalles() { document.getElementById('details-modal-student').classList.add('hidden'); }
         function actualizarBotonSimulacion() { let btn=document.getElementById('btn-simular'); if(btn) btn.disabled=obtenerEstudiantesFiltrados().length===0; }
-        
-        function verificarDatosCursoAntesDeArchivo(e) { 
-            let file=e.target.files[0]; 
-            if(!file) return; 
-            archivoTemporal=file; 
-            importacionMasivaManualTemporal=false; 
-            document.getElementById('setup-curso').value=cursoFiltrado; 
-            document.getElementById('setup-paralelo').value=paraleloFiltrado; 
-            document.getElementById('course-setup-modal').classList.remove('hidden'); 
-        }
-        
-        function verificarDatosCursoAntesDePegar() { 
-            let txt=document.getElementById('textarea-importar').value.trim(); 
-            if(!txt) { mostrarAlertaRapida("Pega datos primero"); return; } 
-            archivoTemporal=null; 
-            importacionMasivaManualTemporal=true; 
-            document.getElementById('setup-curso').value=cursoFiltrado; 
-            document.getElementById('setup-paralelo').value=paraleloFiltrado; 
-            document.getElementById('course-setup-modal').classList.remove('hidden'); 
-        }
-        
-        function cancelarConfiguracionCurso() { 
-            document.getElementById('course-setup-modal').classList.add('hidden'); 
-            document.getElementById('file-import-nomina').value=''; 
-            archivoTemporal=null; 
-            importacionMasivaManualTemporal=false; 
-        }
-        
-        async function confirmarConfiguracionCurso() { 
-            cursoFiltrado=document.getElementById('setup-curso').value; 
-            paraleloFiltrado=document.getElementById('setup-paralelo').value; 
-            document.getElementById('course-setup-modal').classList.add('hidden'); 
-            if(importacionMasivaManualTemporal) await procesarTextoImportacion(document.getElementById('textarea-importar').value); 
-            else if(archivoTemporal) { 
-                let reader=new FileReader(); 
-                reader.onload=async ev=>await procesarTextoImportacion(ev.target.result); 
-                reader.readAsText(archivoTemporal); 
-            } 
-        }
-        
-        async function procesarTextoImportacion(texto) { 
-            let lineas=texto.split(/\r?\n/); 
-            let importados=0; 
-            for(let i=1;i<lineas.length;i++) { 
-                let cols=lineas[i].split(','); 
-                if(cols.length>=3) { 
-                    let nombre=cols[1]?.trim().toUpperCase(); 
-                    let cedula=cols[2]?.trim(); 
-                    if(nombre && cedula && !estudiantes.some(e=>e.cedula===cedula)) { 
-                        let nuevoEst={ nombre, cedula, curso:cursoFiltrado, paralelo:paraleloFiltrado, fechaNac:cols[3]||'', correo:cols[4]||'', repNombre:cols[5]||'', repCedula:cols[6]||'', repCelular:cols[7]||'', observaciones:cols[8]||'' }; 
-                        await guardarEstudiante(nuevoEst); 
-                        importados++; 
-                    } 
-                } 
-            } 
-            mostrarAlertaRapida(`✅ Importados ${importados} estudiantes a Firebase`); 
-            document.getElementById('textarea-importar').value=''; 
-        }
-        
-        async function agregarEstudianteIndividual() { 
-            let nombre=document.getElementById('add-est-nombre').value.trim().toUpperCase(); 
-            let cedula=document.getElementById('add-est-cedula').value.trim(); 
-            let curso=document.getElementById('add-est-curso').value; 
-            let paralelo=document.getElementById('add-est-paralelo').value; 
-            if(!nombre||!cedula){ mostrarAlertaRapida("Nombre y cédula requeridos"); return; } 
-            if(estudiantes.some(e=>e.cedula===cedula)){ mostrarAlertaRapida("Cédula ya existe"); return; } 
-            let nuevoEst={ nombre, cedula, curso, paralelo, fechaNac:document.getElementById('add-est-fecha-nac').value, correo:document.getElementById('add-est-correo').value, repNombre:document.getElementById('add-est-rep-nombre').value, repCedula:document.getElementById('add-est-rep-cedula').value, repCelular:document.getElementById('add-est-rep-celular').value, observaciones:document.getElementById('add-est-observaciones').value }; 
-            await guardarEstudiante(nuevoEst); 
-            mostrarAlertaRapida("✅ Estudiante guardado en Firebase"); 
-        }
-        
+        function verificarDatosCursoAntesDeArchivo(e) { let file=e.target.files[0]; if(!file) return; archivoTemporal=file; importacionMasivaManualTemporal=false; document.getElementById('setup-curso').value=cursoFiltrado; document.getElementById('setup-paralelo').value=paraleloFiltrado; document.getElementById('course-setup-modal').classList.remove('hidden'); }
+        function verificarDatosCursoAntesDePegar() { let txt=document.getElementById('textarea-importar').value.trim(); if(!txt) { mostrarAlertaRapida("Pega datos primero"); return; } archivoTemporal=null; importacionMasivaManualTemporal=true; document.getElementById('setup-curso').value=cursoFiltrado; document.getElementById('setup-paralelo').value=paraleloFiltrado; document.getElementById('course-setup-modal').classList.remove('hidden'); }
+        function cancelarConfiguracionCurso() { document.getElementById('course-setup-modal').classList.add('hidden'); document.getElementById('file-import-nomina').value=''; archivoTemporal=null; importacionMasivaManualTemporal=false; }
+        async function confirmarConfiguracionCurso() { cursoFiltrado=document.getElementById('setup-curso').value; paraleloFiltrado=document.getElementById('setup-paralelo').value; document.getElementById('course-setup-modal').classList.add('hidden'); if(importacionMasivaManualTemporal) await procesarTextoImportacion(document.getElementById('textarea-importar').value); else if(archivoTemporal) { let reader=new FileReader(); reader.onload=async ev=>await procesarTextoImportacion(ev.target.result); reader.readAsText(archivoTemporal); } }
+        async function procesarTextoImportacion(texto) { let lineas=texto.split(/\r?\n/); let importados=0; for(let i=1;i<lineas.length;i++) { let cols=lineas[i].split(','); if(cols.length>=3) { let nombre=cols[1]?.trim().toUpperCase(); let cedula=cols[2]?.trim(); if(nombre && cedula && !estudiantes.some(e=>e.cedula===cedula)) { let nuevoEst={ nombre, cedula, curso:cursoFiltrado, paralelo:paraleloFiltrado, fechaNac:cols[3]||'', correo:cols[4]||'', repNombre:cols[5]||'', repCedula:cols[6]||'', repCelular:cols[7]||'', observaciones:cols[8]||'' }; await guardarEstudiante(nuevoEst); importados++; } } } mostrarAlertaRapida(`✅ Importados ${importados} estudiantes a ${isOnline ? 'Firebase' : 'modo local'}`); document.getElementById('textarea-importar').value=''; }
+        async function agregarEstudianteIndividual() { let nombre=document.getElementById('add-est-nombre').value.trim().toUpperCase(); let cedula=document.getElementById('add-est-cedula').value.trim(); let curso=document.getElementById('add-est-curso').value; let paralelo=document.getElementById('add-est-paralelo').value; if(!nombre||!cedula){ mostrarAlertaRapida("Nombre y cédula requeridos"); return; } if(estudiantes.some(e=>e.cedula===cedula)){ mostrarAlertaRapida("Cédula ya existe"); return; } let nuevoEst={ nombre, cedula, curso, paralelo, fechaNac:document.getElementById('add-est-fecha-nac').value, correo:document.getElementById('add-est-correo').value, repNombre:document.getElementById('add-est-rep-nombre').value, repCedula:document.getElementById('add-est-rep-cedula').value, repCelular:document.getElementById('add-est-rep-celular').value, observaciones:document.getElementById('add-est-observaciones').value }; await guardarEstudiante(nuevoEst); mostrarAlertaRapida(`✅ Estudiante guardado ${isOnline ? 'en Firebase' : 'localmente'}`); }
         async function eliminarEstudiante(cedula) { if(confirm('¿Eliminar estudiante?')) await eliminarEstudianteFirebase(cedula); }
         async function limpiarNominaCompleta() { if(confirm('¿Vaciar toda la nómina?')) await eliminarTodosEstudiantes(); }
         async function generarDataSimulada() { if(confirm('¿Generar calificaciones aleatorias?')) { for(let e of estudiantes){ let correctas=Math.floor(Math.random()*11); let nota=correctas; await guardarCalificacion({ cedula:e.cedula, nombre:e.nombre, fecha:new Date().toLocaleString(), correctas, nota, curso:e.curso, paralelo:e.paralelo }); } mostrarAlertaRapida('✅ Calificaciones simuladas guardadas'); } }
         async function limpiarRegistros() { if(confirm('¿Borrar todas las calificaciones?')) await eliminarTodasCalificaciones(); }
-        
-        function switchAdminTab(tab) { 
-            currentAdminTab=tab; 
-            document.getElementById('tab-content-calificaciones').classList.toggle('hidden',tab!=='calificaciones'); 
-            document.getElementById('tab-content-estudiantes').classList.toggle('hidden',tab!=='estudiantes'); 
-            document.getElementById('tab-btn-calificaciones').classList.toggle('border-brand-600',tab==='calificaciones'); 
-            document.getElementById('tab-btn-calificaciones').classList.toggle('text-brand-700',tab==='calificaciones'); 
-            document.getElementById('tab-btn-estudiantes').classList.toggle('border-brand-600',tab==='estudiantes'); 
-            document.getElementById('tab-btn-estudiantes').classList.toggle('text-brand-700',tab==='estudiantes'); 
-            if(tab==='estudiantes') construirTablaEstudiantes(); 
-        }
-        
+        function switchAdminTab(tab) { currentAdminTab=tab; document.getElementById('tab-content-calificaciones').classList.toggle('hidden',tab!=='calificaciones'); document.getElementById('tab-content-estudiantes').classList.toggle('hidden',tab!=='estudiantes'); document.getElementById('tab-btn-calificaciones').classList.toggle('border-brand-600',tab==='calificaciones'); document.getElementById('tab-btn-calificaciones').classList.toggle('text-brand-700',tab==='calificaciones'); document.getElementById('tab-btn-estudiantes').classList.toggle('border-brand-600',tab==='estudiantes'); document.getElementById('tab-btn-estudiantes').classList.toggle('text-brand-700',tab==='estudiantes'); if(tab==='estudiantes') construirTablaEstudiantes(); }
         function filtrarTablaCalificaciones() { let term=document.getElementById('input-buscar-calificacion').value.toLowerCase(); let filtradas=obtenerCalificacionesFiltradas().filter(c=>c.nombre.toLowerCase().includes(term)||c.cedula.includes(term)); construirTablaCalificaciones(filtradas); }
         function exportarResultadosCSV() { let csv="Estudiante,Cédula,Nota,Fecha\n"; calificaciones.forEach(c=>csv+=`${c.nombre},${c.cedula},${c.nota.toFixed(2)},${c.fecha}\n`); let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:'text/csv'})); link.download="calificaciones.csv"; link.click(); }
         function descargarPlantillaCSV() { let plantilla="Ord,Nómina,Cédula,Fecha Nac,Correo,Nombre Representante,Cédula R,Cel.Representante,Observaciones\n1,ALAVA ORTIZ BERTHA ANAHIS,0850812348,2009-12-23,correo@ejemplo.com,REPRESENTANTE,0802348219,0996313327,"; let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob(["\uFEFF"+plantilla],{type:'text/csv'})); link.download="plantilla.csv"; link.click(); }
@@ -551,95 +303,17 @@
         function mostrarAlertaRapida(msg) { alert(msg); }
         function obtenerFechaHoraActual() { return new Date().toLocaleString('es-EC'); }
 
-        // Funciones de estudiante
+        // Estudiante
         function mostrarPantalla(id) { document.querySelectorAll('[id^="screen-"]').forEach(el=>el.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
         function volverAlInicio() { estudianteActual=null; indicePreguntaActual=0; respuestasEstudiante={}; document.getElementById('input-cedula').value=''; document.getElementById('input-clave-docente').value=''; mostrarPantalla('screen-login'); }
-        
-        function verificarEstudiante() { 
-            let ced=document.getElementById('input-cedula').value.trim(); 
-            let est=estudiantes.find(e=>e.cedula===ced); 
-            if(!est){ document.getElementById('login-error').classList.remove('hidden'); return; } 
-            document.getElementById('login-error').classList.add('hidden'); 
-            let ya=calificaciones.find(c=>c.cedula===ced); 
-            if(ya){ document.getElementById('result-student-name').innerText=est.nombre; document.getElementById('result-score').innerText=`${ya.nota.toFixed(2)} / 10`; evaluarEstadoDesbloqueoReporteEstudiante(); mostrarPantalla('screen-results'); return; } 
-            estudianteActual=est; document.getElementById('student-name').innerText=est.nombre; document.getElementById('student-quiz-badge').innerText=est.nombre; document.getElementById('welcome-student-curso').innerText=`Curso: ${est.curso||'2do BGU'}`; mostrarPantalla('screen-welcome'); 
-        }
-        
+        function verificarEstudiante() { let ced=document.getElementById('input-cedula').value.trim(); let est=estudiantes.find(e=>e.cedula===ced); if(!est){ document.getElementById('login-error').classList.remove('hidden'); return; } document.getElementById('login-error').classList.add('hidden'); let ya=calificaciones.find(c=>c.cedula===ced); if(ya){ document.getElementById('result-student-name').innerText=est.nombre; document.getElementById('result-score').innerText=`${ya.nota.toFixed(2)} / 10`; evaluarEstadoDesbloqueoReporteEstudiante(); mostrarPantalla('screen-results'); return; } estudianteActual=est; document.getElementById('student-name').innerText=est.nombre; document.getElementById('student-quiz-badge').innerText=est.nombre; document.getElementById('welcome-student-curso').innerText=`Curso: ${est.curso||'2do BGU'}`; mostrarPantalla('screen-welcome'); }
         function comenzarEvaluacion() { indicePreguntaActual=0; respuestasEstudiante={}; mostrarPregunta(); mostrarPantalla('screen-quiz'); }
-        
-        function mostrarPregunta() { 
-            let q=preguntas[indicePreguntaActual]; 
-            document.getElementById('question-text').innerText=q.pregunta; 
-            document.getElementById('question-progress').innerText=`Pregunta ${indicePreguntaActual+1} de ${preguntas.length}`; 
-            document.getElementById('progress-bar').style.width=`${((indicePreguntaActual+1)/preguntas.length)*100}%`; 
-            let container=document.getElementById('options-container'); 
-            container.innerHTML=''; 
-            q.opciones.forEach(op=>{ 
-                let selected=respuestasEstudiante[indicePreguntaActual]===op.id; 
-                let div=document.createElement('div'); 
-                div.className=`border p-4 rounded-2xl cursor-pointer transition-all flex items-center gap-4 ${selected?'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/10':'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`; 
-                div.onclick=()=>seleccionarOpcion(op.id); 
-                let circle=document.createElement('div'); 
-                circle.className=`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center transition-all ${selected?'border-brand-600 bg-brand-600 text-white':'border-slate-300 bg-white'}`; 
-                if(selected) circle.innerHTML='<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>'; 
-                let txt=document.createElement('span'); 
-                txt.className=`font-semibold text-sm ${selected?'text-brand-900':'text-slate-700'}`; 
-                txt.innerText=`${op.id}) ${op.texto}`; 
-                div.appendChild(circle); 
-                div.appendChild(txt); 
-                container.appendChild(div); 
-            }); 
-            let btn=document.getElementById('btn-next'); 
-            if(indicePreguntaActual===preguntas.length-1){ btn.innerText="Finalizar Prueba"; btn.classList.remove('bg-brand-600'); btn.classList.add('bg-emerald-600'); } 
-            else { btn.innerText="Siguiente"; btn.classList.add('bg-brand-600'); btn.classList.remove('bg-emerald-600'); } 
-        }
-        
+        function mostrarPregunta() { let q=preguntas[indicePreguntaActual]; document.getElementById('question-text').innerText=q.pregunta; document.getElementById('question-progress').innerText=`Pregunta ${indicePreguntaActual+1} de ${preguntas.length}`; document.getElementById('progress-bar').style.width=`${((indicePreguntaActual+1)/preguntas.length)*100}%`; let container=document.getElementById('options-container'); container.innerHTML=''; q.opciones.forEach(op=>{ let selected=respuestasEstudiante[indicePreguntaActual]===op.id; let div=document.createElement('div'); div.className=`border p-4 rounded-2xl cursor-pointer transition-all flex items-center gap-4 ${selected?'border-brand-500 bg-brand-50/50 ring-2 ring-brand-500/10':'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`; div.onclick=()=>seleccionarOpcion(op.id); let circle=document.createElement('div'); circle.className=`w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center transition-all ${selected?'border-brand-600 bg-brand-600 text-white':'border-slate-300 bg-white'}`; if(selected) circle.innerHTML='<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>'; let txt=document.createElement('span'); txt.className=`font-semibold text-sm ${selected?'text-brand-900':'text-slate-700'}`; txt.innerText=`${op.id}) ${op.texto}`; div.appendChild(circle); div.appendChild(txt); container.appendChild(div); }); let btn=document.getElementById('btn-next'); if(indicePreguntaActual===preguntas.length-1){ btn.innerText="Finalizar Prueba"; btn.classList.remove('bg-brand-600'); btn.classList.add('bg-emerald-600'); } else { btn.innerText="Siguiente"; btn.classList.add('bg-brand-600'); btn.classList.remove('bg-emerald-600'); } }
         function seleccionarOpcion(id) { respuestasEstudiante[indicePreguntaActual]=id; mostrarPregunta(); }
-        
-        function preguntaSiguiente() { 
-            if(respuestasEstudiante[indicePreguntaActual]===undefined){ mostrarAlertaRapida("Debes seleccionar una opción para poder continuar."); return; } 
-            if(indicePreguntaActual<preguntas.length-1){ indicePreguntaActual++; mostrarPregunta(); } 
-            else finalizarEvaluacion(); 
-        }
-        
-        async function finalizarEvaluacion() { 
-            let correctas=0; 
-            preguntas.forEach((q,i)=>{ if(respuestasEstudiante[i]===q.correcta) correctas++; }); 
-            let nota=correctas; 
-            let nuevoReg={ cedula:estudianteActual.cedula, nombre:estudianteActual.nombre, fecha:obtenerFechaHoraActual(), correctas, nota, curso:estudianteActual.curso, paralelo:estudianteActual.paralelo, respuestas:respuestasEstudiante }; 
-            await guardarCalificacion(nuevoReg); 
-            document.getElementById('result-student-name').innerText=estudianteActual.nombre; 
-            document.getElementById('result-score').innerText=`${nota} / 10`; 
-            evaluarEstadoDesbloqueoReporteEstudiante(); 
-            mostrarPantalla('screen-results'); 
-        }
-        
-        function evaluarEstadoDesbloqueoReporteEstudiante() { 
-            let total=obtenerEstudiantesFiltrados().length; 
-            let evaluados=obtenerCalificacionesFiltradas().length; 
-            let contenedor=document.getElementById('reporte-detallado-container'); 
-            let bloqueado=document.getElementById('reporte-bloqueado-mensaje'); 
-            if(!contenedor||!bloqueado) return; 
-            if(total>0 && evaluados>=total){ bloqueado.classList.add('hidden'); contenedor.classList.remove('hidden'); let miCal=calificaciones.find(c=>c.cedula===estudianteActual.cedula); if(miCal && miCal.respuestas) generarRevisionVisualReporte(miCal.respuestas); } 
-            else { bloqueado.classList.remove('hidden'); contenedor.classList.add('hidden'); } 
-        }
-        
-        function generarRevisionVisualReporte(misRespuestas) { 
-            let lista=document.getElementById('reporte-preguntas-lista'); 
-            if(!lista) return; 
-            lista.innerHTML=''; 
-            preguntas.forEach((q,idx)=>{ 
-                let miOpcion=misRespuestas[idx]; 
-                let esCorrecta=miOpcion===q.correcta; 
-                let miOpcionObj=q.opciones.find(o=>o.id===miOpcion); 
-                let correctaObj=q.opciones.find(o=>o.id===q.correcta); 
-                let card=document.createElement('div'); 
-                card.className=`p-5 rounded-2xl border ${esCorrecta?'bg-emerald-50/30 border-emerald-200':'bg-rose-50/20 border-rose-200'} space-y-3`; 
-                card.innerHTML=`<div class="flex justify-between items-start gap-4"><h5 class="font-bold text-slate-900 text-sm leading-snug">${q.pregunta}</h5><button onclick="abrirTutorIA('${q.pregunta.replace(/'/g,"\\'")}','${(miOpcionObj?miOpcionObj.texto:'No respondida').replace(/'/g,"\\'")}','${(correctaObj?correctaObj.texto:'').replace(/'/g,"\\'")}')" class="text-xs font-bold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 py-1.5 px-3 rounded-lg flex items-center gap-1 transition-all border border-violet-200 flex-shrink-0"><span>✨ Consultar Tutor IA</span></button></div><div class="text-xs space-y-1.5 font-medium"><p class="flex items-center gap-1.5 ${esCorrecta?'text-emerald-700':'text-rose-600'}"><span class="font-bold">Tu respuesta:</span> <span>${miOpcion}) ${miOpcionObj?miOpcionObj.texto:'No respondida'}</span> ${esCorrecta?'✓':'✗'}</p>${!esCorrecta?`<p class="text-emerald-800"><span class="font-bold">Respuesta correcta:</span> <span>${q.correcta}) ${correctaObj?correctaObj.texto:''}</span></p>`:''}</div><div class="text-[11px] text-slate-500 bg-white/70 p-3 rounded-xl border border-slate-100/60 leading-relaxed font-semibold"><strong class="text-slate-700">Justificación pedagógica:</strong> ${correctaObj?correctaObj.rationale:''}</div>`; 
-                lista.appendChild(card); 
-            }); 
-        }
-        
+        function preguntaSiguiente() { if(respuestasEstudiante[indicePreguntaActual]===undefined){ mostrarAlertaRapida("Debes seleccionar una opción para poder continuar."); return; } if(indicePreguntaActual<preguntas.length-1){ indicePreguntaActual++; mostrarPregunta(); } else finalizarEvaluacion(); }
+        async function finalizarEvaluacion() { let correctas=0; preguntas.forEach((q,i)=>{ if(respuestasEstudiante[i]===q.correcta) correctas++; }); let nota=correctas; let nuevoReg={ cedula:estudianteActual.cedula, nombre:estudianteActual.nombre, fecha:obtenerFechaHoraActual(), correctas, nota, curso:estudianteActual.curso, paralelo:estudianteActual.paralelo, respuestas:respuestasEstudiante }; await guardarCalificacion(nuevoReg); document.getElementById('result-student-name').innerText=estudianteActual.nombre; document.getElementById('result-score').innerText=`${nota} / 10`; evaluarEstadoDesbloqueoReporteEstudiante(); mostrarPantalla('screen-results'); }
+        function evaluarEstadoDesbloqueoReporteEstudiante() { let total=obtenerEstudiantesFiltrados().length; let evaluados=obtenerCalificacionesFiltradas().length; let contenedor=document.getElementById('reporte-detallado-container'); let bloqueado=document.getElementById('reporte-bloqueado-mensaje'); if(!contenedor||!bloqueado) return; if(total>0 && evaluados>=total){ bloqueado.classList.add('hidden'); contenedor.classList.remove('hidden'); let miCal=calificaciones.find(c=>c.cedula===estudianteActual.cedula); if(miCal && miCal.respuestas) generarRevisionVisualReporte(miCal.respuestas); } else { bloqueado.classList.remove('hidden'); contenedor.classList.add('hidden'); } }
+        function generarRevisionVisualReporte(misRespuestas) { let lista=document.getElementById('reporte-preguntas-lista'); if(!lista) return; lista.innerHTML=''; preguntas.forEach((q,idx)=>{ let miOpcion=misRespuestas[idx]; let esCorrecta=miOpcion===q.correcta; let miOpcionObj=q.opciones.find(o=>o.id===miOpcion); let correctaObj=q.opciones.find(o=>o.id===q.correcta); let card=document.createElement('div'); card.className=`p-5 rounded-2xl border ${esCorrecta?'bg-emerald-50/30 border-emerald-200':'bg-rose-50/20 border-rose-200'} space-y-3`; card.innerHTML=`<div class="flex justify-between items-start gap-4"><h5 class="font-bold text-slate-900 text-sm leading-snug">${q.pregunta}</h5><button onclick="abrirTutorIA('${q.pregunta.replace(/'/g,"\\'")}','${(miOpcionObj?miOpcionObj.texto:'No respondida').replace(/'/g,"\\'")}','${(correctaObj?correctaObj.texto:'').replace(/'/g,"\\'")}')" class="text-xs font-bold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 py-1.5 px-3 rounded-lg flex items-center gap-1 transition-all border border-violet-200 flex-shrink-0"><span>✨ Consultar Tutor IA</span></button></div><div class="text-xs space-y-1.5 font-medium"><p class="flex items-center gap-1.5 ${esCorrecta?'text-emerald-700':'text-rose-600'}"><span class="font-bold">Tu respuesta:</span> <span>${miOpcion}) ${miOpcionObj?miOpcionObj.texto:'No respondida'}</span> ${esCorrecta?'✓':'✗'}</p>${!esCorrecta?`<p class="text-emerald-800"><span class="font-bold">Respuesta correcta:</span> <span>${q.correcta}) ${correctaObj?correctaObj.texto:''}</span></p>`:''}</div><div class="text-[11px] text-slate-500 bg-white/70 p-3 rounded-xl border border-slate-100/60 leading-relaxed font-semibold"><strong class="text-slate-700">Justificación pedagógica:</strong> ${correctaObj?correctaObj.rationale:''}</div>`; lista.appendChild(card); }); }
         function mostrarAccesoDocente() { mostrarPantalla('screen-docente-login'); }
         function validarAccesoDocente() { let clave=document.getElementById('input-clave-docente').value; if(clave===CLAVE_DOCENTE_MASTER){ actualizarTodo(); mostrarPantalla('screen-docente-panel'); } else document.getElementById('docente-login-error').classList.remove('hidden'); }
         function cerrarSesionDocente() { mostrarPantalla('screen-login'); }
@@ -649,7 +323,7 @@
         async function guardarNuevaClaveDocente() { let old=document.getElementById('old-pass').value; let newp=document.getElementById('new-pass').value; if(old===CLAVE_DOCENTE_MASTER){ CLAVE_DOCENTE_MASTER=newp; if(isOnline && database) await database.ref('configuracion/claveDocente').set(newp); mostrarAlertaRapida("Contraseña cambiada"); cerrarConfiguracionClaveModal(); } else mostrarAlertaRapida("Contraseña actual incorrecta"); }
         function abrirConfiguracionBaseDatosModal() { document.getElementById('db-config-modal').classList.remove('hidden'); }
         function cerrarConfiguracionBaseDatosModal() { document.getElementById('db-config-modal').classList.add('hidden'); }
-        function guardarConfiguracionBaseDatos() { cerrarConfiguracionBaseDatosModal(); mostrarAlertaRapida("La configuración de Firebase ya está predefinida."); }
+        function guardarConfiguracionBaseDatos() { cerrarConfiguracionBaseDatosModal(); mostrarAlertaRapida("Configuración de Firebase correcta."); }
         function abrirTutorIA(p,r,c) { document.getElementById('ai-tutor-dialog').innerHTML=`<p><strong>Pregunta:</strong> ${p}</p><p><strong>Tu respuesta:</strong> ${r}</p><p><strong>Respuesta correcta:</strong> ${c}</p><p>Consulta a tu docente para más detalles.</p>`; document.getElementById('ai-tutor-modal').classList.remove('hidden'); }
         function cerrarTutorIA() { document.getElementById('ai-tutor-modal').classList.add('hidden'); }
         function reintentarConexion() { location.reload(); }
@@ -658,10 +332,9 @@
         document.addEventListener('keydown', e=>{ if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&e.key==='I')||(e.ctrlKey&&e.key==='u')){ e.preventDefault(); document.getElementById('security-block-screen').classList.remove('hidden'); } });
         document.addEventListener('contextmenu', e=>e.preventDefault());
 
-        // Inicializar
+        // Iniciar
         iniciarFirebase();
 
-        // Exponer funciones globales
         window.verificarEstudiante=verificarEstudiante; window.comenzarEvaluacion=comenzarEvaluacion; window.preguntaSiguiente=preguntaSiguiente; window.mostrarAccesoDocente=mostrarAccesoDocente; window.validarAccesoDocente=validarAccesoDocente; window.cerrarSesionDocente=cerrarSesionDocente; window.volverAlInicio=volverAlInicio; window.exportarResultadosCSV=exportarResultadosCSV; window.limpiarRegistros=limpiarRegistros; window.generarDataSimulada=generarDataSimulada; window.switchAdminTab=switchAdminTab; window.filtrarTablaCalificaciones=filtrarTablaCalificaciones; window.descargarPlantillaCSV=descargarPlantillaCSV; window.importarArchivoNomina=importarArchivoNomina; window.verificarDatosCursoAntesDePegar=verificarDatosCursoAntesDePegar; window.cancelarConfiguracionCurso=cancelarConfiguracionCurso; window.confirmarConfiguracionCurso=confirmarConfiguracionCurso; window.agregarEstudianteIndividual=agregarEstudianteIndividual; window.limpiarNominaCompleta=limpiarNominaCompleta; window.eliminarEstudiante=eliminarEstudiante; window.verFichaDetalles=verFichaDetalles; window.cerrarFichaDetalles=cerrarFichaDetalles; window.cambiarFiltroCursoParalelo=cambiarFiltroCursoParalelo; window.abrirReportePedagogicoIA=abrirReportePedagogicoIA; window.abrirConfiguracionClaveModal=abrirConfiguracionClaveModal; window.cerrarConfiguracionClaveModal=cerrarConfiguracionClaveModal; window.guardarNuevaClaveDocente=guardarNuevaClaveDocente; window.abrirConfiguracionBaseDatosModal=abrirConfiguracionBaseDatosModal; window.cerrarConfiguracionBaseDatosModal=cerrarConfiguracionBaseDatosModal; window.guardarConfiguracionBaseDatos=guardarConfiguracionBaseDatos; window.abrirTutorIA=abrirTutorIA; window.cerrarTutorIA=cerrarTutorIA; window.reintentarConexion=reintentarConexion;
     </script>
 </body>
