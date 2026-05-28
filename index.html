@@ -29,7 +29,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-['Plus_Jakarta_Sans']">
 
-    <!-- Pantalla de bloqueo (seguridad) -->
+    <!-- Pantalla de bloqueo -->
     <div id="security-block-screen" class="hidden fixed inset-0 bg-slate-950/95 text-white z-[9999] flex flex-col items-center justify-center p-6 text-center">
         <div class="w-24 h-24 bg-rose-600 rounded-full flex items-center justify-center mb-6 animate-pulse"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
         <h2 class="text-2xl font-black uppercase text-rose-500">SISTEMA BLOQUEADO</h2>
@@ -49,7 +49,7 @@
     </header>
 
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
-        <!-- PANTALLA LOGIN -->
+        <!-- Login -->
         <div id="screen-login" class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8 transition-all">
             <div class="text-center mb-6">
                 <span class="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-full">Evaluación Diagnóstica</span>
@@ -68,7 +68,7 @@
             <div id="loading-data" class="hidden text-center mt-4"><div class="loader"></div><p class="text-xs text-slate-500">Cargando datos del sistema...</p></div>
         </div>
 
-        <!-- PANTALLA ACCESO DOCENTE -->
+        <!-- Acceso docente -->
         <div id="screen-docente-login" class="hidden w-full max-w-md mx-auto bg-white rounded-2xl shadow-xl p-6">
             <div class="text-center mb-5"><span class="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">Administración</span><h3 class="text-xl font-bold mt-2">Autenticación Docente</h3></div>
             <input type="password" id="input-clave-docente" placeholder="Clave de acceso" class="w-full p-3 bg-slate-50 border rounded-xl text-center font-mono text-lg mb-3">
@@ -76,7 +76,7 @@
             <div class="grid grid-cols-2 gap-3"><button onclick="volverAlInicio()" class="bg-slate-100 py-2 rounded-xl">Cancelar</button><button onclick="validarAccesoDocente()" class="bg-brand-600 text-white py-2 rounded-xl">Ingresar</button></div>
         </div>
 
-        <!-- PANEL DOCENTE -->
+        <!-- Panel docente -->
         <div id="screen-docente-panel" class="hidden">
             <div id="db-status" class="bg-white rounded-xl shadow p-3 mb-4 text-sm flex justify-between items-center flex-wrap gap-2">
                 <span id="connection-status" class="text-emerald-600 font-bold">🟢 Conectado a la nube</span>
@@ -127,18 +127,18 @@
             </div>
         </div>
 
-        <!-- PANTALLAS DE EVALUACIÓN (simplificadas pero funcionales) -->
+        <!-- Evaluación -->
         <div id="screen-welcome" class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 text-center"><div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div><h4 id="welcome-name" class="text-2xl font-black">Estudiante</h4><div class="bg-slate-50 p-4 rounded-xl text-left text-sm mt-4"><p class="font-bold">Instrucciones:</p><ul class="list-disc pl-5"><li>Lee cada pregunta cuidadosamente.</li><li>Selecciona una sola opción.</li><li>No recargues la página.</li></ul></div><button onclick="comenzarEvaluacion()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold mt-5">Comenzar Evaluación</button></div>
         <div id="screen-quiz" class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6"><div class="flex justify-between pb-3 border-b"><span id="quiz-badge" class="font-bold text-brand-600">Estudiante</span><span id="quiz-progress">Pregunta 1/10</span></div><div class="w-full bg-slate-100 h-2 rounded-full my-5"><div id="quiz-bar" class="bg-brand-500 h-full w-0 transition-all rounded-full"></div></div><h3 id="quiz-question" class="text-lg font-bold mb-5">Cargando...</h3><div id="quiz-options" class="space-y-3 mb-6"></div><button id="quiz-next" onclick="siguientePregunta()" class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold">Siguiente</button></div>
         <div id="screen-results" class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 text-center"><div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><h3 class="text-2xl font-black">Evaluación Completada</h3><div class="bg-slate-50 rounded-xl p-4 my-5"><p class="text-sm">Calificación obtenida</p><p id="result-nota" class="text-3xl font-black text-brand-600">0.00 / 10</p></div><button onclick="volverAlInicio()" class="bg-slate-800 text-white px-6 py-2 rounded-xl">Cerrar Sesión</button></div>
     </main>
 
-    <!-- MODALES -->
+    <!-- Modales -->
     <div id="detail-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-5 max-w-2xl w-full"><div class="flex justify-between border-b pb-2 mb-3"><h3 class="font-black">Detalles del Estudiante</h3><button onclick="cerrarDetalle()">✖</button></div><div id="detail-content" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"></div></div></div>
     <div id="import-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-5 w-96"><h4 class="font-bold mb-3">Configurar curso/paralelo para importación</h4><select id="import-curso" class="w-full p-2 border rounded mb-2"><option>1do.</option><option>2do</option><option>3ro.</option></select><select id="import-paralelo" class="w-full p-2 border rounded mb-4"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option></select><div class="flex justify-end gap-3"><button onclick="cerrarModalImportacion()">Cancelar</button><button onclick="confirmarImportacion()" class="bg-brand-600 text-white px-4 py-2 rounded-lg">Confirmar e Importar</button></div></div></div>
 
     <script>
-        // ==================== CONFIGURACIÓN DE FIREBASE (DATOS CORRECTOS) ====================
+        // ==================== CONFIGURACIÓN DE FIREBASE ====================
         const firebaseConfig = {
             apiKey: "AIzaSyC2CT_eH9XbEKBZKHTjXDMCkjHW7hYOGzs",
             authDomain: "evaluaciones-uefsc.firebaseapp.com",
@@ -172,7 +172,29 @@
             { pregunta: "10. Pensamiento crítico frente a IA", opciones: [{id:"A",texto:"Copiar sin analizar"},{id:"B",texto:"Usar sin comprender"},{id:"C",texto:"Evaluar y validar"},{id:"D",texto:"Evitar tecnología"}], correcta:"C" }
         ];
 
-        // ==================== INICIALIZACIÓN Y OBSERVADORES ====================
+        // ==================== ASEGURAMIENTO DE AUTENTICACIÓN ====================
+        async function ensureAuth() {
+            if (auth?.currentUser) {
+                try {
+                    await database.ref('.info/connected').once('value');
+                    return true;
+                } catch (e) {
+                    console.warn('Token expirado, reintentando autenticación...');
+                }
+            }
+            try {
+                await auth.signInAnonymously();
+                console.log('✅ Reautenticación anónima exitosa');
+                document.getElementById('connection-status').innerHTML = '🟢 Conectado a la nube';
+                return true;
+            } catch (err) {
+                console.error('❌ Falló la autenticación:', err);
+                document.getElementById('connection-status').innerHTML = '🔴 Sin conexión – Modo local';
+                return false;
+            }
+        }
+
+        // ==================== INICIALIZACIÓN ====================
         function iniciarFirebase() {
             document.getElementById('loading-data')?.classList.remove('hidden');
             try {
@@ -181,10 +203,11 @@
                 database = firebase.database();
                 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 auth.signInAnonymously()
-                    .then(() => {
+                    .then(async () => {
                         console.log("✅ Autenticación anónima exitosa");
                         document.getElementById('connection-status').innerHTML = '🟢 Conectado a la nube';
-                        // Suscribirse a estudiantes
+                        await ensureAuth();
+
                         database.ref('estudiantes').on('value', snapshot => {
                             estudiantes = [];
                             snapshot.forEach(child => {
@@ -195,14 +218,18 @@
                             actualizarPaneles();
                             document.getElementById('loading-data')?.classList.add('hidden');
                         }, error => { console.error("Error cargando estudiantes:", error); mostrarErrorConexion(); });
-                        // Suscribirse a calificaciones
+
                         database.ref('calificaciones').on('value', snapshot => {
                             calificaciones = [];
                             snapshot.forEach(child => calificaciones.push({ id: child.key, ...child.val() }));
                             console.log(`📝 Calificaciones cargadas: ${calificaciones.length}`);
                             actualizarPaneles();
                         });
-                        database.ref('configuracion/claveDocente').on('value', snap => { if(snap.exists()) CLAVE_DOCENTE = snap.val(); else database.ref('configuracion/claveDocente').set("Uesc2026.*"); });
+
+                        database.ref('configuracion/claveDocente').on('value', snap => {
+                            if(snap.exists()) CLAVE_DOCENTE = snap.val();
+                            else database.ref('configuracion/claveDocente').set("Uesc2026.*");
+                        });
                     })
                     .catch(err => { console.error("Error auth:", err); mostrarErrorConexion(); });
             } catch(e) { mostrarErrorConexion(); }
@@ -211,39 +238,109 @@
         function mostrarErrorConexion() {
             document.getElementById('loading-data')?.classList.add('hidden');
             document.getElementById('connection-status').innerHTML = '🔴 Sin conexión a Firebase - Modo local';
-            // Intentar cargar datos desde localStorage como respaldo
             let backup = localStorage.getItem('estudiantes_backup');
             if(backup) { estudiantes = JSON.parse(backup); actualizarSelectores(); actualizarPaneles(); }
         }
 
-        function guardarBackup() { localStorage.setItem('estudiantes_backup', JSON.stringify(estudiantes)); localStorage.setItem('calificaciones_backup', JSON.stringify(calificaciones)); }
+        function guardarBackup() {
+            localStorage.setItem('estudiantes_backup', JSON.stringify(estudiantes));
+            localStorage.setItem('calificaciones_backup', JSON.stringify(calificaciones));
+        }
 
-        // ==================== FUNCIONES DE ESCRITURA (Firebase + respaldo local) ====================
+        // ==================== FUNCIONES DE ESCRITURA MEJORADAS ====================
         async function guardarEstudiante(est) {
-            if(database && auth?.currentUser) {
-                await database.ref('estudiantes/' + est.cedula).set(est);
-            } else {
-                if(!estudiantes.some(e => e.cedula === est.cedula)) estudiantes.push(est);
+            if (estudiantes.some(e => e.cedula === est.cedula)) {
+                console.log(`Estudiante con cédula ${est.cedula} ya existe, omitiendo.`);
+                return false;
+            }
+
+            const authOk = await ensureAuth();
+            if (authOk && database) {
+                try {
+                    await database.ref('estudiantes/' + est.cedula).set(est);
+                    console.log(`✅ Guardado en Firebase: ${est.nombre}`);
+                } catch (error) {
+                    console.error('Error al escribir en Firebase:', error);
+                }
+            }
+
+            // Agregar al array local y refrescar UI
+            if (!estudiantes.some(e => e.cedula === est.cedula)) {
+                estudiantes.push(est);
                 guardarBackup();
                 actualizarSelectores();
                 actualizarPaneles();
+                console.log(`💾 Guardado localmente: ${est.nombre}`);
+                return true;
             }
+            return false;
         }
-        async function eliminarEstudianteFirebase(ced) { if(database && auth?.currentUser) await database.ref('estudiantes/' + ced).remove(); else { estudiantes = estudiantes.filter(e => e.cedula !== ced); guardarBackup(); actualizarSelectores(); actualizarPaneles(); } }
-        async function guardarCalificacion(cal) { let id = cal.cedula + '_' + Date.now(); if(database && auth?.currentUser) await database.ref('calificaciones/' + id).set(cal); else { calificaciones.push(cal); guardarBackup(); actualizarPaneles(); } }
-        async function limpiarCalificaciones() { if(database && auth?.currentUser) await database.ref('calificaciones').remove(); else { calificaciones = []; guardarBackup(); actualizarPaneles(); } }
-        async function limpiarEstudiantes() { if(database && auth?.currentUser) await database.ref('estudiantes').remove(); else { estudiantes = []; guardarBackup(); actualizarSelectores(); actualizarPaneles(); } }
 
-        // ==================== LÓGICA DE FILTROS Y ACTUALIZACIÓN DE UI ====================
+        async function eliminarEstudianteFirebase(ced) {
+            const authOk = await ensureAuth();
+            if (authOk && database) {
+                try { await database.ref('estudiantes/' + ced).remove(); } catch(e) { console.error(e); }
+            }
+            estudiantes = estudiantes.filter(e => e.cedula !== ced);
+            guardarBackup();
+            actualizarSelectores();
+            actualizarPaneles();
+        }
+
+        async function guardarCalificacion(cal) {
+            let id = cal.cedula + '_' + Date.now();
+            const authOk = await ensureAuth();
+            if (authOk && database) {
+                try { await database.ref('calificaciones/' + id).set(cal); } catch(e) { console.error(e); }
+            }
+            calificaciones.push(cal);
+            guardarBackup();
+            actualizarPaneles();
+        }
+
+        async function limpiarCalificaciones() {
+            const authOk = await ensureAuth();
+            if (authOk && database) {
+                try { await database.ref('calificaciones').remove(); } catch(e) { console.error(e); }
+            }
+            calificaciones = [];
+            guardarBackup();
+            actualizarPaneles();
+        }
+
+        async function limpiarEstudiantes() {
+            const authOk = await ensureAuth();
+            if (authOk && database) {
+                try { await database.ref('estudiantes').remove(); } catch(e) { console.error(e); }
+            }
+            estudiantes = [];
+            guardarBackup();
+            actualizarSelectores();
+            actualizarPaneles();
+        }
+
+        // ==================== UI Y FILTROS ====================
         function actualizarSelectores() {
             let cursosSet = new Set(), paralelosSet = new Set();
             estudiantes.forEach(e => { if(e.curso) cursosSet.add(e.curso); if(e.paralelo) paralelosSet.add(e.paralelo); });
             let cursos = Array.from(cursosSet).sort(), paralelos = Array.from(paralelosSet).sort();
             let selCurso = document.getElementById('select-filtro-curso'), selParalelo = document.getElementById('select-filtro-paralelo');
-            if(selCurso) { selCurso.innerHTML = cursos.map(c => `<option value="${c}">${c}</option>`).join(''); if(cursos.length && (!cursoActual || !cursos.includes(cursoActual))) cursoActual = cursos[0]; if(cursoActual) selCurso.value = cursoActual; else cursoActual = ""; }
-            if(selParalelo) { selParalelo.innerHTML = paralelos.map(p => `<option value="${p}">${p}</option>`).join(''); if(paralelos.length && (!paraleloActual || !paralelos.includes(paraleloActual))) paraleloActual = paralelos[0]; if(paraleloActual) selParalelo.value = paraleloActual; else paraleloActual = ""; }
+            if(selCurso) {
+                selCurso.innerHTML = cursos.map(c => `<option value="${c}">${c}</option>`).join('');
+                if(cursos.length && (!cursoActual || !cursos.includes(cursoActual))) cursoActual = cursos[0];
+                if(cursoActual) selCurso.value = cursoActual; else cursoActual = "";
+            }
+            if(selParalelo) {
+                selParalelo.innerHTML = paralelos.map(p => `<option value="${p}">${p}</option>`).join('');
+                if(paralelos.length && (!paraleloActual || !paralelos.includes(paraleloActual))) paraleloActual = paralelos[0];
+                if(paraleloActual) selParalelo.value = paraleloActual; else paraleloActual = "";
+            }
         }
-        function cambiarFiltro() { cursoActual = document.getElementById('select-filtro-curso').value; paraleloActual = document.getElementById('select-filtro-paralelo').value; actualizarPaneles(); }
+        function cambiarFiltro() {
+            cursoActual = document.getElementById('select-filtro-curso').value;
+            paraleloActual = document.getElementById('select-filtro-paralelo').value;
+            actualizarPaneles();
+        }
         function estudiantesFiltrados() { return estudiantes.filter(e => e.curso === cursoActual && e.paralelo === paraleloActual); }
         function calificacionesFiltradas() { let cedulas = new Set(estudiantesFiltrados().map(e => e.cedula)); return calificaciones.filter(c => cedulas.has(c.cedula)); }
         function actualizarPaneles() { actualizarMetricas(); mostrarTablaEstudiantes(); mostrarTablaCalificaciones(); }
@@ -252,10 +349,8 @@
             document.getElementById('metric-total-est').innerText = alumnos.length;
             document.getElementById('metric-evaluados').innerText = califs.length;
             let suma = 0, aprobados = 0; califs.forEach(c => { suma += c.nota; if(c.nota >= 7) aprobados++; });
-            let prom = califs.length ? (suma/califs.length).toFixed(2) : "0.00";
-            let pct = califs.length ? ((aprobados/califs.length)*100).toFixed(0) : 0;
-            document.getElementById('metric-promedio').innerText = prom;
-            document.getElementById('metric-aprobados').innerText = pct + "%";
+            document.getElementById('metric-promedio').innerText = califs.length ? (suma/califs.length).toFixed(2) : "0.00";
+            document.getElementById('metric-aprobados').innerText = califs.length ? ((aprobados/califs.length)*100).toFixed(0) + "%" : "0%";
         }
         function mostrarTablaEstudiantes() {
             let tbody = document.getElementById('tabla-estudiantes-body'), noAlert = document.getElementById('no-estudiantes-alert');
@@ -283,44 +378,268 @@
                 tbody.insertRow().innerHTML = row;
             });
         }
-        function verDetalle(ced) { let e = estudiantes.find(s => s.cedula === ced); if(!e) return; let cont = document.getElementById('detail-content'); cont.innerHTML = `<div><strong>Nombre:</strong> ${e.nombre||'-'}</div><div><strong>Cédula:</strong> ${e.cedula||'-'}</div><div><strong>Curso/Paralelo:</strong> ${e.curso||'-'} "${e.paralelo||'-'}"</div><div><strong>Fecha Nac.:</strong> ${e.fechaNac||'-'}</div><div><strong>Correo:</strong> ${e.correo||'-'}</div><div><strong>Representante:</strong> ${e.repNombre||'-'}</div><div><strong>Cédula R.:</strong> ${e.repCedula||'-'}</div><div><strong>Celular R.:</strong> ${e.repCelular||'-'}</div><div class="md:col-span-2"><strong>Observaciones:</strong> ${e.observaciones||'-'}</div>`; document.getElementById('detail-modal').classList.remove('hidden'); }
+        function verDetalle(ced) {
+            let e = estudiantes.find(s => s.cedula === ced);
+            if(!e) return;
+            let cont = document.getElementById('detail-content');
+            cont.innerHTML = `<div><strong>Nombre:</strong> ${e.nombre||'-'}</div><div><strong>Cédula:</strong> ${e.cedula||'-'}</div><div><strong>Curso/Paralelo:</strong> ${e.curso||'-'} "${e.paralelo||'-'}"</div><div><strong>Fecha Nac.:</strong> ${e.fechaNac||'-'}</div><div><strong>Correo:</strong> ${e.correo||'-'}</div><div><strong>Representante:</strong> ${e.repNombre||'-'}</div><div><strong>Cédula R.:</strong> ${e.repCedula||'-'}</div><div><strong>Celular R.:</strong> ${e.repCelular||'-'}</div><div class="md:col-span-2"><strong>Observaciones:</strong> ${e.observaciones||'-'}</div>`;
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
         function cerrarDetalle() { document.getElementById('detail-modal').classList.add('hidden'); }
         function forzarRecargaDatos() { location.reload(); }
 
-        // ==================== REPORTES ====================
+        // ==================== IMPORTACIÓN DE ESTUDIANTES (CORREGIDA) ====================
+        function prepararImportacionArchivo(e) {
+            archivoTemp = e.target.files[0];
+            importacionManual = false;
+            if (archivoTemp) document.getElementById('import-modal').classList.remove('hidden');
+        }
+        function prepararImportacionPegado() {
+            const txt = document.getElementById('textarea-importar').value.trim();
+            if (!txt) { alert("Pega los datos antes de continuar."); return; }
+            archivoTemp = null;
+            importacionManual = true;
+            document.getElementById('import-modal').classList.remove('hidden');
+        }
+        function cerrarModalImportacion() {
+            document.getElementById('import-modal').classList.add('hidden');
+            document.getElementById('file-import').value = '';
+            archivoTemp = null;
+        }
+
+        async function confirmarImportacion() {
+            const curso = document.getElementById('import-curso').value;
+            const paralelo = document.getElementById('import-paralelo').value;
+            cursoActual = curso;
+            paraleloActual = paralelo;
+            document.getElementById('select-filtro-curso').value = curso;
+            document.getElementById('select-filtro-paralelo').value = paralelo;
+            document.getElementById('import-modal').classList.add('hidden');
+
+            if (importacionManual) {
+                const texto = document.getElementById('textarea-importar').value.trim();
+                if (!texto) {
+                    alert("El área de texto está vacía. Pega los datos antes de importar.");
+                    return;
+                }
+                await procesarTextoImportacion(texto, curso, paralelo);
+            } else if (archivoTemp) {
+                try {
+                    const texto = await leerArchivoComoTexto(archivoTemp);
+                    if (!texto.trim()) {
+                        alert("El archivo está vacío o no se pudo leer correctamente.");
+                        return;
+                    }
+                    await procesarTextoImportacion(texto, curso, paralelo);
+                } catch (error) {
+                    console.error("Error al leer el archivo:", error);
+                    alert("Error al leer el archivo. Verifica que sea un archivo CSV válido.");
+                }
+            } else {
+                alert("No se ha seleccionado ningún archivo ni pegado datos.");
+            }
+
+            // Limpieza post-importación
+            archivoTemp = null;
+            document.getElementById('file-import').value = '';
+            document.getElementById('textarea-importar').value = '';
+            importacionManual = false;
+        }
+
+        function leerArchivoComoTexto(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        async function procesarTextoImportacion(texto, curso, paralelo) {
+            // Normalizar saltos de línea y eliminar líneas vacías
+            const lineas = texto
+                .replace(/\r\n?/g, '\n')
+                .split('\n')
+                .map(linea => linea.trim())
+                .filter(linea => linea.length > 0);
+
+            if (lineas.length < 2) {
+                alert("El archivo debe contener al menos una línea de cabecera y un estudiante. Verifica el formato CSV.");
+                return;
+            }
+
+            // Validar que la primera línea de datos tenga al menos 3 columnas
+            const primeraData = lineas[1].split(',');
+            if (primeraData.length < 3) {
+                alert("El formato no es válido. Cada estudiante debe tener al menos 3 columnas (Ord, Nómina, Cédula). Revisa la plantilla.");
+                return;
+            }
+
+            let exitos = 0, fallos = 0;
+            for (let i = 1; i < lineas.length; i++) {
+                const cols = lineas[i].split(',').map(c => c.trim());
+                if (cols.length >= 3) {
+                    const nombre = cols[1].toUpperCase();
+                    const cedula = cols[2];
+                    if (nombre && cedula) {
+                        const nuevo = {
+                            nombre,
+                            cedula,
+                            curso,
+                            paralelo,
+                            fechaNac: cols[3] || '',
+                            correo: cols[4] || '',
+                            repNombre: (cols[5] || '').toUpperCase(),
+                            repCedula: cols[6] || '',
+                            repCelular: cols[7] || '',
+                            observaciones: cols[8] || ''
+                        };
+                        const ok = await guardarEstudiante(nuevo);
+                        if (ok) exitos++;
+                        else fallos++;
+                    }
+                }
+            }
+
+            alert(`✅ ${exitos} estudiantes importados correctamente.\n❌ ${fallos} errores/duplicados.`);
+        }
+
+        async function agregarEstudiante() {
+            let nombre = document.getElementById('add-nombre').value.trim().toUpperCase();
+            let cedula = document.getElementById('add-cedula').value.trim();
+            let curso = document.getElementById('add-curso').value;
+            let paralelo = document.getElementById('add-paralelo').value;
+            if(!nombre || !cedula) { alert("Complete nombre y cédula"); return; }
+            let nuevo = {
+                nombre, cedula, curso, paralelo,
+                fechaNac: document.getElementById('add-fecha').value,
+                correo: document.getElementById('add-correo').value,
+                repNombre: document.getElementById('add-rep-nombre').value.trim().toUpperCase(),
+                repCedula: document.getElementById('add-rep-cedula').value,
+                repCelular: document.getElementById('add-rep-celular').value,
+                observaciones: document.getElementById('add-observaciones').value
+            };
+            const guardado = await guardarEstudiante(nuevo);
+            if(guardado) {
+                alert("Estudiante guardado");
+                limpiarFormulario();
+            } else {
+                alert("No se pudo guardar (cédula duplicada o error de conexión).");
+            }
+        }
+        function limpiarFormulario() {
+            ['add-nombre','add-cedula','add-fecha','add-correo','add-rep-nombre','add-rep-cedula','add-rep-celular','add-observaciones'].forEach(id => {
+                let el = document.getElementById(id); if(el) el.value = '';
+            });
+        }
+        async function eliminarEstudiante(ced) { if(confirm("¿Eliminar?")) await eliminarEstudianteFirebase(ced); }
+        function descargarPlantilla() {
+            let plantilla = "Ord,Nómina,Cédula,Fecha Nac,Correo,Nombre Representante,Cédula R,Cel.Representante,Observaciones\n1,ALAVA ORTIZ BERTHA ANAHIS,0850812348,2009-12-23,correo@ejemplo.com,REPRESENTANTE,0802348219,0996313327,";
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob(["\uFEFF"+plantilla], {type:'text/csv'}));
+            link.download = "plantilla_estudiantes.csv";
+            link.click();
+        }
+
+        // ==================== EVALUACIÓN ====================
+        function verificarEstudiante() {
+            let ced = document.getElementById('input-cedula').value.trim();
+            let est = estudiantes.find(e => e.cedula === ced);
+            if(!est) { document.getElementById('login-error').classList.remove('hidden'); return; }
+            document.getElementById('login-error').classList.add('hidden');
+            let ya = calificaciones.find(c => c.cedula === ced);
+            if(ya) {
+                document.getElementById('result-nota').innerText = `${ya.nota.toFixed(2)} / 10`;
+                mostrarPantalla('screen-results');
+                return;
+            }
+            estudianteActual = est;
+            document.getElementById('welcome-name').innerText = est.nombre;
+            document.getElementById('quiz-badge').innerText = est.nombre;
+            mostrarPantalla('screen-welcome');
+        }
+        function comenzarEvaluacion() { indicePregunta = 0; respuestas = {}; mostrarPregunta(); mostrarPantalla('screen-quiz'); }
+        function mostrarPregunta() {
+            let q = preguntas[indicePregunta];
+            document.getElementById('quiz-question').innerText = q.pregunta;
+            document.getElementById('quiz-progress').innerText = `Pregunta ${indicePregunta+1}/10`;
+            document.getElementById('quiz-bar').style.width = `${((indicePregunta+1)/10)*100}%`;
+            let container = document.getElementById('quiz-options');
+            container.innerHTML = '';
+            q.opciones.forEach(op => {
+                let selected = respuestas[indicePregunta] === op.id;
+                let btn = document.createElement('button');
+                btn.className = `w-full text-left p-3 rounded-xl border ${selected ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:bg-slate-50'} transition-all flex items-center gap-3`;
+                btn.innerHTML = `<div class="w-5 h-5 rounded-full border flex items-center justify-center ${selected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'}">${selected ? '✓' : ''}</div><span>${op.id}) ${op.texto}</span>`;
+                btn.onclick = () => { respuestas[indicePregunta] = op.id; mostrarPregunta(); };
+                container.appendChild(btn);
+            });
+            document.getElementById('quiz-next').innerText = indicePregunta === 9 ? "Finalizar" : "Siguiente";
+        }
+        function siguientePregunta() {
+            if(respuestas[indicePregunta] === undefined) { alert("Selecciona una respuesta"); return; }
+            if(indicePregunta < 9) { indicePregunta++; mostrarPregunta(); }
+            else finalizarEvaluacion();
+        }
+        async function finalizarEvaluacion() {
+            let correctas = 0;
+            preguntas.forEach((q,i) => { if(respuestas[i] === q.correcta) correctas++; });
+            let nota = correctas;
+            await guardarCalificacion({
+                cedula: estudianteActual.cedula, nombre: estudianteActual.nombre,
+                fecha: new Date().toLocaleString(), correctas, nota,
+                curso: estudianteActual.curso, paralelo: estudianteActual.paralelo
+            });
+            document.getElementById('result-nota').innerText = `${nota} / 10`;
+            mostrarPantalla('screen-results');
+        }
+
+        // ==================== NAVEGACIÓN ====================
+        function mostrarPantalla(id) {
+            document.querySelectorAll('[id^="screen-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function volverAlInicio() {
+            estudianteActual = null; indicePregunta = 0; respuestas = {};
+            document.getElementById('input-cedula').value = '';
+            document.getElementById('input-clave-docente').value = '';
+            mostrarPantalla('screen-login');
+        }
+        function mostrarAccesoDocente() { mostrarPantalla('screen-docente-login'); }
+        function validarAccesoDocente() {
+            let clave = document.getElementById('input-clave-docente').value;
+            if(clave === CLAVE_DOCENTE) {
+                actualizarPaneles();
+                mostrarPantalla('screen-docente-panel');
+            } else document.getElementById('docente-login-error').classList.remove('hidden');
+        }
+        function cerrarSesionDocente() { mostrarPantalla('screen-login'); }
+        function switchTab(tab) {
+            document.getElementById('tab-calificaciones').classList.toggle('hidden', tab !== 'calificaciones');
+            document.getElementById('tab-estudiantes').classList.toggle('hidden', tab !== 'estudiantes');
+            document.getElementById('tab-btn-calificaciones').classList.toggle('border-brand-600', tab === 'calificaciones');
+            document.getElementById('tab-btn-calificaciones').classList.toggle('text-brand-700', tab === 'calificaciones');
+            document.getElementById('tab-btn-estudiantes').classList.toggle('text-slate-500', tab !== 'estudiantes');
+            if(tab === 'estudiantes') mostrarTablaEstudiantes();
+        }
+        function filtrarCalificaciones() {
+            let term = document.getElementById('buscar-calificacion').value.toLowerCase();
+            let filtradas = calificacionesFiltradas().filter(c => c.nombre.toLowerCase().includes(term) || c.cedula.includes(term));
+            let tbody = document.getElementById('tabla-calificaciones-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            if(filtradas.length === 0) { document.getElementById('no-calif-alert')?.classList.remove('hidden'); return; }
+            document.getElementById('no-calif-alert')?.classList.add('hidden');
+            filtradas.forEach((c,i) => {
+                tbody.insertRow().innerHTML = `<tr><td class="p-3">${i+1}</td><td>${c.nombre}</td><td>${c.cedula}</td><td>${c.curso || cursoActual}</td><td>${c.fecha}</td><td class="text-center">${c.correctas}/10</td><td class="text-right font-bold">${c.nota.toFixed(2)}</td></tr>`;
+            });
+        }
         function generarReporteEstudiantes() { if(!estudiantes.length) { alert("No hay estudiantes."); return; } let html = `<div style="padding:20px"><h2>Reporte de Estudiantes</h2>`; let grupos = {}; estudiantes.forEach(e => { let key = `${e.curso||'?'} - ${e.paralelo||'?'}`; if(!grupos[key]) grupos[key] = []; grupos[key].push(e); }); for(let [g, lista] of Object.entries(grupos)) { html += `<h3>${g}</h3><table border="1" cellpadding="5"><tr><th>#</th><th>Nombre</th><th>Cédula</th><th>Correo</th></tr>`; lista.forEach((e,i) => { html += `<tr><td>${i+1}</td><td>${e.nombre}</td><td>${e.cedula}</td><td>${e.correo||''}</td></tr>`; }); html += `</table><br>`; } html += `</div>`; let win = window.open(); win.document.write(html); win.document.close(); }
         function generarReporteEvaluaciones() { if(!calificaciones.length) { alert("No hay evaluaciones."); return; } let html = `<div style="padding:20px"><h2>Reporte de Evaluaciones</h2>`; let grupos = {}; calificaciones.forEach(c => { let est = estudiantes.find(e => e.cedula === c.cedula); let key = est ? `${est.curso||'?'} - ${est.paralelo||'?'}` : 'Desconocido'; if(!grupos[key]) grupos[key] = []; grupos[key].push(c); }); for(let [g, lista] of Object.entries(grupos)) { html += `<h3>${g}</h3><table border="1" cellpadding="5"><tr><th>#</th><th>Estudiante</th><th>Cédula</th><th>Nota</th><th>Fecha</th></tr>`; lista.forEach((c,i) => { html += `<tr><td>${i+1}</td><td>${c.nombre}</td><td>${c.cedula}</td><td><strong>${c.nota.toFixed(2)}</strong></td><td>${c.fecha}</td></tr>`; }); html += `</table><br>`; } html += `</div>`; let win = window.open(); win.document.write(html); win.document.close(); }
         function exportarResultadosCSV() { let csv = "Estudiante,Cédula,Nota,Fecha\n"; calificaciones.forEach(c => csv += `${c.nombre},${c.cedula},${c.nota.toFixed(2)},${c.fecha}\n`); let link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(["\uFEFF"+csv], {type:'text/csv'})); link.download = "calificaciones.csv"; link.click(); }
         async function limpiarRegistros() { if(confirm("¿Borrar todas las calificaciones?")) await limpiarCalificaciones(); }
         async function limpiarNominaCompleta() { if(confirm("⚠️ ¿Vaciar toda la nómina? Esta acción es irreversible.")) await limpiarEstudiantes(); }
         async function generarDataSimulada() { if(confirm("Generar calificaciones aleatorias?")) { for(let e of estudiantesFiltrados()) { let correctas = Math.floor(Math.random()*11); await guardarCalificacion({ cedula:e.cedula, nombre:e.nombre, fecha: new Date().toLocaleString(), correctas, nota: correctas, curso:e.curso, paralelo:e.paralelo }); } alert("Calificaciones simuladas guardadas"); } }
-
-        // ==================== IMPORTACIÓN DE ESTUDIANTES ====================
-        function prepararImportacionArchivo(e) { let file = e.target.files[0]; if(!file) return; archivoTemp = file; importacionManual = false; document.getElementById('import-modal').classList.remove('hidden'); }
-        function prepararImportacionPegado() { let txt = document.getElementById('textarea-importar').value.trim(); if(!txt) { alert("Pega datos primero"); return; } archivoTemp = null; importacionManual = true; document.getElementById('import-modal').classList.remove('hidden'); }
-        function cerrarModalImportacion() { document.getElementById('import-modal').classList.add('hidden'); document.getElementById('file-import').value = ''; archivoTemp = null; }
-        async function confirmarImportacion() { let curso = document.getElementById('import-curso').value; let paralelo = document.getElementById('import-paralelo').value; cursoActual = curso; paraleloActual = paralelo; document.getElementById('select-filtro-curso').value = curso; document.getElementById('select-filtro-paralelo').value = paralelo; document.getElementById('import-modal').classList.add('hidden'); if(importacionManual) { await procesarTextoImportacion(document.getElementById('textarea-importar').value, curso, paralelo); } else if(archivoTemp) { let reader = new FileReader(); reader.onload = async ev => await procesarTextoImportacion(ev.target.result, curso, paralelo); reader.readAsText(archivoTemp); } }
-        async function procesarTextoImportacion(texto, curso, paralelo) { let lineas = texto.split(/\r?\n/); let importados = 0; for(let i=1; i<lineas.length; i++) { let cols = lineas[i].split(','); if(cols.length>=3) { let nombre = (cols[1]||'').trim().toUpperCase(); let cedula = (cols[2]||'').trim(); if(nombre && cedula && !estudiantes.some(e => e.cedula === cedula)) { let nuevo = { nombre, cedula, curso, paralelo, fechaNac: cols[3]||'', correo: cols[4]||'', repNombre: (cols[5]||'').toUpperCase(), repCedula: cols[6]||'', repCelular: cols[7]||'', observaciones: cols[8]||'' }; await guardarEstudiante(nuevo); importados++; } } } alert(`✅ ${importados} estudiantes importados.`); document.getElementById('textarea-importar').value = ''; }
-        async function agregarEstudiante() { let nombre = document.getElementById('add-nombre').value.trim().toUpperCase(); let cedula = document.getElementById('add-cedula').value.trim(); let curso = document.getElementById('add-curso').value; let paralelo = document.getElementById('add-paralelo').value; if(!nombre || !cedula) { alert("Complete nombre y cédula"); return; } if(estudiantes.some(e => e.cedula === cedula)) { alert("Cédula ya registrada"); return; } let nuevo = { nombre, cedula, curso, paralelo, fechaNac: document.getElementById('add-fecha').value, correo: document.getElementById('add-correo').value, repNombre: document.getElementById('add-rep-nombre').value.trim().toUpperCase(), repCedula: document.getElementById('add-rep-cedula').value, repCelular: document.getElementById('add-rep-celular').value, observaciones: document.getElementById('add-observaciones').value }; await guardarEstudiante(nuevo); alert("Estudiante guardado"); limpiarFormulario(); }
-        function limpiarFormulario() { ['add-nombre','add-cedula','add-fecha','add-correo','add-rep-nombre','add-rep-cedula','add-rep-celular','add-observaciones'].forEach(id => { let el = document.getElementById(id); if(el) el.value = ''; }); }
-        async function eliminarEstudiante(ced) { if(confirm("¿Eliminar?")) await eliminarEstudianteFirebase(ced); }
-        function descargarPlantilla() { let plantilla = "Ord,Nómina,Cédula,Fecha Nac,Correo,Nombre Representante,Cédula R,Cel.Representante,Observaciones\n1,ALAVA ORTIZ BERTHA ANAHIS,0850812348,2009-12-23,correo@ejemplo.com,REPRESENTANTE,0802348219,0996313327,"; let link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(["\uFEFF"+plantilla], {type:'text/csv'})); link.download = "plantilla_estudiantes.csv"; link.click(); }
-
-        // ==================== FUNCIONES DE EVALUACIÓN (ESTUDIANTE) ====================
-        function verificarEstudiante() { let ced = document.getElementById('input-cedula').value.trim(); let est = estudiantes.find(e => e.cedula === ced); if(!est) { document.getElementById('login-error').classList.remove('hidden'); return; } document.getElementById('login-error').classList.add('hidden'); let ya = calificaciones.find(c => c.cedula === ced); if(ya) { document.getElementById('result-nota').innerText = `${ya.nota.toFixed(2)} / 10`; mostrarPantalla('screen-results'); return; } estudianteActual = est; document.getElementById('welcome-name').innerText = est.nombre; document.getElementById('quiz-badge').innerText = est.nombre; mostrarPantalla('screen-welcome'); }
-        function comenzarEvaluacion() { indicePregunta = 0; respuestas = {}; mostrarPregunta(); mostrarPantalla('screen-quiz'); }
-        function mostrarPregunta() { let q = preguntas[indicePregunta]; document.getElementById('quiz-question').innerText = q.pregunta; document.getElementById('quiz-progress').innerText = `Pregunta ${indicePregunta+1}/10`; document.getElementById('quiz-bar').style.width = `${((indicePregunta+1)/10)*100}%`; let container = document.getElementById('quiz-options'); container.innerHTML = ''; q.opciones.forEach(op => { let selected = respuestas[indicePregunta] === op.id; let btn = document.createElement('button'); btn.className = `w-full text-left p-3 rounded-xl border ${selected ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:bg-slate-50'} transition-all flex items-center gap-3`; btn.innerHTML = `<div class="w-5 h-5 rounded-full border flex items-center justify-center ${selected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'}">${selected ? '✓' : ''}</div><span>${op.id}) ${op.texto}</span>`; btn.onclick = () => { respuestas[indicePregunta] = op.id; mostrarPregunta(); }; container.appendChild(btn); }); let nextBtn = document.getElementById('quiz-next'); nextBtn.innerText = indicePregunta === 9 ? "Finalizar" : "Siguiente"; }
-        function siguientePregunta() { if(respuestas[indicePregunta] === undefined) { alert("Selecciona una respuesta"); return; } if(indicePregunta < 9) { indicePregunta++; mostrarPregunta(); } else finalizarEvaluacion(); }
-        async function finalizarEvaluacion() { let correctas = 0; preguntas.forEach((q,i) => { if(respuestas[i] === q.correcta) correctas++; }); let nota = correctas; await guardarCalificacion({ cedula: estudianteActual.cedula, nombre: estudianteActual.nombre, fecha: new Date().toLocaleString(), correctas, nota, curso: estudianteActual.curso, paralelo: estudianteActual.paralelo }); document.getElementById('result-nota').innerText = `${nota} / 10`; mostrarPantalla('screen-results'); }
-
-        // ==================== NAVEGACIÓN GENERAL ====================
-        function mostrarPantalla(id) { document.querySelectorAll('[id^="screen-"]').forEach(el => el.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-        function volverAlInicio() { estudianteActual = null; indicePregunta = 0; respuestas = {}; document.getElementById('input-cedula').value = ''; document.getElementById('input-clave-docente').value = ''; mostrarPantalla('screen-login'); }
-        function mostrarAccesoDocente() { mostrarPantalla('screen-docente-login'); }
-        function validarAccesoDocente() { let clave = document.getElementById('input-clave-docente').value; if(clave === CLAVE_DOCENTE) { actualizarPaneles(); mostrarPantalla('screen-docente-panel'); } else document.getElementById('docente-login-error').classList.remove('hidden'); }
-        function cerrarSesionDocente() { mostrarPantalla('screen-login'); }
-        function switchTab(tab) { document.getElementById('tab-calificaciones').classList.toggle('hidden', tab !== 'calificaciones'); document.getElementById('tab-estudiantes').classList.toggle('hidden', tab !== 'estudiantes'); document.getElementById('tab-btn-calificaciones').classList.toggle('border-brand-600', tab === 'calificaciones'); document.getElementById('tab-btn-calificaciones').classList.toggle('text-brand-700', tab === 'calificaciones'); document.getElementById('tab-btn-estudiantes').classList.toggle('text-slate-500', tab !== 'estudiantes'); if(tab === 'estudiantes') mostrarTablaEstudiantes(); }
-        function filtrarCalificaciones() { let term = document.getElementById('buscar-calificacion').value.toLowerCase(); let filtradas = calificacionesFiltradas().filter(c => c.nombre.toLowerCase().includes(term) || c.cedula.includes(term)); let tbody = document.getElementById('tabla-calificaciones-body'); if(!tbody) return; tbody.innerHTML = ''; if(filtradas.length === 0) { document.getElementById('no-calif-alert')?.classList.remove('hidden'); return; } document.getElementById('no-calif-alert')?.classList.add('hidden'); filtradas.forEach((c,i) => { let row = `<tr><td class="p-3">${i+1}</td><td>${c.nombre}</td><td>${c.cedula}</td><td>${c.curso || cursoActual}</td><td>${c.fecha}</td><td class="text-center">${c.correctas}/10</td><td class="text-right font-bold">${c.nota.toFixed(2)}</td></tr>`; tbody.insertRow().innerHTML = row; }); }
 
         // Seguridad
         document.addEventListener('keydown', e => { if(e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u')) { e.preventDefault(); document.getElementById('security-block-screen').classList.remove('hidden'); } });
@@ -329,7 +648,33 @@
         // Iniciar aplicación
         iniciarFirebase();
 
-        window.verificarEstudiante = verificarEstudiante; window.comenzarEvaluacion = comenzarEvaluacion; window.siguientePregunta = siguientePregunta; window.mostrarAccesoDocente = mostrarAccesoDocente; window.validarAccesoDocente = validarAccesoDocente; window.cerrarSesionDocente = cerrarSesionDocente; window.volverAlInicio = volverAlInicio; window.exportarResultadosCSV = exportarResultadosCSV; window.limpiarRegistros = limpiarRegistros; window.generarDataSimulada = generarDataSimulada; window.switchTab = switchTab; window.filtrarCalificaciones = filtrarCalificaciones; window.descargarPlantilla = descargarPlantilla; window.prepararImportacionArchivo = prepararImportacionArchivo; window.prepararImportacionPegado = prepararImportacionPegado; window.cerrarModalImportacion = cerrarModalImportacion; window.confirmarImportacion = confirmarImportacion; window.agregarEstudiante = agregarEstudiante; window.limpiarNominaCompleta = limpiarNominaCompleta; window.eliminarEstudiante = eliminarEstudiante; window.verDetalle = verDetalle; window.cerrarDetalle = cerrarDetalle; window.cambiarFiltro = cambiarFiltro; window.generarReporteEstudiantes = generarReporteEstudiantes; window.generarReporteEvaluaciones = generarReporteEvaluaciones; window.forzarRecargaDatos = forzarRecargaDatos;
+        // Exponer funciones globales
+        window.verificarEstudiante = verificarEstudiante;
+        window.comenzarEvaluacion = comenzarEvaluacion;
+        window.siguientePregunta = siguientePregunta;
+        window.mostrarAccesoDocente = mostrarAccesoDocente;
+        window.validarAccesoDocente = validarAccesoDocente;
+        window.cerrarSesionDocente = cerrarSesionDocente;
+        window.volverAlInicio = volverAlInicio;
+        window.exportarResultadosCSV = exportarResultadosCSV;
+        window.limpiarRegistros = limpiarRegistros;
+        window.generarDataSimulada = generarDataSimulada;
+        window.switchTab = switchTab;
+        window.filtrarCalificaciones = filtrarCalificaciones;
+        window.descargarPlantilla = descargarPlantilla;
+        window.prepararImportacionArchivo = prepararImportacionArchivo;
+        window.prepararImportacionPegado = prepararImportacionPegado;
+        window.cerrarModalImportacion = cerrarModalImportacion;
+        window.confirmarImportacion = confirmarImportacion;
+        window.agregarEstudiante = agregarEstudiante;
+        window.limpiarNominaCompleta = limpiarNominaCompleta;
+        window.eliminarEstudiante = eliminarEstudiante;
+        window.verDetalle = verDetalle;
+        window.cerrarDetalle = cerrarDetalle;
+        window.cambiarFiltro = cambiarFiltro;
+        window.generarReporteEstudiantes = generarReporteEstudiantes;
+        window.generarReporteEvaluaciones = generarReporteEvaluaciones;
+        window.forzarRecargaDatos = forzarRecargaDatos;
     </script>
 </body>
 </html>
