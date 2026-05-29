@@ -208,6 +208,44 @@
             return numero(valor).toFixed(2);
         }
 
+        function timestampCalificacion(cal) {
+            const idTime = String(cal?.id || '').match(/_(\d{10,})$/)?.[1];
+            if (idTime) return Number(idTime);
+            const fechaTime = Date.parse(cal?.fecha || '');
+            return Number.isFinite(fechaTime) ? fechaTime : 0;
+        }
+
+        function calificacionesUnicas(lista = calificaciones) {
+            const mapa = new Map();
+            lista.forEach(cal => {
+                const clave = normalizarCedula(cal.cedula) || `sin_cedula_${texto(cal.nombre).toUpperCase()}_${texto(cal.fecha)}`;
+                const actual = mapa.get(clave);
+                if (!actual || timestampCalificacion(cal) < timestampCalificacion(actual)) {
+                    mapa.set(clave, cal);
+                }
+            });
+            return Array.from(mapa.values());
+        }
+
+        function calificacionExistentePorCedula(cedula) {
+            const ced = normalizarCedula(cedula);
+            return calificacionesUnicas().find(c => c.cedula === ced);
+        }
+
+        function etiquetaFiltroReporte() {
+            const curso = cursoActual || 'Todos los cursos';
+            const paralelo = paraleloActual || 'Todos los paralelos';
+            return `${curso} - ${paralelo}`;
+        }
+
+        function validarFiltroReporte() {
+            if (!cursoActual || !paraleloActual) {
+                alert("Seleccione un curso y un paralelo antes de generar el reporte.");
+                return false;
+            }
+            return true;
+        }
+
         function escapeHtml(valor) {
             return texto(valor).replace(/[&<>"']/g, ch => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -681,17 +719,41 @@
 
         async function guardarCalificacion(cal) {
             cal = normalizarCalificacion({ clave: cal.cedula, valor: cal, ruta: [cal.cedula] });
-            let id = `${cal.cedula}_${Date.now()}`;
-            cal.id = id;
+            const existenteLocal = calificacionExistentePorCedula(cal.cedula);
+            if (existenteLocal) {
+                console.warn(`Evaluación duplicada bloqueada para cédula ${cal.cedula}.`);
+                return { guardado: false, duplicado: true, existente: existenteLocal };
+            }
+
             const authOk = await ensureAuth();
+            if (authOk) {
+                try {
+                    const remoto = normalizarListaCalificaciones(await leerValorRutaFirebase(rutaCalificaciones));
+                    const existenteRemoto = calificacionesUnicas(remoto).find(c => c.cedula === cal.cedula);
+                    if (existenteRemoto) {
+                        calificaciones = calificacionesUnicas([...calificaciones, ...remoto]);
+                        guardarBackup();
+                        actualizarPaneles();
+                        console.warn(`Evaluación remota duplicada bloqueada para cédula ${cal.cedula}.`);
+                        return { guardado: false, duplicado: true, existente: existenteRemoto };
+                    }
+                } catch (e) {
+                    console.warn('No se pudo verificar duplicados remotos antes de guardar:', e);
+                }
+            }
+
+            let id = cal.cedula;
+            cal.id = id;
             if (authOk && database) {
                 try { await guardarValorFirebase(`${rutaCalificaciones}/${id}`, cal); } catch(e) { console.error(e); }
             } else if (authOk) {
                 try { await guardarValorFirebase(`${rutaCalificaciones}/${id}`, cal); } catch(e) { console.error(e); }
             }
             if (!calificaciones.some(c => c.id === id)) calificaciones.push(cal);
+            calificaciones = calificacionesUnicas(calificaciones);
             guardarBackup();
             actualizarPaneles();
+            return { guardado: true, duplicado: false, calificacion: cal };
         }
 
         async function limpiarCalificaciones() {
@@ -749,9 +811,10 @@
             return estudiantes.filter(e => (!cursoActual || e.curso === cursoActual) && (!paraleloActual || e.paralelo === paraleloActual));
         }
         function calificacionesFiltradas() {
-            if (!cursoActual && !paraleloActual) return calificaciones;
+            const unicas = calificacionesUnicas();
+            if (!cursoActual && !paraleloActual) return unicas;
             let cedulas = new Set(estudiantesFiltrados().map(e => e.cedula));
-            return calificaciones.filter(c => {
+            return unicas.filter(c => {
                 const coincideCalificacion = (!cursoActual || c.curso === cursoActual) && (!paraleloActual || c.paralelo === paraleloActual);
                 return cedulas.has(c.cedula) || coincideCalificacion;
             });
@@ -773,7 +836,7 @@
             if(alumnos.length === 0) { noAlert?.classList.remove('hidden'); return; }
             noAlert?.classList.add('hidden');
             alumnos.forEach((e,i) => {
-                let evaluado = calificaciones.some(c => c.cedula === e.cedula);
+                let evaluado = !!calificacionExistentePorCedula(e.cedula);
                 let badge = evaluado ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px]">✅ Evaluado</span>' : '<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px]">⏳ Pendiente</span>';
                 let row = `<tr class="border-b"><td class="p-2">${i+1}</td><td class="p-2 font-semibold">${escapeHtml(e.nombre)||'-'}</td><td class="p-2">${escapeHtml(e.curso)||'-'}</td><td class="p-2">${escapeHtml(e.paralelo)||'-'}</td><td class="p-2 font-mono">${escapeHtml(e.cedula)||'-'}</td><td class="p-2 text-center">${badge}</td><td class="p-2 text-center"><button onclick="verDetalle('${e.cedula}')" class="text-brand-600 text-[10px] bg-brand-50 px-2 py-1 rounded">👤 Ficha</button> <button onclick="eliminarEstudiante('${e.cedula}')" class="text-rose-600 text-[10px] bg-rose-50 px-2 py-1 rounded">🗑️</button></td></tr>`;
                 tbody.insertRow().innerHTML = row;
@@ -1000,7 +1063,7 @@
                 return;
             }
             document.getElementById('login-error').classList.add('hidden');
-            let ya = calificaciones.find(c => c.cedula === ced);
+            let ya = calificacionExistentePorCedula(ced);
             if(ya) {
                 document.getElementById('result-nota').innerText = `${formatearNota(ya.nota)} / 10`;
                 mostrarPantalla('screen-results');
@@ -1038,11 +1101,18 @@
             let correctas = 0;
             preguntas.forEach((q,i) => { if(respuestas[i] === q.correcta) correctas++; });
             let nota = correctas;
-            await guardarCalificacion({
+            const resultadoGuardado = await guardarCalificacion({
                 cedula: estudianteActual.cedula, nombre: estudianteActual.nombre,
                 fecha: new Date().toLocaleString(), correctas, nota,
                 curso: estudianteActual.curso, paralelo: estudianteActual.paralelo
             });
+            if (resultadoGuardado?.duplicado) {
+                const notaExistente = resultadoGuardado.existente?.nota ?? 0;
+                alert("Ya existe una evaluación registrada para este estudiante. No se guardará una segunda evaluación.");
+                document.getElementById('result-nota').innerText = `${formatearNota(notaExistente)} / 10`;
+                mostrarPantalla('screen-results');
+                return;
+            }
             document.getElementById('result-nota').innerText = `${nota} / 10`;
             mostrarPantalla('screen-results');
         }
@@ -1122,14 +1192,25 @@
         h1 { margin: 0; color: #075985; font-size: 22px; }
         h2 { color: #334155; font-size: 17px; margin-top: 22px; }
         .meta { color: #475569; font-size: 12px; margin-top: 4px; }
+        .filtro { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; margin: 12px 0; font-size: 12px; }
         .actions { margin: 14px 0; }
         button { background: #0369a1; border: 0; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; font-size: 12px; }
-        th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; font-size: 11px; table-layout: fixed; }
+        th, td { border: 1px solid #cbd5e1; padding: 5px 7px; text-align: left; vertical-align: top; overflow-wrap: anywhere; word-break: normal; line-height: 1.25; }
         th { background: #e0f2fe; color: #0c4a6e; }
         tr:nth-child(even) { background: #f8fafc; }
         .right { text-align: right; }
         .center { text-align: center; }
+        .col-num { width: 34px; }
+        .col-nombre { width: 34%; }
+        .col-cedula { width: 86px; }
+        .col-correo { width: 20%; }
+        .col-fecha { width: 125px; }
+        .col-nota { width: 70px; }
+        .col-abrev { width: 70px; text-align: center; font-weight: bold; }
+        .col-cantidad { width: 80px; text-align: center; }
+        .col-porcentaje { width: 80px; text-align: center; }
+        .resumen { margin-top: 22px; page-break-inside: avoid; }
         @media print { .actions { display: none; } body { margin: 8mm; } }
     </style>
 </head>
@@ -1158,17 +1239,40 @@
             alert("El navegador bloqueó la ventana del reporte. Se descargó un archivo HTML que puedes abrir e imprimir.");
         }
 
+        function tablaResultadosEvaluacion(lista) {
+            const total = lista.length;
+            const rangos = [
+                { texto: 'Destreza o aprendizaje alcanzado. (9-10)', abrev: 'DAR', desde: 9, hasta: 10 },
+                { texto: 'Alcanza los aprendizajes requeridos (7-8.99)', abrev: 'AAR', desde: 7, hasta: 8.99 },
+                { texto: 'Próximo alcanzar los aprendizajes requeridos (4-6.99)', abrev: 'PAR', desde: 4.000001, hasta: 6.99 },
+                { texto: 'No alcanza los aprendizajes requeridos <= 4', abrev: 'NAR', desde: Number.NEGATIVE_INFINITY, hasta: 4 }
+            ];
+            let html = `<div class="resumen"><h2>RESULTADOS DE EVALUACIÓN DEL CURSO</h2><table><tr><th>Escala cualitativa</th><th class="col-abrev">Sigla</th><th class="col-cantidad">Cantidad</th><th class="col-porcentaje">Porcentaje</th></tr>`;
+            rangos.forEach(rango => {
+                const cantidad = lista.filter(c => {
+                    const nota = numero(c.nota);
+                    return nota >= rango.desde && nota <= rango.hasta;
+                }).length;
+                const porcentaje = total ? ((cantidad / total) * 100).toFixed(1) + '%' : '0.0%';
+                html += `<tr><td>${escapeHtml(rango.texto)}</td><td class="col-abrev">${rango.abrev}</td><td class="col-cantidad">${cantidad}</td><td class="col-porcentaje">${porcentaje}</td></tr>`;
+            });
+            html += `<tr><th>TOTAL</th><th></th><th class="col-cantidad">${total}</th><th class="col-porcentaje">${total ? '100.0%' : '0.0%'}</th></tr></table></div>`;
+            return html;
+        }
+
         function generarReporteEstudiantes() {
-            if(!estudiantes.length) { alert("No hay estudiantes."); return; }
-            let html = `<p><strong>Total de estudiantes:</strong> ${estudiantes.length}</p>`;
+            if (!validarFiltroReporte()) return;
+            const alumnos = estudiantesFiltrados();
+            if(!alumnos.length) { alert("No hay estudiantes para el curso/paralelo seleccionado."); return; }
+            let html = `<div class="filtro"><strong>Filtro aplicado:</strong> ${escapeHtml(etiquetaFiltroReporte())}</div><p><strong>Total de estudiantes:</strong> ${alumnos.length}</p>`;
             let grupos = {};
-            estudiantes.forEach(e => {
+            alumnos.forEach(e => {
                 let key = `${e.curso||'Sin curso'} - ${e.paralelo||'Sin paralelo'}`;
                 if(!grupos[key]) grupos[key] = [];
                 grupos[key].push(e);
             });
             for(let [g, lista] of Object.entries(grupos)) {
-                html += `<h2>${escapeHtml(g)} (${lista.length})</h2><table><tr><th>#</th><th>Nómina</th><th>Cédula</th><th>Correo</th><th>Representante</th><th>Celular</th></tr>`;
+                html += `<h2>${escapeHtml(g)} (${lista.length})</h2><table><tr><th class="col-num">#</th><th class="col-nombre">Nómina</th><th class="col-cedula">Cédula</th><th class="col-correo">Correo</th><th>Representante</th><th>Celular</th></tr>`;
                 lista.forEach((e,i) => {
                     html += `<tr><td class="center">${i+1}</td><td>${escapeHtml(e.nombre)}</td><td>${escapeHtml(e.cedula)}</td><td>${escapeHtml(e.correo||'')}</td><td>${escapeHtml(e.repNombre||'')}</td><td>${escapeHtml(e.repCelular||'')}</td></tr>`;
                 });
@@ -1178,38 +1282,41 @@
         }
 
         function generarReporteEvaluaciones() {
-            if(!calificaciones.length) { alert("No hay evaluaciones."); return; }
+            if (!validarFiltroReporte()) return;
+            const listaEvaluaciones = calificacionesFiltradas();
+            if(!listaEvaluaciones.length) { alert("No hay evaluaciones para el curso/paralelo seleccionado."); return; }
             let suma = 0, aprobados = 0;
-            calificaciones.forEach(c => { const nota = numero(c.nota); suma += nota; if(nota >= 7) aprobados++; });
-            let html = `<p><strong>Total de evaluaciones:</strong> ${calificaciones.length} &nbsp; <strong>Promedio:</strong> ${(suma/calificaciones.length).toFixed(2)} &nbsp; <strong>Aprobados:</strong> ${aprobados}</p>`;
+            listaEvaluaciones.forEach(c => { const nota = numero(c.nota); suma += nota; if(nota >= 7) aprobados++; });
+            let html = `<div class="filtro"><strong>Filtro aplicado:</strong> ${escapeHtml(etiquetaFiltroReporte())}</div><p><strong>Total de evaluaciones:</strong> ${listaEvaluaciones.length} &nbsp; <strong>Promedio:</strong> ${(suma/listaEvaluaciones.length).toFixed(2)} &nbsp; <strong>Aprobados:</strong> ${aprobados}</p>`;
             let grupos = {};
-            calificaciones.forEach(c => {
+            listaEvaluaciones.forEach(c => {
                 let est = estudiantes.find(e => e.cedula === c.cedula);
                 let key = est ? `${est.curso||'Sin curso'} - ${est.paralelo||'Sin paralelo'}` : `${c.curso||'Desconocido'} - ${c.paralelo||'?'}`;
                 if(!grupos[key]) grupos[key] = [];
                 grupos[key].push(c);
             });
             for(let [g, lista] of Object.entries(grupos)) {
-                html += `<h2>${escapeHtml(g)} (${lista.length})</h2><table><tr><th>#</th><th>Estudiante</th><th>Cédula</th><th>Fecha</th><th class="center">Correctas</th><th class="right">Nota</th></tr>`;
+                html += `<h2>${escapeHtml(g)} (${lista.length})</h2><table><tr><th class="col-num">#</th><th class="col-nombre">Estudiante</th><th class="col-fecha">Fecha</th><th class="col-nota right">Nota</th></tr>`;
                 lista.forEach((c,i) => {
-                    html += `<tr><td class="center">${i+1}</td><td>${escapeHtml(c.nombre)}</td><td>${escapeHtml(c.cedula)}</td><td>${escapeHtml(c.fecha)}</td><td class="center">${numero(c.correctas)}/10</td><td class="right"><strong>${formatearNota(c.nota)}</strong></td></tr>`;
+                    html += `<tr><td class="center">${i+1}</td><td>${escapeHtml(c.nombre)}</td><td>${escapeHtml(c.fecha)}</td><td class="right"><strong>${formatearNota(c.nota)}</strong></td></tr>`;
                 });
                 html += `</table>`;
             }
+            html += tablaResultadosEvaluacion(listaEvaluaciones);
             abrirODescargarReporte("Reporte de Evaluaciones", html, `reporte_evaluaciones_${fechaArchivo()}.html`);
         }
 
         function exportarResultadosCSV() {
-            if(!calificaciones.length) { alert("No hay evaluaciones para exportar."); return; }
-            let csv = "Estudiante,Cedula,Curso,Paralelo,Correctas,Nota,Fecha\n";
-            calificaciones.forEach(c => {
+            if (!validarFiltroReporte()) return;
+            const listaEvaluaciones = calificacionesFiltradas();
+            if(!listaEvaluaciones.length) { alert("No hay evaluaciones para exportar en el filtro seleccionado."); return; }
+            let csv = "Estudiante,Curso,Paralelo,Nota,Fecha\n";
+            listaEvaluaciones.forEach(c => {
                 let est = estudiantes.find(e => e.cedula === c.cedula);
                 csv += [
                     csvCampo(c.nombre || est?.nombre),
-                    csvCampo(c.cedula),
                     csvCampo(c.curso || est?.curso),
                     csvCampo(c.paralelo || est?.paralelo),
-                    csvCampo(numero(c.correctas)),
                     csvCampo(formatearNota(c.nota)),
                     csvCampo(c.fecha)
                 ].join(',') + "\n";
