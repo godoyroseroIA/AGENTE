@@ -761,12 +761,18 @@
         // Estrategia: SDK Realtime DB (tiempo real, sin auth) → REST puro → local
         //
         // REGLAS RTDB requeridas en Firebase Console:
-        //   { "rules": { ".read": true, ".write": true } }
+        //   permitir lectura/escritura en los nodos usados por la app.
+        //   No se debe depender de leer la raiz del RTDB.
         //
         // No requiere Firebase Auth ni ningún dominio de Google adicional.
         // =====================================================================
 
         const RTDB_URL = firebaseConfig.databaseURL;
+        const RTDB_PROBE_PATHS = [
+            'configuracion/periodoActivo',
+            'estudiantes',
+            'nptArchivos'
+        ];
 
         /** Construye la URL REST del RTDB para una ruta dada, sin token */
         function rtdbRestUrl(ruta) {
@@ -803,6 +809,19 @@
                 setTimeout(() => reject(new Error('fetchFirebase: timeout ' + TIMEOUT_MS + 'ms')), TIMEOUT_MS)
             );
             return Promise.race([fetchPromise, timeoutPromise]);
+        }
+
+        async function verificarConexionFirebase() {
+            let ultimoError = null;
+            for (const ruta of RTDB_PROBE_PATHS) {
+                try {
+                    await fetchFirebase(rtdbRestUrl(ruta));
+                    return true;
+                } catch (e) {
+                    ultimoError = e;
+                }
+            }
+            throw ultimoError || new Error('No se pudo verificar Firebase');
         }
 
         /** Lee un nodo RTDB. Prioriza SDK (tiempo real), cae a REST. */
@@ -980,8 +999,8 @@
             // ── Nivel 2: verificar acceso REST ──────────────────────────────
             if (fb_modo === 'rest') {
                 try {
-                    // fetchFirebase ya maneja timeout interno de 10 s
-                    await fetchFirebase(`${RTDB_URL}/.json`);
+                    // Probar una ruta permitida por reglas; la raiz puede estar bloqueada.
+                    await verificarConexionFirebase();
                     actualizarEstadoConexion('🟢 Conectado (REST)');
                     console.info('[FB] Modo REST activo — conexión verificada.');
                 } catch (restErr) {
@@ -1005,7 +1024,7 @@
             catch (e) { console.warn('[FB] Error iniciando módulo NPT:', e.message); }
 
             // ── Cargar configuración del sistema (período, trimestres, fórmula) ──
-            try { await cargarConfigSistema(); actualizarSelectoresTrimestre(); actualizarBadgePeriodo(); }
+            try { await cargarConfigSistema(); actualizarSelectoresTrimestre(); actualizarBadgePeriodo(); actualizarPaneles(); renderTrimestresEstudiante(); }
             catch (e) { console.warn('[FB] Error cargando configuración del sistema:', e.message); }
 
             // ── Clave docente ────────────────────────────────────────────────
@@ -1057,7 +1076,7 @@
             if (fb_modo === 'local') return false;
             // Modo desconocido: intentar conexión REST rápida
             try {
-                await fetchFirebase(`${RTDB_URL}/.json`);
+                await verificarConexionFirebase();
                 fb_modo = 'rest';
                 actualizarEstadoConexion('🟢 Conectado (REST)');
                 return true;
@@ -1579,6 +1598,14 @@
                 document.getElementById('login-error').classList.remove('hidden');
                 return;
             }
+            const nptOk = await esperarModuloNPT();
+            if (!nptOk) {
+                document.getElementById('login-error-text').innerText = "No se pudieron cargar las entregas NPT. Revisa la conexión e intenta de nuevo.";
+                document.getElementById('login-error').classList.remove('hidden');
+                return;
+            }
+            try { await cargarConfigSistema(); actualizarSelectoresTrimestre(); actualizarBadgePeriodo(); }
+            catch (e) { console.warn('[NPT] No se pudo refrescar configuración antes del acceso estudiante:', e.message); }
             const local = texto(document.getElementById('input-email-local').value).trim().toLowerCase();
             const ced = normalizarCedula(document.getElementById('input-cedula').value);
             document.getElementById('input-cedula').value = ced;
@@ -1726,14 +1753,33 @@
             mostrarPantalla('screen-login');
         }
         function mostrarAccesoDocente() { mostrarPantalla('screen-docente-login'); }
-        function validarAccesoDocente() {
+        async function validarAccesoDocente() {
             let clave = document.getElementById('input-clave-docente').value;
             if(clave === CLAVE_DOCENTE) {
+                document.getElementById('docente-login-error')?.classList.add('hidden');
+                const datosOk = await esperarDatosIniciales();
+                const nptOk = await esperarModuloNPT();
+                if (!datosOk || !nptOk) {
+                    const err = document.getElementById('docente-login-error');
+                    if (err) {
+                        err.textContent = 'No se pudieron cargar datos/entregas NPT. Revisa la conexión e intenta de nuevo.';
+                        err.classList.remove('hidden');
+                    }
+                    return;
+                }
+                try { await cargarConfigSistema(); actualizarSelectoresTrimestre(); actualizarBadgePeriodo(); }
+                catch (e) { console.warn('[NPT] No se pudo refrescar configuración antes del acceso docente:', e.message); }
                 actualizarPaneles();
                 mostrarPantalla('screen-docente-panel');
                 // Registrar acceso del docente (contador)
                 registrarAccesoDocente();
-            } else document.getElementById('docente-login-error').classList.remove('hidden');
+            } else {
+                const err = document.getElementById('docente-login-error');
+                if (err) {
+                    err.textContent = 'Clave incorrecta';
+                    err.classList.remove('hidden');
+                }
+            }
         }
         function cerrarSesionDocente() { mostrarPantalla('screen-login'); }
         function switchTab(tab) {
@@ -1802,6 +1848,9 @@
         let nptObservacionesDevolucion = {}; // { cedula: { trimestreN: { tipo: { fecha, docente, motivo } } } }
         let nptNotaModalCtx = null; // { cedula, nombre, trimestre, tipo }
         let nptGestionCtx = null;   // { trimestre } — trimestre actualmente en gestión (modal docente)
+        let nptInicializado = false;
+        let nptInitPromise = null;
+        let nptListenersActivos = false;
 
         // ==================== CONFIGURACIÓN DEL SISTEMA ====================
         // Período académico activo + trimestres configurables + fórmula de promedio
@@ -1824,6 +1873,44 @@
 
         function sanitizarClave(v) {
             return texto(v).trim().replace(/[.#$\/\[\]\s]+/g, '_').toUpperCase() || '_';
+        }
+
+        function unicos(lista) {
+            return Array.from(new Set(lista.filter(v => v !== undefined && v !== null && String(v).trim() !== '')));
+        }
+
+        function nptAliasCurso(curso) {
+            const grado = String.fromCharCode(176);
+            const clave = sanitizarClave(curso);
+            const limpio = texto(curso).trim().toUpperCase().replace(/\s+/g, '').replace(/\.$/, '');
+            const aliases = [clave];
+            if (/^1/.test(limpio)) aliases.push(`1${grado}`, '1DO_', '1DO', '1RO_', '1RO');
+            if (/^2/.test(limpio)) aliases.push(`2${grado}`, '2DO_', '2DO');
+            if (/^3/.test(limpio)) aliases.push(`3${grado}`, '3RO_', '3RO');
+            return unicos(aliases);
+        }
+
+        function nptAliasParalelo(paralelo) {
+            const normal = texto(paralelo).trim().toUpperCase();
+            return unicos([sanitizarClave(paralelo), normal]);
+        }
+
+        function nptNodoCursoParalelo(origen, curso, paralelo) {
+            if (!origen || typeof origen !== 'object') return null;
+            for (const c of nptAliasCurso(curso)) {
+                const porCurso = origen[c];
+                if (!porCurso || typeof porCurso !== 'object') continue;
+                for (const p of nptAliasParalelo(paralelo)) {
+                    if (porCurso[p] !== undefined && porCurso[p] !== null) return porCurso[p];
+                }
+            }
+            return null;
+        }
+
+        function nptNodoTrimestre(origen, curso, paralelo, n) {
+            const nodo = nptNodoCursoParalelo(origen, curso, paralelo);
+            if (!nodo || typeof nodo !== 'object') return null;
+            return nodo[n] || nodo[String(n)] || null;
         }
 
         // ---- Carga de configuración NPT ----
@@ -1877,8 +1964,10 @@
                 cargarExamenesNPT(), cargarRubricasNPT(), cargarArchivosNPT(), cargarNotasNPT(), cargarEvaluacionesIANPT(),
                 cargarObservacionesDevolucionNPT()
             ]);
+            nptInicializado = true;
             // Listeners en tiempo real — solo necesitan el SDK de database (sin auth)
-            if (database) {
+            if (database && !nptListenersActivos) {
+                nptListenersActivos = true;
                 database.ref('nptConfig').on('value', snap => {
                     nptConfig = snap.val() || {};
                     renderControlTrimestres();
@@ -1933,33 +2022,49 @@
             }
         }
 
+        async function esperarModuloNPT() {
+            if (nptInicializado) return true;
+            const datosOk = await esperarDatosIniciales();
+            if (!datosOk) return false;
+            if (!nptInitPromise) {
+                nptInitPromise = iniciarModuloNPT().finally(() => { nptInitPromise = null; });
+            }
+            try {
+                await nptInitPromise;
+                return nptInicializado;
+            } catch(e) {
+                console.warn('[NPT] No se pudo inicializar el módulo:', e.message);
+                return false;
+            }
+        }
+
         // ---- Helpers de acceso a la configuración NPT (por curso/paralelo) ----
         function nptTrimestreInfo(curso, paralelo, n) {
-            return nptConfig?.[sanitizarClave(curso)]?.[sanitizarClave(paralelo)]?.[n] || null;
+            return nptNodoTrimestre(nptConfig, curso, paralelo, n);
         }
         function nptTrimestreHabilitado(curso, paralelo, n) {
             return !!nptTrimestreInfo(curso, paralelo, n)?.habilitado;
         }
         function nptEstudianteHabilitado(curso, paralelo, n, cedula) {
-            const mapa = nptHabilitacionEstudiantes?.[sanitizarClave(curso)]?.[sanitizarClave(paralelo)]?.[n];
+            const mapa = nptNodoTrimestre(nptHabilitacionEstudiantes, curso, paralelo, n);
             // Si el docente no ha definido el estado individual del estudiante, se asume habilitado
             // mientras el trimestre esté activo en general (el docente puede desmarcar excepciones).
             if (!mapa || mapa[cedula] === undefined) return nptTrimestreHabilitado(curso, paralelo, n);
             return !!mapa[cedula];
         }
         function nptRubricaTexto(curso, paralelo, n, tipo) {
-            return nptRubricas?.[sanitizarClave(curso)]?.[sanitizarClave(paralelo)]?.[n]?.[tipo]?.texto || '';
+            return nptNodoTrimestre(nptRubricas, curso, paralelo, n)?.[tipo]?.texto || '';
         }
         function nptExamenHabilitado(curso, paralelo, n) {
             return !!nptTrimestreInfo(curso, paralelo, n)?.examenHabilitado;
         }
         function nptExamenEstudianteHabilitado(curso, paralelo, n, cedula) {
-            const mapa = nptExamenHabilitacionEstudiantes?.[sanitizarClave(curso)]?.[sanitizarClave(paralelo)]?.[n];
+            const mapa = nptNodoTrimestre(nptExamenHabilitacionEstudiantes, curso, paralelo, n);
             if (!mapa || mapa[cedula] === undefined) return nptExamenHabilitado(curso, paralelo, n);
             return !!mapa[cedula];
         }
         function nptExamenesPreguntas(curso, paralelo, n) {
-            return nptExamenes?.[sanitizarClave(curso)]?.[sanitizarClave(paralelo)]?.[n] || [];
+            return nptNodoTrimestre(nptExamenes, curso, paralelo, n) || [];
         }
 
         // ---- Habilitación POR INSUMO + fecha máxima de entrega ----
@@ -1969,7 +2074,7 @@
         // Compatibilidad: si no existe el nodo insumos[tipo], se mantiene el comportamiento previo
         // (el insumo queda habilitado cuando el trimestre general lo está).
         function nptInsumoInfo(curso, paralelo, n, tipo) {
-            return nptConfig?.[sanitizarClave(curso)]?.[sanitizarClave(paralelo)]?.[n]?.insumos?.[tipo] || null;
+            return nptTrimestreInfo(curso, paralelo, n)?.insumos?.[tipo] || null;
         }
         function nptInsumoHabilitado(curso, paralelo, n, tipo) {
             const info = nptInsumoInfo(curso, paralelo, n, tipo);
