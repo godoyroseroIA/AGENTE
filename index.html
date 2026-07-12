@@ -1835,7 +1835,7 @@
         // embebida en este HTML. Debe apuntar a un endpoint propio (backend/proxy) que reciba
         // { rubrica, archivoBase64, mime } y devuelva { nota, comentario } llamando él mismo a la
         // API de Claude con la key resguardada en el servidor. Ver nota de seguridad en la respuesta.
-        const NPT_EVAL_API_ENDPOINT = ""; // <-- configurar con la URL del proxy propio antes de usar en producción
+        const NPT_EVAL_API_ENDPOINT = "https://npt-eval-proxy.cesargodoyia25.workers.dev";
 
         let nptConfig = {};                 // { [curso]: { [paralelo]: { [n]: {habilitado, examenHabilitado} } } }
         let nptHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [cedula]: bool } } } }
@@ -2618,7 +2618,7 @@
             try {
                 const resp = await fetch(NPT_EVAL_API_ENDPOINT, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': '3f79bbd513edaf0d68bf046dd951929ae3f2a86e3aaaf05f' },
                     body: JSON.stringify({ rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo, estudiante: est.nombre })
                 });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
