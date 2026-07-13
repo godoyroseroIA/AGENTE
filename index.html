@@ -180,7 +180,16 @@
                                     <option value="2">2do Trimestre</option>
                                     <option value="3">3er Trimestre</option>
                                 </select>
+                                <button id="npt-btn-evaluar-todos" onclick="evaluarTodosPendientesIA()" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-700">🤖 Evaluar todos los pendientes</button>
                                 <button onclick="exportarNPTCSV()" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold">📎 Exportar CSV</button>
+                            </div>
+                        </div>
+                        <div id="npt-eval-progreso" class="hidden mb-3">
+                            <div class="flex items-center justify-between text-xs text-indigo-700 font-bold mb-1">
+                                <span id="npt-eval-progreso-texto">Evaluando 0 de 0...</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div id="npt-eval-progreso-barra" class="bg-indigo-600 h-2 rounded-full transition-all" style="width:0%"></div>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
@@ -1845,6 +1854,7 @@
         let nptArchivos = {};   // { cedula: { trimestre1: { cuaderno:{...}, libro:{...} }, ... } }
         let nptNotas = {};      // { cedula: { trimestre1: { cuaderno:{...}, libro:{...} }, ... } }
         let nptEvaluacionesIA = {}; // { cedula: { trimestre1: { cuaderno:{...}, libro:{...} }, ... } }
+        let nptEvalMasivaEnCurso = false; // true mientras corre "Evaluar todos los pendientes" (bloquea botones IA)
         let nptObservacionesDevolucion = {}; // { cedula: { trimestreN: { tipo: { fecha, docente, motivo } } } }
         let nptNotaModalCtx = null; // { cedula, nombre, trimestre, tipo }
         let nptGestionCtx = null;   // { trimestre } — trimestre actualmente en gestión (modal docente)
@@ -2520,8 +2530,9 @@
                         ${ia?.comentario ? `<div class="text-[10px] text-slate-400 mt-0.5 max-w-[160px]">${escapeHtml(ia.comentario)}</div>` : ''}
                     </td>
                     <td class="p-2 text-center space-y-1">
-                        ${tieneRubrica ? `<button onclick="evaluarConIA('${escapeHtml(est.cedula)}',${t.num},'${tp.id}')"
-                            class="block w-full bg-indigo-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-indigo-700">
+                        ${tieneRubrica ? `<button onclick="evaluarConIA('${escapeHtml(est.cedula)}',${t.num},'${tp.id}',this)"
+                            ${nptEvalMasivaEnCurso ? 'disabled' : ''}
+                            class="block w-full text-xs px-2 py-1 rounded-lg ${nptEvalMasivaEnCurso ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}">
                             🤖 ${ia ? 'Re-evaluar IA' : 'Evaluar con IA'}</button>` : ''}
                         <button onclick="abrirModalNotaNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'${tp.id}')"
                             class="block w-full bg-brand-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-brand-700">
@@ -2603,36 +2614,124 @@
             });
             descargarArchivo(`cuadro_general_T${t}_${fechaArchivo()}.csv`, csv, 'text/csv;charset=utf-8');
         }
-        async function evaluarConIA(cedula, numTrimestre, tipo) {
-            if (!NPT_TIPOS_RUBRICA.includes(tipo)) { alert('Este tipo de entrega no usa evaluación automática por rúbrica.'); return; }
+        // Núcleo reutilizable: hace la llamada al Worker y guarda el resultado. No muestra alerts ni toca el DOM,
+        // para poder usarse tanto desde el botón individual como desde el lote masivo.
+        async function evaluarConIACore(cedula, numTrimestre, tipo) {
+            if (!NPT_TIPOS_RUBRICA.includes(tipo)) throw new Error('Este tipo de entrega no usa evaluación automática por rúbrica.');
             const est = estudiantes.find(e => e.cedula === cedula);
-            if (!est) { alert('Estudiante no encontrado.'); return; }
+            if (!est) throw new Error('Estudiante no encontrado.');
             const rubrica = nptRubricaTexto(est.curso, est.paralelo, numTrimestre, tipo);
-            if (!rubrica) { alert(`No hay una rúbrica de "${tipo}" guardada para ${est.curso} "${est.paralelo}" en este trimestre. Ve a "⚙️ Gestionar" y escríbela primero.`); return; }
+            if (!rubrica) throw new Error(`No hay una rúbrica de "${tipo}" guardada para ${est.curso} "${est.paralelo}" en este trimestre. Ve a "⚙️ Gestionar" y escríbela primero.`);
             const arch = nptArchivos[cedula]?.[`trimestre${numTrimestre}`]?.[tipo];
-            if (!arch?.base64) { alert('No se encontró el archivo subido por el estudiante.'); return; }
-            if (!NPT_EVAL_API_ENDPOINT) {
-                alert('La evaluación automática no está configurada todavía: falta definir, en el código, la URL de tu backend/proxy propio (no se debe llamar a la API de Claude directamente desde el navegador). Mientras tanto, califica manualmente con "📝 Calificar".');
-                return;
+            if (!arch?.base64) throw new Error('No se encontró el archivo subido por el estudiante.');
+            if (!NPT_EVAL_API_ENDPOINT) throw new Error('La evaluación automática no está configurada todavía: falta definir, en el código, la URL de tu backend/proxy propio.');
+
+            const resp = await fetch(NPT_EVAL_API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': '3f79bbd513edaf0d68bf046dd951929ae3f2a86e3aaaf05f' },
+                body: JSON.stringify({ rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo, estudiante: est.nombre })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json(); // se espera { nota: number, comentario: string }
+            const registro = { nota: Math.round(numero(data.nota) * 100) / 100, comentario: texto(data.comentario), fecha: new Date().toISOString() };
+            await guardarValorFirebase(`nptEvaluacionesIA/${cedula}/trimestre${numTrimestre}/${tipo}`, registro);
+            if (!nptEvaluacionesIA[cedula]) nptEvaluacionesIA[cedula] = {};
+            if (!nptEvaluacionesIA[cedula][`trimestre${numTrimestre}`]) nptEvaluacionesIA[cedula][`trimestre${numTrimestre}`] = {};
+            nptEvaluacionesIA[cedula][`trimestre${numTrimestre}`][tipo] = registro;
+            return registro;
+        }
+
+        // Botón individual de una fila: deshabilita el botón mientras espera (evita doble clic) y muestra el error si falla.
+        async function evaluarConIA(cedula, numTrimestre, tipo, btnEl) {
+            if (nptEvalMasivaEnCurso) return; // seguridad: ignorar clics individuales mientras corre el lote masivo
+            const textoOriginal = btnEl ? btnEl.textContent : null;
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.textContent = '⏳ Evaluando...';
+                btnEl.classList.add('opacity-60', 'cursor-not-allowed');
             }
             try {
-                const resp = await fetch(NPT_EVAL_API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': '3f79bbd513edaf0d68bf046dd951929ae3f2a86e3aaaf05f' },
-                    body: JSON.stringify({ rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo, estudiante: est.nombre })
-                });
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const data = await resp.json(); // se espera { nota: number, comentario: string }
-                const registro = { nota: Math.round(numero(data.nota) * 100) / 100, comentario: texto(data.comentario), fecha: new Date().toISOString() };
-                await guardarValorFirebase(`nptEvaluacionesIA/${cedula}/trimestre${numTrimestre}/${tipo}`, registro);
-                if (!nptEvaluacionesIA[cedula]) nptEvaluacionesIA[cedula] = {};
-                if (!nptEvaluacionesIA[cedula][`trimestre${numTrimestre}`]) nptEvaluacionesIA[cedula][`trimestre${numTrimestre}`] = {};
-                nptEvaluacionesIA[cedula][`trimestre${numTrimestre}`][tipo] = registro;
+                await evaluarConIACore(cedula, numTrimestre, tipo);
                 renderNPTDocente();
             } catch(e) {
                 console.error(e);
-                alert(`Error al evaluar con IA: ${e.message}. Revisa que la URL del endpoint de evaluación esté configurada y disponible.`);
+                alert(`Error al evaluar con IA: ${e.message}`);
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.textContent = textoOriginal;
+                    btnEl.classList.remove('opacity-60', 'cursor-not-allowed');
+                }
             }
+        }
+
+        // Recolecta las entregas visibles (según el filtro de trimestre activo) que aún no tienen
+        // evaluación de IA ni nota verificada por el docente.
+        function nptFilasPendientesIA() {
+            const filtroT = document.getElementById('npt-filtro-trimestre')?.value || '';
+            const alumnos = estudiantesFiltrados();
+            const pendientes = [];
+            alumnos.forEach(est => {
+                trimestresEfectivos().forEach(t => {
+                    if (filtroT && String(t.num) !== filtroT) return;
+                    NPT_TIPOS.forEach(tp => {
+                        if (!NPT_TIPOS_RUBRICA.includes(tp.id)) return;
+                        const arch = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
+                        if (!arch) return;
+                        const nota = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
+                        if (nota?.verificado) return; // ya calificado y verificado manualmente, no se toca
+                        const ia = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
+                        if (ia) return; // ya tiene evaluación IA pendiente de verificar; para reintentar una puntual se usa "🔁 Re-evaluar IA" en su fila
+                        pendientes.push({ cedula: est.cedula, numTrimestre: t.num, tipo: tp.id });
+                    });
+                });
+            });
+            return pendientes;
+        }
+
+        // Botón "Evaluar todos los pendientes": procesa la cola secuencialmente (una petición a la vez, con
+        // pausa entre cada una) para no exceder el límite de peticiones por minuto de la API de Gemini.
+        const NPT_EVAL_MASIVA_DELAY_MS = 4500;
+        async function evaluarTodosPendientesIA() {
+            if (nptEvalMasivaEnCurso) return;
+            const pendientes = nptFilasPendientesIA();
+            if (pendientes.length === 0) {
+                alert('No hay entregas pendientes de evaluación automática (con rúbrica) en la vista actual.');
+                return;
+            }
+            const minutosAprox = Math.ceil((pendientes.length * NPT_EVAL_MASIVA_DELAY_MS) / 60000);
+            if (!confirm(`Se van a evaluar ${pendientes.length} entregas con IA, una por una (aprox. ${minutosAprox} min). No cierres esta pestaña mientras corre. ¿Continuar?`)) return;
+
+            nptEvalMasivaEnCurso = true;
+            let ok = 0, fallidas = 0;
+            const btnMasivo = document.getElementById('npt-btn-evaluar-todos');
+            const progresoEl = document.getElementById('npt-eval-progreso');
+            const progresoTexto = document.getElementById('npt-eval-progreso-texto');
+            const progresoBarra = document.getElementById('npt-eval-progreso-barra');
+            if (btnMasivo) { btnMasivo.disabled = true; btnMasivo.classList.add('opacity-50', 'cursor-not-allowed'); }
+            progresoEl?.classList.remove('hidden');
+            if (progresoBarra) progresoBarra.style.width = '0%';
+            renderNPTDocente(); // redibuja para deshabilitar visualmente los botones individuales
+
+            for (let i = 0; i < pendientes.length; i++) {
+                const { cedula, numTrimestre, tipo } = pendientes[i];
+                if (progresoTexto) progresoTexto.textContent = `Evaluando ${i + 1} de ${pendientes.length}...`;
+                try {
+                    await evaluarConIACore(cedula, numTrimestre, tipo);
+                    ok++;
+                } catch(e) {
+                    console.error('Fallo evaluación masiva:', cedula, tipo, e);
+                    fallidas++;
+                }
+                if (progresoBarra) progresoBarra.style.width = `${Math.round(((i + 1) / pendientes.length) * 100)}%`;
+                renderNPTDocente();
+                if (i < pendientes.length - 1) await new Promise(r => setTimeout(r, NPT_EVAL_MASIVA_DELAY_MS));
+            }
+
+            nptEvalMasivaEnCurso = false;
+            if (btnMasivo) { btnMasivo.disabled = false; btnMasivo.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            progresoEl?.classList.add('hidden');
+            renderNPTDocente();
+            alert(`Evaluación masiva terminada: ${ok} completadas, ${fallidas} fallidas.` + (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : ''));
         }
 
         // Abre el archivo del docente recuperando Base64 desde RTDB si no está en caché
@@ -4072,6 +4171,7 @@
         window.cerrarGestionTrimestreNPT = cerrarGestionTrimestreNPT;
         window.guardarGestionTrimestreNPT = guardarGestionTrimestreNPT;
         window.evaluarConIA = evaluarConIA;
+        window.evaluarTodosPendientesIA = evaluarTodosPendientesIA;
         window.toggleExamenTrimestre = toggleExamenTrimestre;
         window.guardarURLInsumo = guardarURLInsumo;
         window.nptGestionTodosInsumos = nptGestionTodosInsumos;
