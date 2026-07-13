@@ -289,6 +289,31 @@
                         <p class="text-[11px] text-slate-400 mt-2">Ejemplo personalizado: Examen 40%, Cuaderno 20%, Libro 20%, Tarea 10%, Talleres 10%.</p>
                     </section>
 
+                    <!-- (B2) Firma de referencia del docente -->
+                    <section class="bg-slate-50 rounded-xl p-4">
+                        <h4 class="font-bold text-sm mb-3">🖊️ Firma de referencia del docente</h4>
+                        <p class="text-[11px] text-slate-500 mb-3">
+                            Sube una foto o escaneo de tu firma. Al evaluar Cuaderno/Libro con IA, el sistema revisará si aparece una firma
+                            manuscrita tuya en el documento del estudiante y qué tan parecida es a esta referencia (comparación por semejanza
+                            de trazo, no exacta — las firmas manuscritas nunca son idénticas). Si no registras una firma aquí, esta verificación
+                            simplemente no se muestra y todo lo demás sigue funcionando igual.
+                        </p>
+                        <div class="flex flex-wrap items-start gap-4">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Imagen de la firma (JPG o PNG)</label>
+                                <input type="file" id="cfg-firma-input" accept="image/png,image/jpeg" class="text-xs">
+                                <div class="flex gap-2 mt-2">
+                                    <button onclick="guardarFirmaDocente()" class="bg-brand-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-brand-700">💾 Guardar firma</button>
+                                    <button onclick="eliminarFirmaDocente()" class="bg-rose-50 text-rose-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-100">🗑️ Eliminar firma</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Firma registrada actualmente</label>
+                                <div id="cfg-firma-preview" class="w-48 h-24 bg-white border rounded-lg flex items-center justify-center text-[11px] text-slate-400 p-2">Sin firma registrada</div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- (C) Gestión de nómina por curso/paralelo -->
                     <section class="bg-slate-50 rounded-xl p-4">
                         <h4 class="font-bold text-sm mb-3">👥 Gestión de nómina por curso y paralelo</h4>
@@ -1871,6 +1896,7 @@
         let cfgPeriodoActivo = null;
         let cfgTrimestres = null;       // null = usar NPT_TRIMESTRES por defecto
         let cfgFormulaPromedio = null;  // null = promedio simple
+        let cfgFirmaDocente = null;     // null = sin firma registrada. Si existe: { base64, mime, fecha }
 
         // ==================== CONTADORES DE ACCESO ====================
         // Nodos RTDB:
@@ -2528,6 +2554,7 @@
                         <span class="text-xs font-bold px-2 py-0.5 rounded-full ${badgeClass}">${notaTexto}</span>
                         ${verificado ? '<div class="text-[10px] text-emerald-600 font-bold mt-0.5">✔ Verificado</div>' : (ia ? '<div class="text-[10px] text-amber-600 font-bold mt-0.5">⏳ Eval. IA — pendiente verificar</div>' : '')}
                         ${ia?.comentario ? `<div class="text-[10px] text-slate-400 mt-0.5 max-w-[160px]">${escapeHtml(ia.comentario)}</div>` : ''}
+                        ${(ia && ia.firmaDetectada !== null && ia.firmaDetectada !== undefined) ? `<div class="text-[10px] font-bold mt-0.5 ${ia.firmaCoincide ? 'text-emerald-600' : 'text-rose-600'}" title="${escapeHtml(ia.comentarioFirma || '')}">${ia.firmaCoincide ? '✅ Firma coincide' : (ia.firmaDetectada ? '⚠️ Firma no coincide' : '⚠️ Sin firma del docente')}</div>` : ''}
                     </td>
                     <td class="p-2 text-center space-y-1">
                         ${tieneRubrica ? `<button onclick="evaluarConIA('${escapeHtml(est.cedula)}',${t.num},'${tp.id}',this)"
@@ -2629,11 +2656,21 @@
             const resp = await fetch(NPT_EVAL_API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': '3f79bbd513edaf0d68bf046dd951929ae3f2a86e3aaaf05f' },
-                body: JSON.stringify({ rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo, estudiante: est.nombre })
+                body: JSON.stringify({
+                    rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo, estudiante: est.nombre,
+                    firmaDocenteBase64: cfgFirmaDocente?.base64 || null,
+                    firmaDocenteMime: cfgFirmaDocente?.mime || 'image/png'
+                })
             });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json(); // se espera { nota: number, comentario: string }
-            const registro = { nota: Math.round(numero(data.nota) * 100) / 100, comentario: texto(data.comentario), fecha: new Date().toISOString() };
+            const data = await resp.json(); // se espera { nota, comentario, firmaDetectada?, firmaCoincide?, comentarioFirma? }
+            const registro = {
+                nota: Math.round(numero(data.nota) * 100) / 100, comentario: texto(data.comentario), fecha: new Date().toISOString(),
+                // null = no se pidió verificación de firma (no hay firma de referencia registrada)
+                firmaDetectada: (data.firmaDetectada === true || data.firmaDetectada === false) ? data.firmaDetectada : null,
+                firmaCoincide: (data.firmaCoincide === true || data.firmaCoincide === false) ? data.firmaCoincide : null,
+                comentarioFirma: texto(data.comentarioFirma || '')
+            };
             await guardarValorFirebase(`nptEvaluacionesIA/${cedula}/trimestre${numTrimestre}/${tipo}`, registro);
             if (!nptEvaluacionesIA[cedula]) nptEvaluacionesIA[cedula] = {};
             if (!nptEvaluacionesIA[cedula][`trimestre${numTrimestre}`]) nptEvaluacionesIA[cedula][`trimestre${numTrimestre}`] = {};
@@ -3555,6 +3592,7 @@
                 cfgPeriodoActivo = (cfg && cfg.periodoActivo) || null;
                 cfgTrimestres = (cfg && cfg.trimestres) || null;
                 cfgFormulaPromedio = (cfg && cfg.formulaPromedio) || null;
+                cfgFirmaDocente = (cfg && cfg.firmaDocente) || null;
                 cntAccesosEstudiantes = (cfg && cfg.contadores && cfg.contadores.accesosEstudiantes) || 0;
                 cntAccesosDocente = (cfg && cfg.contadores && cfg.contadores.accesosDocente) || 0;
             } catch(e) {
@@ -3564,6 +3602,7 @@
                 cntAccesosEstudiantesIndividuales = (await leerValorRutaFirebase('contadoresEstudiantesIndividuales')) || {};
             } catch(e) { cntAccesosEstudiantesIndividuales = {}; }
             actualizarVistasContadores();
+            renderFirmaDocentePreview();
         }
         // Incrementa el contador de acceso del estudiante (general + individual)
         async function registrarAccesoEstudiante(cedula) {
@@ -3842,6 +3881,58 @@
                 renderCuadroGeneral();
                 alert('Fórmula restablecida a: Examen 30% + Insumos 70% equitativo (17.5% c/u).');
             })();
+        }
+
+        // ---- Firma de referencia del docente ----
+        function renderFirmaDocentePreview() {
+            const cont = document.getElementById('cfg-firma-preview');
+            if (!cont) return;
+            if (cfgFirmaDocente?.base64) {
+                cont.innerHTML = `<img src="data:${cfgFirmaDocente.mime || 'image/png'};base64,${cfgFirmaDocente.base64}" class="max-w-full max-h-full object-contain" alt="Firma del docente">`;
+            } else {
+                cont.innerHTML = `<span>Sin firma registrada</span>`;
+                cont.className = 'w-48 h-24 bg-white border rounded-lg flex items-center justify-center text-[11px] text-slate-400 p-2';
+            }
+        }
+        async function guardarFirmaDocente() {
+            const input = document.getElementById('cfg-firma-input');
+            const file = input?.files?.[0];
+            if (!file) { alert('Selecciona primero una imagen (JPG o PNG) con tu firma.'); return; }
+            if (!['image/png', 'image/jpeg'].includes(file.type)) { alert('El archivo debe ser una imagen JPG o PNG.'); return; }
+            if (file.size > 3 * 1024 * 1024) { alert('La imagen no debe superar 3 MB.'); return; }
+            try {
+                const base64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload  = e => resolve(e.target.result.split(',')[1]);
+                    reader.onerror = () => reject(new Error('No se pudo leer el archivo.'));
+                    reader.readAsDataURL(file);
+                });
+                const registro = { base64, mime: file.type, fecha: new Date().toLocaleString() };
+                const authOk = await ensureAuth();
+                if (authOk) {
+                    try { await guardarValorFirebase('configuracion/firmaDocente', registro); await registrarAuditoria('firma_docente', 'Firma de referencia del docente actualizada'); }
+                    catch(e) { console.error(e); alert('Error al guardar la firma.'); return; }
+                }
+                cfgFirmaDocente = registro;
+                input.value = '';
+                renderFirmaDocentePreview();
+                alert('✅ Firma de referencia guardada. Se usará automáticamente en las próximas evaluaciones con IA de Cuaderno y Libro.');
+            } catch(e) {
+                console.error(e);
+                alert('Error al procesar la imagen: ' + e.message);
+            }
+        }
+        async function eliminarFirmaDocente() {
+            if (!cfgFirmaDocente) { alert('No hay ninguna firma registrada.'); return; }
+            if (!confirm('¿Eliminar la firma de referencia? La evaluación con IA dejará de revisar firmas hasta que registres una nueva.')) return;
+            const authOk = await ensureAuth();
+            if (authOk) {
+                try { await borrarValorFirebase('configuracion/firmaDocente'); await registrarAuditoria('firma_docente', 'Firma de referencia del docente eliminada'); }
+                catch(e) { console.error(e); alert('Error al eliminar la firma.'); return; }
+            }
+            cfgFirmaDocente = null;
+            renderFirmaDocentePreview();
+            alert('Firma de referencia eliminada.');
         }
 
         // ---- Nómina por curso/paralelo ----
