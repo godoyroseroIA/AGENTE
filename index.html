@@ -2417,6 +2417,7 @@ video {
                         <button onclick="volverAlInicio()" class="text-xs text-slate-500 underline">Cerrar sesión</button>
                     </div>
                 </div>
+                <p id="npt-accesos-diarios-msg" class="mt-2 text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
             </div>
 
             <!-- Tarjetas de trimestres -->
@@ -3694,6 +3695,13 @@ video {
                 document.getElementById('login-error').classList.remove('hidden');
                 return;
             }
+            // Límite de accesos diarios: máximo NPT_MAX_ACCESOS_DIARIOS ingresos por estudiante por día
+            const accesosHoy = accesosHoyEstudiante(est.cedula);
+            if (accesosHoy >= NPT_MAX_ACCESOS_DIARIOS) {
+                document.getElementById('login-error-text').innerText = `⏰ Ya ingresaste ${NPT_MAX_ACCESOS_DIARIOS} veces hoy a tu cuenta, el máximo permitido por día. Podrás volver a ingresar mañana.`;
+                document.getElementById('login-error').classList.remove('hidden');
+                return;
+            }
             document.getElementById('login-error').classList.add('hidden');
             estudianteActual = est;
             await cargarArchivosEstudianteNPT(est.cedula);
@@ -3946,7 +3954,9 @@ video {
         //   contadoresEstudiantesIndividuales/{cedula}               → number (contador por estudiante)
         let cntAccesosEstudiantes = 0;
         let cntAccesosDocente = 0;
-        let cntAccesosEstudiantesIndividuales = {}; // { cedula: number }
+        let cntAccesosEstudiantesIndividuales = {}; // { cedula: number }  (histórico total)
+        let cntAccesosEstudiantesDiario = {};       // { cedula: { 'YYYY-MM-DD': number } }  (por día)
+        const NPT_MAX_ACCESOS_DIARIOS = 3;          // límite de inicios de sesión por estudiante por día
 
         function sanitizarClave(v) {
             return texto(v).trim().replace(/[.#$\/\[\]\s]+/g, '_').toUpperCase() || '_';
@@ -4162,6 +4172,10 @@ video {
                 });
                 database.ref('contadoresEstudiantesIndividuales').on('value', snap => {
                     cntAccesosEstudiantesIndividuales = snap.val() || {};
+                    actualizarVistasContadores();
+                });
+                database.ref('contadoresEstudiantesDiario').on('value', snap => {
+                    cntAccesosEstudiantesDiario = snap.val() || {};
                     actualizarVistasContadores();
                 });
             }
@@ -5561,6 +5575,11 @@ video {
         function fechaArchivo() {
             return new Date().toISOString().slice(0, 10);
         }
+        // Devuelve cuántas veces ha ingresado el estudiante HOY (según contador diario)
+        function accesosHoyEstudiante(cedula) {
+            const hoy = fechaArchivo();
+            return (cntAccesosEstudiantesDiario[cedula] && cntAccesosEstudiantesDiario[cedula][hoy]) || 0;
+        }
 
         function csvCampo(valor) {
             return `"${texto(valor).replace(/"/g, '""')}"`;
@@ -5867,18 +5886,25 @@ video {
             try {
                 cntAccesosEstudiantesIndividuales = (await leerValorRutaFirebase('contadoresEstudiantesIndividuales')) || {};
             } catch(e) { cntAccesosEstudiantesIndividuales = {}; }
+            try {
+                cntAccesosEstudiantesDiario = (await leerValorRutaFirebase('contadoresEstudiantesDiario')) || {};
+            } catch(e) { cntAccesosEstudiantesDiario = {}; }
             actualizarVistasContadores();
             renderFirmaDocentePreview();
         }
-        // Incrementa el contador de acceso del estudiante (general + individual)
+        // Incrementa el contador de acceso del estudiante (general + individual histórico + individual diario)
         async function registrarAccesoEstudiante(cedula) {
             const authOk = await ensureAuth();
+            const hoy = fechaArchivo();
             cntAccesosEstudiantes = (cntAccesosEstudiantes || 0) + 1;
             cntAccesosEstudiantesIndividuales[cedula] = (cntAccesosEstudiantesIndividuales[cedula] || 0) + 1;
+            if (!cntAccesosEstudiantesDiario[cedula]) cntAccesosEstudiantesDiario[cedula] = {};
+            cntAccesosEstudiantesDiario[cedula][hoy] = (cntAccesosEstudiantesDiario[cedula][hoy] || 0) + 1;
             if (authOk) {
                 try {
                     await guardarValorFirebase('configuracion/contadores/accesosEstudiantes', cntAccesosEstudiantes);
                     await guardarValorFirebase(`contadoresEstudiantesIndividuales/${cedula}`, cntAccesosEstudiantesIndividuales[cedula]);
+                    await guardarValorFirebase(`contadoresEstudiantesDiario/${cedula}/${hoy}`, cntAccesosEstudiantesDiario[cedula][hoy]);
                 } catch(e) { console.warn('No se pudo registrar acceso de estudiante:', e.message); }
             }
             actualizarVistasContadores();
@@ -5906,6 +5932,19 @@ video {
             const eIndividual = document.getElementById('cnt-accesos-estudiante-individual');
             if (eIndividual && estudianteActual) {
                 eIndividual.textContent = cntAccesosEstudiantesIndividuales[estudianteActual.cedula] || 0;
+            }
+            // Mensaje de accesos diarios (máximo permitido por día) dentro de la cuenta del estudiante
+            const eDiarioMsg = document.getElementById('npt-accesos-diarios-msg');
+            if (eDiarioMsg && estudianteActual) {
+                const usados = accesosHoyEstudiante(estudianteActual.cedula);
+                const restantes = Math.max(0, NPT_MAX_ACCESOS_DIARIOS - usados);
+                if (restantes <= 0) {
+                    eDiarioMsg.className = 'mt-2 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2';
+                    eDiarioMsg.textContent = `⏰ Has alcanzado el máximo de ${NPT_MAX_ACCESOS_DIARIOS} ingresos permitidos hoy. Podrás volver a ingresar mañana.`;
+                } else {
+                    eDiarioMsg.className = `mt-2 text-xs font-bold rounded-lg px-3 py-2 border ${restantes === 1 ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-slate-500 bg-slate-50 border-slate-200'}`;
+                    eDiarioMsg.textContent = `🔑 Has ingresado ${usados} de ${NPT_MAX_ACCESOS_DIARIOS} veces permitidas hoy${restantes === 1 ? ' · Te queda 1 ingreso disponible por hoy' : ''}.`;
+                }
             }
             // Estudiantes distintos con acceso
             const cedulasDistintas = Object.keys(cntAccesosEstudiantesIndividuales);
