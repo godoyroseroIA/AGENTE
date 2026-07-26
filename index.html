@@ -2062,22 +2062,26 @@ video {
                 <h3 class="text-2xl font-black mt-2">Ingreso del Estudiante</h3>
                 <p class="text-slate-500 text-sm">Ingresa tu correo institucional y tu cédula como clave de acceso.</p>
             </div>
+            <div id="aviso-suspension-insumos" class="max-w-sm mx-auto mb-5 bg-amber-50 border border-amber-300 text-amber-800 p-4 rounded-xl text-sm flex items-start gap-2">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.59c.75 1.334-.213 2.987-1.743 2.987H3.482c-1.53 0-2.493-1.653-1.743-2.987L8.257 3.1zM11 14a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                <span><strong>Aviso:</strong> Por motivos de calificación de insumos previamente registrados, los envíos de nuevos INSUMOS quedan suspendidos hasta un próximo AVISO. Los estudiantes podrán volver a enviar sus insumos previo aviso CONFIRMADO al docente.</span>
+            </div>
             <div class="space-y-5 max-w-sm mx-auto">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Correo institucional</label>
                     <div class="flex items-stretch">
-                        <input type="text" id="input-email-local"
-                            class="flex-1 px-4 py-3 bg-slate-50 border rounded-l-xl text-sm focus:ring-2 focus:ring-brand-500 min-w-0">
+                        <input type="text" id="input-email-local" disabled
+                            class="flex-1 px-4 py-3 bg-slate-50 border rounded-l-xl text-sm focus:ring-2 focus:ring-brand-500 min-w-0 opacity-60 cursor-not-allowed">
                         <span class="px-3 py-3 bg-slate-100 border border-l-0 rounded-r-xl text-xs text-slate-500 font-mono whitespace-nowrap">@sagradocorazon.edu.ec</span>
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Cédula (clave de acceso)</label>
-                    <input type="password" id="input-cedula" maxlength="10"
-                        class="w-full px-4 py-3 bg-slate-50 border rounded-xl text-lg font-mono tracking-wider focus:ring-2 focus:ring-brand-500">
+                    <input type="password" id="input-cedula" maxlength="10" disabled
+                        class="w-full px-4 py-3 bg-slate-50 border rounded-xl text-lg font-mono tracking-wider focus:ring-2 focus:ring-brand-500 opacity-60 cursor-not-allowed">
                 </div>
                 <div id="login-error" class="hidden bg-rose-50 border border-rose-200 text-rose-700 p-2 rounded-xl text-sm flex items-center gap-2"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/></svg><span id="login-error-text">Datos no registrados</span></div>
-                <button onclick="verificarEstudiante()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition-all">Validar y Continuar</button>
+                <button onclick="verificarEstudiante()" disabled title="Acceso de estudiantes suspendido temporalmente" class="w-full bg-slate-300 text-slate-500 font-bold py-3 rounded-xl shadow-md transition-all cursor-not-allowed opacity-70">🚫 Acceso suspendido temporalmente</button>
             </div>
             <div class="border-t mt-6 pt-5 flex flex-wrap justify-between items-center gap-3 text-xs text-slate-400">
                 <p>Docente: <strong class="text-slate-600">Ing. César Godoy Rosero, Mgt.</strong></p>
@@ -2550,18 +2554,8 @@ video {
                             <textarea id="npt-rubrica-libro" rows="8" placeholder="Escribe aquí los criterios de evaluación del libro para este trimestre..."
                                 class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs focus:ring-2 focus:ring-brand-500"></textarea>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">🔗 Rúbrica · Tarea</label>
-                            <textarea id="npt-rubrica-tarea" rows="8" placeholder="Escribe aquí los criterios de evaluación de la tarea para este trimestre..."
-                                class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs focus:ring-2 focus:ring-brand-500"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">🛠️ Rúbrica · Talleres</label>
-                            <textarea id="npt-rubrica-talleres" rows="8" placeholder="Escribe aquí los criterios de evaluación de los talleres para este trimestre..."
-                                class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs focus:ring-2 focus:ring-brand-500"></textarea>
-                        </div>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-3">Los 4 insumos se entregan por enlace y se evalúan por IA contra su rúbrica. <strong>Cuaderno y Libro</strong> no se pueden enviar sin rúbrica publicada. <strong>Tarea y Talleres sí se pueden enviar sin rúbrica</strong> — la evaluación automática queda pendiente hasta que la publiques, y mientras tanto se califican manualmente.</p>
+                    <p class="text-[11px] text-slate-400 mt-3">Mientras un tipo de entrega no tenga rúbrica guardada, los estudiantes no podrán subir ese archivo. "Tarea" y "Talleres" no requieren rúbrica: solo un enlace URL calificado manualmente.</p>
                 </section>
 
                 <!-- Pestaña 3: Examen -->
@@ -3910,37 +3904,22 @@ video {
             { num: 3, label: '3er Trimestre', meses: 'Abril – Junio' }
         ];
         const NPT_TIPOS = [
-            { id: 'cuaderno', label: '📓 Cuaderno',  icono: '📓' },
-            { id: 'libro',    label: '📘 Libro',     icono: '📘' },
-            { id: 'tarea',    label: '🔗 Tarea',     icono: '🔗' },
-            { id: 'talleres', label: '🛠️ Talleres',  icono: '🛠️' }
+            { id: 'cuaderno', label: '📓 Cuaderno',       icono: '📓' },
+            { id: 'libro',    label: '📘 Libro',          icono: '📘' },
+            { id: 'tarea',    label: '🔗 Tarea (URL)',    icono: '🔗' },
+            { id: 'talleres', label: '🛠️ Talleres (URL)', icono: '🛠️' }
         ];
-        // Los 4 insumos se entregan por enlace y los 4 tienen rúbrica + evaluación IA.
-        // (Antes: solo Cuaderno/Libro subían PDF y tenían IA; Tarea/Talleres eran URL sin IA.
-        //  Migración a Drive/GitHub/web decidida y verificada en julio 2026 — ver notas de diseño.)
-        const NPT_TIPOS_RUBRICA = ['cuaderno', 'libro', 'tarea', 'talleres']; // requieren rúbrica + evaluación IA
-        const NPT_TIPOS_URL     = ['cuaderno', 'libro', 'tarea', 'talleres']; // se entregan como enlace (URL)
-        // De los tipos con rúbrica, cuáles BLOQUEAN el envío si aún no existe rúbrica publicada
-        // para ese curso/paralelo/trimestre (Cuaderno/Libro: comportamiento histórico, sin cambios).
-        // Tarea/Talleres: decisión explícita de NO bloquear — se puede enviar igual, y la
-        // evaluación por IA queda pendiente hasta que el docente publique la rúbrica.
-        const NPT_TIPOS_BLOQUEA_SIN_RUBRICA = ['cuaderno', 'libro'];
+        const NPT_TIPOS_RUBRICA = ['cuaderno', 'libro'];            // tipos que requieren rúbrica + evaluación IA
+        const NPT_TIPOS_URL     = ['tarea', 'talleres'];            // insumos que se entregan como enlace web (URL)
         const NPT_INSUMOS_ENTREGA = ['cuaderno', 'libro', 'tarea', 'talleres']; // insumos habilitables por trimestre (sin examen)
         function esInsumoURL(tipo) { return NPT_TIPOS_URL.includes(tipo); }
-        function esInsumoConRubrica(tipo) { return NPT_TIPOS_RUBRICA.includes(tipo); }
-        function bloqueaSinRubrica(tipo) { return NPT_TIPOS_BLOQUEA_SIN_RUBRICA.includes(tipo); }
 
 
         // ⚠️ ENDPOINT DE EVALUACIÓN IA: por seguridad, esta constante NO debe contener una API key
         // embebida en este HTML. Debe apuntar a un endpoint propio (backend/proxy) que reciba
-        // { rubrica, archivoBase64, mime } O { rubrica, url } y devuelva { nota, comentario, ... }
-        // llamando él mismo a la API de Gemini con la key resguardada en el servidor.
+        // { rubrica, archivoBase64, mime } y devuelva { nota, comentario } llamando él mismo a la
+        // API de Claude con la key resguardada en el servidor. Ver nota de seguridad en la respuesta.
         const NPT_EVAL_API_ENDPOINT = "https://npt-eval-proxy.cesargodoyia25.workers.dev";
-        // Endpoint liviano de validación al momento del envío (no gasta cuota de Gemini).
-        const NPT_VALIDAR_ENVIO_ENDPOINT = NPT_EVAL_API_ENDPOINT + "/validar-envio";
-        // Secreto compartido con el Worker (mismo valor configurado allí como NPT_SHARED_SECRET).
-        // Se reutiliza en toda llamada al Worker (evaluación e validación) para no duplicarlo.
-        const NPT_AUTH_HEADER = '3f79bbd513edaf0d68bf046dd951929ae3f2a86e3aaaf05f';
 
         let nptConfig = {};                 // { [curso]: { [paralelo]: { [n]: {habilitado, examenHabilitado} } } }
         let nptHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [cedula]: bool } } } }
@@ -4600,7 +4579,7 @@ video {
                 await guardarValorFirebase(`nptConfig/${cv}/${pv}/${trimestre}/habilitado`, nodoTrim.habilitado);
                 await guardarValorFirebase(`nptConfig/${cv}/${pv}/${trimestre}/insumos`, insumosAGuardar);
 
-                // 1) Rúbricas (los 4 tipos: Cuaderno, Libro, Tarea, Talleres)
+                // 1) Rúbricas (solo Cuaderno y Libro)
                 for (const tipoId of NPT_TIPOS_RUBRICA) {
                     const texto2 = document.getElementById(`npt-rubrica-${tipoId}`).value.trim();
                     if (!nptRubricas[cv]) nptRubricas[cv] = {};
@@ -4696,11 +4675,7 @@ video {
                 const notaTexto = notaVal !== null ? formatearNota(notaVal) : 'Sin nota';
                 const verificado = !!nota?.verificado;
 
-                // Detección por registro (no por tipo): igual que en el módulo estudiante, un
-                // envío antiguo en Base64 debe seguir abriendo el visor de PDF aunque el insumo
-                // ya acepte enlaces para las entregas nuevas.
-                const esURLDocente = !!arch.url;
-                const verBtn = esURLDocente
+                const verBtn = esInsumoURL(tp.id)
                     ? `<a href="${escapeHtml(arch.url||'#')}" target="_blank" rel="noopener"
                             class="inline-flex items-center gap-1 text-xs bg-brand-50 text-brand-700 font-bold px-2 py-1 rounded-lg hover:bg-brand-100">
                             🔗 Abrir link</a>
@@ -4710,10 +4685,7 @@ video {
                             📄 Ver archivo</button>
                         <div class="text-[10px] text-slate-400 mt-0.5 truncate max-w-[120px]">${escapeHtml(arch.nombre||'archivo')}</div>`;
 
-                // No basta con que el TIPO admita IA (NPT_TIPOS_RUBRICA): se exige que ya exista
-                // una rúbrica publicada para este curso/paralelo/trimestre específico, para no
-                // mostrar el botón "Evaluar con IA" cuando aún fallaría con un mensaje de error.
-                const tieneRubrica = NPT_TIPOS_RUBRICA.includes(tp.id) && !!nptRubricaTexto(est.curso, est.paralelo, t.num, tp.id);
+                const tieneRubrica = NPT_TIPOS_RUBRICA.includes(tp.id);
                 const tr = document.createElement('tr');
                 tr.className = 'border-b hover:bg-slate-50';
                 tr.innerHTML = `
@@ -4828,10 +4800,7 @@ video {
             const desglose = Array.isArray(ia.desglose) ? ia.desglose : [];
             const observaciones = Array.isArray(ia.observaciones) ? ia.observaciones : [];
             const tieneFirmaInfo = ia.firmaDetectada === true || ia.firmaDetectada === false;
-            const advertenciasFuente = Array.isArray(ia.advertenciasFuente) ? ia.advertenciasFuente : [];
-            const tieneAlgoQueMostrar = desglose.length > 0 || observaciones.length > 0 || tieneFirmaInfo ||
-                !!ia.advertenciaIntegridad || advertenciasFuente.length > 0 || !!ia.fuenteInfo;
-            if (!tieneAlgoQueMostrar) return '';
+            if (desglose.length === 0 && observaciones.length === 0 && !tieneFirmaInfo) return '';
 
             const sumaMaximo = desglose.reduce((a, d) => a + (numero(d.maximo) || 0), 0);
             const sumaObtenido = desglose.reduce((a, d) => a + (numero(d.obtenido) || 0), 0);
@@ -4901,37 +4870,7 @@ video {
                     </div>
                 </details>` : '';
 
-            // ---- Integridad: banner visible sin necesidad de expandir, es una alerta seria ----
-            const bloqueIntegridad = ia.advertenciaIntegridad ? `
-                <div class="bg-rose-50 border-2 border-rose-300 rounded-xl p-3 mb-2 text-xs text-rose-800">
-                    <p class="font-bold">🚩 Posible problema de integridad</p>
-                    <p class="mt-1">${escapeHtml(ia.advertenciaIntegridad)}</p>
-                </div>` : '';
-
-            // ---- De dónde vino el contenido evaluado (transparencia: Drive / GitHub / web) ----
-            let fuenteTexto = '';
-            if (ia.fuenteInfo?.tipo === 'drive' && Array.isArray(ia.fuenteInfo.archivos)) {
-                const n = ia.fuenteInfo.archivos.length;
-                fuenteTexto = `📁 Google Drive · ${n} archivo${n === 1 ? '' : 's'} leído${n === 1 ? '' : 's'}`;
-            } else if (ia.fuenteInfo?.tipo === 'github' && ia.fuenteInfo.repo) {
-                fuenteTexto = `💻 GitHub · ${escapeHtml(ia.fuenteInfo.repo.owner || '')}/${escapeHtml(ia.fuenteInfo.repo.repo || '')} (rama ${escapeHtml(ia.fuenteInfo.repo.rama || '')})`;
-            } else if (ia.fuenteInfo?.tipo === 'fetch-simple') {
-                fuenteTexto = `🌐 Contenido de texto extraído de la página web`;
-            }
-            const bloqueFuente = fuenteTexto ? `<p class="text-[11px] text-slate-400 mb-2">${fuenteTexto}</p>` : '';
-
-            const bloqueAdvertenciasFuente = advertenciasFuente.length ? `
-                <details class="npt-detalle mb-2">
-                    <summary class="flex items-center justify-between bg-amber-50 hover:bg-amber-100 rounded-lg px-3 py-2 text-xs font-bold text-amber-700">
-                        <span>⚠️ Avisos al leer el contenido (${advertenciasFuente.length})</span>
-                        <span class="npt-caret text-amber-500">▾</span>
-                    </summary>
-                    <ul class="mt-2 text-[11px] text-amber-700 list-disc pl-4 space-y-0.5">
-                        ${advertenciasFuente.map(a => `<li>${escapeHtml(a)}</li>`).join('')}
-                    </ul>
-                </details>` : '';
-
-            return `<div class="npt-informe-evaluacion">${bloqueIntegridad}${bloqueFuente}${bloqueResumen}${bloqueDesglose}${bloqueObs}${bloqueFirma}${bloqueAdvertenciasFuente}</div>`;
+            return `<div class="npt-informe-evaluacion">${bloqueResumen}${bloqueDesglose}${bloqueObs}${bloqueFirma}</div>`;
         }
 
         // Núcleo reutilizable: hace la llamada al Worker y guarda el resultado. No muestra alerts ni toca el DOM,
@@ -4943,40 +4882,23 @@ video {
             const rubrica = nptRubricaTexto(est.curso, est.paralelo, numTrimestre, tipo);
             if (!rubrica) throw new Error(`No hay una rúbrica de "${tipo}" guardada para ${est.curso} "${est.paralelo}" en este trimestre. Ve a "⚙️ Gestionar" y escríbela primero.`);
             let arch = nptArchivos[cedula]?.[`trimestre${numTrimestre}`]?.[tipo];
-            if (arch && !arch.url && (!arch.base64 || arch.base64 === '[cargado]')) {
+            if (!arch?.base64 || arch.base64 === '[cargado]') {
                 arch = await leerValorRutaFirebase(`nptArchivos/${cedula}/trimestre${numTrimestre}/${tipo}`);
             }
-            if (!arch) throw new Error('No se encontró ninguna entrega de este estudiante para este insumo.');
+            if (!arch?.base64) throw new Error('No se encontró el archivo subido por el estudiante.');
             if (!NPT_EVAL_API_ENDPOINT) throw new Error('La evaluación automática no está configurada todavía: falta definir, en el código, la URL de tu backend/proxy propio.');
-
-            // ---- Formato del registro: NUEVO (url) o LEGACY (archivoBase64) ----
-            // Ambos coexisten: registros creados antes de la migración a Drive/GitHub siguen
-            // usando Base64 tal como siempre; los nuevos usan "url" y el Worker decide él mismo
-            // (por el dominio del enlace) si es Drive, GitHub, o una página web genérica.
-            const payload = arch.url
-                ? { rubrica, url: arch.url, tipo, estudiante: est.nombre,
-                    firmaDocenteBase64: cfgFirmaDocente?.base64 || null, firmaDocenteMime: cfgFirmaDocente?.mime || 'image/png' }
-                : { rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo, estudiante: est.nombre,
-                    firmaDocenteBase64: cfgFirmaDocente?.base64 || null, firmaDocenteMime: cfgFirmaDocente?.mime || 'image/png' };
-            if (!arch.url && !arch.base64) throw new Error('No se encontró el archivo subido por el estudiante.');
 
             const resp = await fetch(NPT_EVAL_API_ENDPOINT, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': NPT_AUTH_HEADER },
-                body: JSON.stringify(payload)
+                headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': '3f79bbd513edaf0d68bf046dd951929ae3f2a86e3aaaf05f' },
+                body: JSON.stringify({
+                    rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo, estudiante: est.nombre,
+                    firmaDocenteBase64: cfgFirmaDocente?.base64 || null,
+                    firmaDocenteMime: cfgFirmaDocente?.mime || 'image/png'
+                })
             });
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json(); // { nota, comentario, desglose?, observaciones?, firmaDetectada?, firmaCoincide?, comentarioFirma?, fuenteInfo?, advertenciasFuente?, requiereRevisionManual? }
-
-            // ---- Caso especial: el Worker no pudo leer contenido evaluable (típico de Tarea con
-            // sitios que dependen de JavaScript) — no es un error, es un resultado honesto que el
-            // docente debe atender manualmente. No se guarda ninguna nota automática.
-            if (data.requiereRevisionManual) {
-                const err = new Error(data.motivo || 'Este envío requiere revisión manual del docente: no se pudo leer su contenido automáticamente.');
-                err.esRevisionManual = true;
-                throw err;
-            }
-
+            const data = await resp.json(); // se espera { nota, comentario, desglose?, observaciones?, firmaDetectada?, firmaCoincide?, comentarioFirma? }
             // desglose/observaciones dependen ÚNICAMENTE de la rúbrica activa en ese momento para
             // este curso/paralelo/trimestre/tipo: su cantidad de filas y nombres de criterio varían
             // libremente de una rúbrica a otra. No se asume ninguna estructura fija, solo se valida
@@ -4996,31 +4918,13 @@ video {
                     aspecto: texto(o.aspecto || ''),
                     observacion: texto(o.observacion || '')
                 })) : [];
-
-            // ---- Integridad: si el Worker devolvió metadatos del archivo de origen (Drive: fecha de
-            // modificación y dueño; GitHub: repo/rama), se guardan junto con la nota para poder
-            // detectar después si el estudiante editó el contenido tras la calificación, y para
-            // señalar si el correo del dueño del archivo no coincide con el correo institucional
-            // del estudiante (posible entrega de un enlace ajeno).
-            let advertenciaIntegridad = '';
-            if (data.fuenteInfo?.tipo === 'drive' && Array.isArray(data.fuenteInfo.archivos)) {
-                const correoEst = texto(est.correo).trim().toLowerCase();
-                const conCorreoDistinto = data.fuenteInfo.archivos.filter(a => a.ownerEmail && correoEst && a.ownerEmail.toLowerCase() !== correoEst);
-                if (conCorreoDistinto.length > 0) {
-                    advertenciaIntegridad = `⚠️ El archivo "${conCorreoDistinto[0].nombre}" pertenece a ${conCorreoDistinto[0].ownerEmail}, distinto del correo institucional del estudiante (${est.correo || 'no registrado'}).`;
-                }
-            }
-
             const registro = {
                 nota: Math.round(numero(data.nota) * 100) / 100, comentario: texto(data.comentario), fecha: new Date().toISOString(),
                 desglose, observaciones,
                 // null = no se pidió verificación de firma (no hay firma de referencia registrada)
                 firmaDetectada: (data.firmaDetectada === true || data.firmaDetectada === false) ? data.firmaDetectada : null,
                 firmaCoincide: (data.firmaCoincide === true || data.firmaCoincide === false) ? data.firmaCoincide : null,
-                comentarioFirma: texto(data.comentarioFirma || ''),
-                fuenteInfo: data.fuenteInfo || null,
-                advertenciasFuente: Array.isArray(data.advertenciasFuente) ? data.advertenciasFuente : [],
-                advertenciaIntegridad
+                comentarioFirma: texto(data.comentarioFirma || '')
             };
             await guardarValorFirebase(`nptEvaluacionesIA/${cedula}/trimestre${numTrimestre}/${tipo}`, registro);
             if (!nptEvaluacionesIA[cedula]) nptEvaluacionesIA[cedula] = {};
@@ -5043,11 +4947,7 @@ video {
                 renderNPTDocente();
             } catch(e) {
                 console.error(e);
-                if (e.esRevisionManual) {
-                    alert(`ℹ️ Este envío requiere revisión manual:\n\n${e.message}\n\nNo se generó una nota automática — califícalo directamente en el campo de nota.`);
-                } else {
-                    alert(`Error al evaluar con IA: ${e.message}`);
-                }
+                alert(`Error al evaluar con IA: ${e.message}`);
                 if (btnEl) {
                     btnEl.disabled = false;
                     btnEl.textContent = textoOriginal;
@@ -5094,7 +4994,7 @@ video {
             if (!confirm(`Se van a evaluar ${pendientes.length} entregas con IA, una por una (aprox. ${minutosAprox} min). No cierres esta pestaña mientras corre. ¿Continuar?`)) return;
 
             nptEvalMasivaEnCurso = true;
-            let ok = 0, fallidas = 0, revisionManual = 0;
+            let ok = 0, fallidas = 0;
             const btnMasivo = document.getElementById('npt-btn-evaluar-todos');
             const progresoEl = document.getElementById('npt-eval-progreso');
             const progresoTexto = document.getElementById('npt-eval-progreso-texto');
@@ -5111,12 +5011,8 @@ video {
                     await evaluarConIACore(cedula, numTrimestre, tipo);
                     ok++;
                 } catch(e) {
-                    if (e.esRevisionManual) {
-                        revisionManual++;
-                    } else {
-                        console.error('Fallo evaluación masiva:', cedula, tipo, e);
-                        fallidas++;
-                    }
+                    console.error('Fallo evaluación masiva:', cedula, tipo, e);
+                    fallidas++;
                 }
                 if (progresoBarra) progresoBarra.style.width = `${Math.round(((i + 1) / pendientes.length) * 100)}%`;
                 renderNPTDocente();
@@ -5127,9 +5023,7 @@ video {
             if (btnMasivo) { btnMasivo.disabled = false; btnMasivo.classList.remove('opacity-50', 'cursor-not-allowed'); }
             progresoEl?.classList.add('hidden');
             renderNPTDocente();
-            alert(`Evaluación masiva terminada: ${ok} completadas, ${revisionManual} requieren revisión manual, ${fallidas} fallidas.` +
-                (revisionManual ? ' Los de revisión manual no se pudieron leer automáticamente (típico en Tarea con sitios que dependen de JavaScript); califícalos directamente.' : '') +
-                (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : ''));
+            alert(`Evaluación masiva terminada: ${ok} completadas, ${fallidas} fallidas.` + (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : ''));
         }
 
         // Abre el archivo del docente recuperando Base64 desde RTDB si no está en caché
@@ -5375,18 +5269,11 @@ video {
                 const habEstudiante = nptEstudianteHabilitado(curso, paralelo, t.num, cedula);
 
                 const bloquesTipo = NPT_TIPOS.map(tp => {
+                    const esURL = esInsumoURL(tp.id);
                     const arch = nptArchivos[cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
-                    // Detección de formato POR REGISTRO, no por tipo: un envío hecho ANTES de la
-                    // migración a URL (PDF en Base64) debe seguir mostrándose con el visor de PDF,
-                    // aunque el insumo ya acepte enlaces para las entregas nuevas. Sin esto, los
-                    // envíos antiguos mostrarían "undefined" en vez de su nombre de archivo.
-                    const esURL = arch ? !!arch.url : esInsumoURL(tp.id);
                     const nota = nptNotas[cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
                     const ia   = nptEvaluacionesIA[cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
-                    // Cuaderno/Libro: sin cambios, bloquean el envío si no hay rúbrica publicada.
-                    // Tarea/Talleres: NO bloquean (decisión confirmada) — se puede enviar igual,
-                    // y la evaluación IA queda pendiente hasta que exista la rúbrica.
-                    const rubricaLista = bloqueaSinRubrica(tp.id) ? !!nptRubricaTexto(curso, paralelo, t.num, tp.id) : true;
+                    const rubricaLista = esURL ? true : !!nptRubricaTexto(curso, paralelo, t.num, tp.id);
                     const verificado = !!nota?.verificado;
                     const notaVal = nota ? numero(nota.nota) : (ia ? numero(ia.nota) : null);
 
@@ -5416,7 +5303,7 @@ video {
                             </div>
                             ${verAccion}
                         </div>`;
-                        if (nptRubricaTexto(curso, paralelo, t.num, tp.id)) {
+                        if (!esURL && nptRubricaTexto(curso, paralelo, t.num, tp.id)) {
                             estadoHtml += `<button type="button" onclick="verRubricaEstudiante(${t.num},'${tp.id}')" class="text-xs text-brand-600 font-bold hover:underline mb-2">📋 Ver rúbrica de evaluación</button>`;
                         }
                         if (verificado) {
@@ -5465,10 +5352,6 @@ video {
                         </div>
                         ${fechaMax ? `<p class="text-[10px] text-amber-600 mt-1">⏳ Cierra el ${escapeHtml(formatearFechaMaxima(fechaMax))}</p>` : ''}`;
                     } else {
-                        // NOTA: con NPT_TIPOS_URL incluyendo ahora los 4 insumos, esta rama ya no se
-                        // alcanza para ningún tipo actual (arch es null y esInsumoURL(tp.id) siempre
-                        // es true) — se deja como respaldo defensivo por si en el futuro se agrega un
-                        // insumo que vuelva a subir archivo directo en vez de enlace.
                         estadoHtml = `${avisoDevolucion}
                         <button type="button" onclick="verRubricaEstudiante(${t.num},'${tp.id}')" class="text-xs text-brand-600 font-bold hover:underline mb-2">📋 Ver rúbrica antes de subir</button>
                         <div class="pdf-drop-zone p-4 text-center cursor-pointer relative" id="drop-zone-${t.num}-${tp.id}"
@@ -5543,9 +5426,7 @@ video {
             }).join('');
         }
 
-        // ---- Subida de insumos por URL (los 4 tipos): valida en el acto contra el Worker antes
-        // de guardar, para dar retroalimentación inmediata en vez de que el docente lo descubra
-        // recién al intentar calificar. No bloquea el envío si el Worker no responde (ver abajo).
+        // ---- Subida de insumos tipo URL (Tarea / Talleres): solo enlace, sin archivo ni rúbrica ----
         async function guardarURLInsumo(numTrimestre, tipo) {
             if (!estudianteActual) return;
             if (!esInsumoURL(tipo)) { alert('Este insumo no acepta enlace URL.'); return; }
@@ -5556,55 +5437,18 @@ video {
                 renderTrimestresEstudiante();
                 return;
             }
-            if (bloqueaSinRubrica(tipo) && !nptRubricaTexto(estudianteActual.curso, estudianteActual.paralelo, numTrimestre, tipo)) {
-                alert('El docente aún no ha publicado la rúbrica de este insumo. No se puede enviar todavía.');
-                return;
-            }
             const input = document.getElementById(`npt-url-${numTrimestre}-${tipo}`);
             const url = texto(input?.value).trim();
             if (!url || !/^https?:\/\/.+/i.test(url)) {
                 alert('Ingresa un enlace válido que comience con http:// o https://');
                 return;
             }
-
-            // ---- Validación en el acto contra el Worker (no gasta cuota de Gemini) ----
-            let validacion = null;
-            if (NPT_VALIDAR_ENVIO_ENDPOINT) {
-                try {
-                    const respValidar = await fetch(NPT_VALIDAR_ENVIO_ENDPOINT, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': NPT_AUTH_HEADER },
-                        body: JSON.stringify({ url, correoEsperado: estudianteActual.correo || '' })
-                    });
-                    validacion = await respValidar.json().catch(() => null);
-                } catch (e) {
-                    console.warn('No se pudo validar el enlace en el acto (se guardará de todos modos):', e);
-                }
-            }
-            if (validacion && validacion.ok === false) {
-                alert(`❌ No se pudo validar tu enlace:\n\n${validacion.error || 'Enlace no accesible.'}\n\nRevisa que esté dentro de tu carpeta compartida "Entregas NPT" (Cuaderno/Libro/Talleres) o que el enlace sea público (Tarea).`);
-                return;
-            }
-            if (validacion?.ok && validacion.coincideCorreo === false) {
-                if (!confirm(`⚠️ El archivo/carpeta pertenece a ${validacion.ownerEmail || 'otro correo'}, distinto de tu correo institucional (${estudianteActual.correo || 'no registrado'}).\n\n¿Confirmas que quieres enviarlo igual?`)) return;
-            }
-            if (validacion?.ok && validacion.requiereRevisionManual) {
-                if (!confirm(`⚠️ No pudimos leer automáticamente el contenido de ese enlace (${validacion.motivo || 'contenido insuficiente'}).\n\nSe puede enviar igual — el docente lo revisará manualmente. ¿Continuar?`)) return;
-            }
-
             const cedula = estudianteActual.cedula;
             const registro = {
                 url, fechaEntrega: new Date().toLocaleString(),
                 cedula, nombreEstudiante: estudianteActual.nombre,
                 trimestre: numTrimestre, tipo,
-                curso: estudianteActual.curso, paralelo: estudianteActual.paralelo,
-                // Metadatos de integridad capturados AL MOMENTO DEL ENVÍO (Drive: fecha de
-                // modificación y dueño del archivo). Se comparan más adelante contra los que
-                // devuelva la evaluación IA para detectar ediciones posteriores a la calificación.
-                validacionEnvio: validacion?.ok ? {
-                    tipo: validacion.tipo || null, modifiedTime: validacion.modifiedTime || null,
-                    ownerEmail: validacion.ownerEmail || null, coincideCorreo: validacion.coincideCorreo ?? null
-                } : null
+                curso: estudianteActual.curso, paralelo: estudianteActual.paralelo
             };
             try {
                 await guardarValorFirebase(`nptArchivos/${cedula}/trimestre${numTrimestre}/${tipo}`, registro);
