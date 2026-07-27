@@ -2425,14 +2425,53 @@ video {
                 <!-- generado por JS -->
             </div>
         </div>
-        <div id="screen-quiz" class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6"><div class="flex justify-between pb-3 border-b"><span id="quiz-badge" class="font-bold text-brand-600">Estudiante</span><span id="quiz-progress">Pregunta 1/10</span></div><div class="w-full bg-slate-100 h-2 rounded-full my-5"><div id="quiz-bar" class="bg-brand-500 h-full w-0 transition-all rounded-full"></div></div><h3 id="quiz-question" class="text-lg font-bold mb-5">Cargando...</h3><div id="quiz-options" class="space-y-3 mb-6"></div><button id="quiz-next" onclick="siguientePregunta()" class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold">Siguiente</button></div>
+        <div id="screen-quiz" class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6">
+            <div class="flex justify-between items-center pb-3 border-b flex-wrap gap-2">
+                <span id="quiz-badge" class="font-bold text-brand-600">Estudiante</span>
+                <div class="text-right text-[11px] text-slate-500 leading-tight">
+                    <p>📅 <span id="quiz-fecha">-</span></p>
+                    <p>🕐 Inicio: <span id="quiz-hora-inicio">-</span> · Fin: <span id="quiz-hora-fin">-</span></p>
+                </div>
+            </div>
+
+            <!-- FASE 1: preguntas, una por una con temporizador de 30s -->
+            <div id="quiz-fase-preguntas">
+                <div class="flex justify-between items-center mt-4 mb-2">
+                    <span id="quiz-progress" class="text-sm font-bold text-slate-600">Pregunta 1/20</span>
+                    <span id="quiz-timer" class="text-sm font-black px-3 py-1 rounded-full bg-amber-50 text-amber-700">⏱️ 30s</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2 rounded-full mb-5"><div id="quiz-bar" class="bg-brand-500 h-full w-0 transition-all rounded-full"></div></div>
+                <h3 id="quiz-question" class="text-lg font-bold mb-5">Cargando...</h3>
+                <div id="quiz-options" class="space-y-3 mb-6"></div>
+                <button id="quiz-next" onclick="avanzarPreguntaManual()" class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold">Siguiente</button>
+                <p class="text-[11px] text-slate-400 text-center mt-3">No es posible regresar a una pregunta anterior. Si no respondes en 30 segundos, pasarás a la siguiente pregunta.</p>
+            </div>
+
+            <!-- FASE 2: revisión de respuestas (1 minuto) -->
+            <div id="quiz-fase-revision" class="hidden">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-800 font-bold text-center">
+                    ⏳ Tienes <span id="revision-timer">60</span> segundos para revisar y corregir tus respuestas.
+                </div>
+                <div id="revision-lista" class="space-y-4 max-h-[28rem] overflow-y-auto pr-1"></div>
+            </div>
+
+            <!-- FASE 3: botón de finalización con su propio conteo -->
+            <div id="quiz-fase-finalizar" class="hidden text-center py-8">
+                <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✅</div>
+                <p class="text-sm text-slate-600 mb-2 font-semibold">Ya respondiste todas las preguntas del examen.</p>
+                <p class="text-xs text-slate-400 mb-5">Tienes <span id="finalizar-timer" class="font-bold">60</span> segundos para presionar el botón. Si no lo presionas a tiempo, el examen se enviará automáticamente con tus respuestas actuales.</p>
+                <button id="btn-finalizar-examen" onclick="finalizarExamenManual()" class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black text-lg hover:bg-emerald-700">Finalizar examen</button>
+            </div>
+        </div>
         <div id="screen-results" class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 text-center">
             <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
             <h3 class="text-2xl font-black">Examen Completado</h3>
-            <div class="bg-slate-50 rounded-xl p-4 my-5"><p class="text-sm">Calificación obtenida</p><p id="result-nota" class="text-3xl font-black text-brand-600">0.00 / 10</p></div>
-            <div id="result-detalle" class="text-left text-sm space-y-1 mb-5 max-h-64 overflow-y-auto"></div>
+            <p class="text-[11px] text-slate-400 mt-2">📅 <span id="result-fecha"></span> · 🕐 Inicio: <span id="result-hora-inicio"></span> · Fin: <span id="result-hora-fin"></span></p>
+            <div class="bg-slate-50 rounded-xl p-5 my-5">
+                <p id="result-mensaje" class="text-lg font-black text-slate-700">Procesando...</p>
+                <p class="text-xs text-slate-400 mt-2">Tu docente podrá revisar el detalle completo de tu examen.</p>
+            </div>
             <div class="flex gap-3 justify-center flex-wrap">
-                <button onclick="imprimirReporteExamen()" class="bg-slate-800 text-white px-5 py-2 rounded-xl font-bold">🖨️ Imprimir reporte</button>
                 <button onclick="volverDesdesNPT()" class="bg-brand-600 text-white px-5 py-2 rounded-xl font-bold">← Volver a mis notas</button>
             </div>
         </div>
@@ -2631,7 +2670,18 @@ video {
         let estudianteActual = null;
         let indicePregunta = 0;
         let respuestas = {};
-        let examenContexto = null; // { trimestre, preguntas: [...] }
+        let examenContexto = null; // { trimestre, preguntasActivas, poolReemplazo, reemplazadas, respuestas, horaInicio, horaFin, fase }
+        let examenTimerPregunta = null;   // interval del temporizador de 30s por pregunta
+        let examenSegundosPregunta = 0;
+        let examenTimerRevision = null;   // interval del minuto de revisión
+        let examenSegundosRevision = 0;
+        let examenTimerFinalizar = null;  // interval del minuto para presionar "Finalizar examen"
+        let examenSegundosFinalizar = 0;
+        const NPT_EXAMEN_NUM_PREGUNTAS = 20;      // cantidad de preguntas por intento
+        const NPT_EXAMEN_TIEMPO_PREGUNTA = 30;    // segundos por pregunta antes de avanzar automáticamente
+        const NPT_EXAMEN_TIEMPO_REVISION = 60;    // segundos para revisar respuestas al terminar
+        const NPT_EXAMEN_TIEMPO_FINALIZAR = 60;   // segundos para presionar "Finalizar examen"
+        const NPT_EXAMEN_PUNTOS_POR_ACIERTO = 0.5; // 20 preguntas x 0.5 = 10 puntos
         let cursoActual = "", paraleloActual = "";
         let CLAVE_DOCENTE = "Uesc2026.*";
         let archivoTemp = null, importacionManual = false;
@@ -3722,10 +3772,31 @@ video {
             // Registrar acceso del estudiante (contador general + individual)
             registrarAccesoEstudiante(est.cedula);
         }
+        // ==================== EXAMEN TRIMESTRAL — lógica de rendición ====================
+        function mezclarArrayExamen(arr) {
+            const copia = arr.slice();
+            for (let i = copia.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copia[i], copia[j]] = [copia[j], copia[i]];
+            }
+            return copia;
+        }
+        function formatearHoraExamen(fecha) {
+            return fecha ? fecha.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-';
+        }
+        function formatearFechaExamen(fecha) {
+            return fecha ? fecha.toLocaleDateString('es-EC', { day: '2-digit', month: 'long', year: 'numeric' }) : '-';
+        }
+        function actualizarBarraMetaExamen() {
+            if (!examenContexto) return;
+            document.getElementById('quiz-fecha').innerText = formatearFechaExamen(examenContexto.horaInicio);
+            document.getElementById('quiz-hora-inicio').innerText = formatearHoraExamen(examenContexto.horaInicio);
+            document.getElementById('quiz-hora-fin').innerText = examenContexto.horaFin ? formatearHoraExamen(examenContexto.horaFin) : '-';
+        }
         function comenzarExamenTrimestre(numTrimestre) {
             if (!estudianteActual) return;
-            const banco = nptExamenesPreguntas(estudianteActual.curso, estudianteActual.paralelo, numTrimestre);
-            if (!banco || banco.length === 0) {
+            const bancoOriginal = nptExamenesPreguntas(estudianteActual.curso, estudianteActual.paralelo, numTrimestre);
+            if (!bancoOriginal || bancoOriginal.length === 0) {
                 alert('El docente aún no ha publicado las preguntas del examen para este trimestre.');
                 return;
             }
@@ -3734,52 +3805,215 @@ video {
                 alert('Ya rendiste el examen de este trimestre. No es posible repetirlo.');
                 return;
             }
-            examenContexto = { trimestre: numTrimestre, preguntas: banco };
-            indicePregunta = 0; respuestas = {};
-            mostrarPregunta();
+            if (!confirm(`Vas a iniciar el examen del trimestre. Se te presentarán ${Math.min(NPT_EXAMEN_NUM_PREGUNTAS, bancoOriginal.length)} preguntas, una a la vez, con 30 segundos para responder cada una. Una vez iniciado no podrás pausarlo ni repetirlo. ¿Deseas continuar?`)) return;
+
+            // Etiquetamos cada pregunta con su índice original en el banco para no repetirla nunca en este intento
+            const bancoIndexado = bancoOriginal.map((q, i) => ({ ...q, _idxBanco: i }));
+            const barajado = mezclarArrayExamen(bancoIndexado);
+            const cantidad = Math.min(NPT_EXAMEN_NUM_PREGUNTAS, barajado.length);
+
+            examenContexto = {
+                trimestre: numTrimestre,
+                preguntasActivas: barajado.slice(0, cantidad),   // preguntas mostradas al estudiante (pueden reemplazarse)
+                poolReemplazo: barajado.slice(cantidad),          // preguntas restantes, nunca usadas, disponibles para reemplazo
+                reemplazadas: {},                                 // índice de posición -> ya se le dio su reemplazo por tiempo agotado
+                respuestas: {},                                   // índice de posición -> id de opción elegida
+                horaInicio: new Date(),
+                horaFin: null,
+                fase: 'preguntas',
+                bancoAgotadoAvisado: false
+            };
+            respuestas = examenContexto.respuestas;
+            indicePregunta = 0;
+            document.getElementById('quiz-fase-preguntas').classList.remove('hidden');
+            document.getElementById('quiz-fase-revision').classList.add('hidden');
+            document.getElementById('quiz-fase-finalizar').classList.add('hidden');
+            actualizarBarraMetaExamen();
+            mostrarPreguntaExamen();
             mostrarPantalla('screen-quiz');
         }
-        function mostrarPregunta() {
+        function detenerTimerPreguntaExamen() {
+            if (examenTimerPregunta) { clearInterval(examenTimerPregunta); examenTimerPregunta = null; }
+        }
+        function mostrarPreguntaExamen() {
             if (!examenContexto) return;
-            let q = examenContexto.preguntas[indicePregunta];
-            const total = examenContexto.preguntas.length;
+            detenerTimerPreguntaExamen();
+            const q = examenContexto.preguntasActivas[indicePregunta];
+            const total = examenContexto.preguntasActivas.length;
             document.getElementById('quiz-question').innerText = q.pregunta;
             document.getElementById('quiz-progress').innerText = `Pregunta ${indicePregunta+1}/${total}`;
             document.getElementById('quiz-bar').style.width = `${((indicePregunta+1)/total)*100}%`;
             let container = document.getElementById('quiz-options');
             container.innerHTML = '';
             q.opciones.forEach(op => {
-                let selected = respuestas[indicePregunta] === op.id;
+                let selected = examenContexto.respuestas[indicePregunta] === op.id;
                 let btn = document.createElement('button');
                 btn.className = `w-full text-left p-3 rounded-xl border ${selected ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:bg-slate-50'} transition-all flex items-center gap-3`;
                 btn.innerHTML = `<div class="w-5 h-5 rounded-full border flex items-center justify-center ${selected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'}">${selected ? '✓' : ''}</div><span>${op.id}) ${op.texto}</span>`;
-                btn.onclick = () => { respuestas[indicePregunta] = op.id; mostrarPregunta(); };
+                btn.onclick = () => { examenContexto.respuestas[indicePregunta] = op.id; mostrarPreguntaExamen(); };
                 container.appendChild(btn);
             });
-            document.getElementById('quiz-next').innerText = indicePregunta === total - 1 ? "Finalizar" : "Siguiente";
+            document.getElementById('quiz-next').innerText = indicePregunta === total - 1 ? "Finalizar preguntas" : "Siguiente";
+            // Temporizador de 30 segundos para esta pregunta
+            examenSegundosPregunta = NPT_EXAMEN_TIEMPO_PREGUNTA;
+            actualizarVisualTimerPregunta();
+            examenTimerPregunta = setInterval(() => {
+                examenSegundosPregunta--;
+                actualizarVisualTimerPregunta();
+                if (examenSegundosPregunta <= 0) {
+                    detenerTimerPreguntaExamen();
+                    manejarTiempoAgotadoExamen();
+                }
+            }, 1000);
         }
-        function siguientePregunta() {
+        function actualizarVisualTimerPregunta() {
+            const el = document.getElementById('quiz-timer');
+            if (!el) return;
+            el.innerText = `⏱️ ${examenSegundosPregunta}s`;
+            el.className = `text-sm font-black px-3 py-1 rounded-full ${examenSegundosPregunta <= 10 ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'}`;
+        }
+        // Se agotó el tiempo de la pregunta actual sin respuesta
+        function manejarTiempoAgotadoExamen() {
             if (!examenContexto) return;
-            if(respuestas[indicePregunta] === undefined) { alert("Selecciona una respuesta"); return; }
-            const total = examenContexto.preguntas.length;
-            if(indicePregunta < total - 1) { indicePregunta++; mostrarPregunta(); }
-            else finalizarEvaluacion();
+            const yaFueReemplazada = !!examenContexto.reemplazadas[indicePregunta];
+            const tieneRespuesta = examenContexto.respuestas[indicePregunta] !== undefined;
+            if (tieneRespuesta) { avanzarDespuesDePregunta(); return; }
+            if (!yaFueReemplazada) {
+                // Damos UNA oportunidad de reemplazo con una pregunta nueva del banco
+                if (examenContexto.poolReemplazo.length > 0) {
+                    const nueva = examenContexto.poolReemplazo.shift();
+                    examenContexto.preguntasActivas[indicePregunta] = nueva;
+                    examenContexto.reemplazadas[indicePregunta] = true;
+                    delete examenContexto.respuestas[indicePregunta];
+                    mostrarPreguntaExamen(); // se reinicia el temporizador para la pregunta de reemplazo
+                    return;
+                } else if (!examenContexto.bancoAgotadoAvisado) {
+                    // No hay más preguntas disponibles para reemplazar: avisamos y pasamos directo a revisión
+                    examenContexto.bancoAgotadoAvisado = true;
+                    alert('El banco de preguntas del docente se agotó y no hay más disponibles para reemplazar preguntas no respondidas. Pasarás directamente a la fase de revisión.');
+                    iniciarFaseRevisionExamen();
+                    return;
+                }
+            }
+            // Ya tuvo su reemplazo (o no aplica) y se volvió a agotar el tiempo: queda sin responder
+            avanzarDespuesDePregunta();
         }
-        async function finalizarEvaluacion() {
+        function avanzarDespuesDePregunta() {
+            const total = examenContexto.preguntasActivas.length;
+            if (indicePregunta < total - 1) {
+                indicePregunta++;
+                mostrarPreguntaExamen();
+            } else {
+                iniciarFaseRevisionExamen();
+            }
+        }
+        // Botón "Siguiente" / "Finalizar preguntas" presionado manualmente
+        function avanzarPreguntaManual() {
+            if (!examenContexto) return;
+            if (examenContexto.respuestas[indicePregunta] === undefined) { alert('Selecciona una respuesta antes de continuar.'); return; }
+            detenerTimerPreguntaExamen();
+            avanzarDespuesDePregunta();
+        }
+        // ---- FASE 2: revisión de respuestas (1 minuto) ----
+        function iniciarFaseRevisionExamen() {
+            if (!examenContexto) return;
+            detenerTimerPreguntaExamen();
+            examenContexto.fase = 'revision';
+            document.getElementById('quiz-fase-preguntas').classList.add('hidden');
+            document.getElementById('quiz-fase-finalizar').classList.add('hidden');
+            document.getElementById('quiz-fase-revision').classList.remove('hidden');
+            renderRevisionExamen();
+            examenSegundosRevision = NPT_EXAMEN_TIEMPO_REVISION;
+            document.getElementById('revision-timer').innerText = examenSegundosRevision;
+            if (examenTimerRevision) clearInterval(examenTimerRevision);
+            examenTimerRevision = setInterval(() => {
+                examenSegundosRevision--;
+                document.getElementById('revision-timer').innerText = Math.max(0, examenSegundosRevision);
+                if (examenSegundosRevision <= 0) {
+                    clearInterval(examenTimerRevision); examenTimerRevision = null;
+                    iniciarFaseFinalizarExamen();
+                }
+            }, 1000);
+        }
+        function renderRevisionExamen() {
+            const cont = document.getElementById('revision-lista');
+            if (!cont || !examenContexto) return;
+            cont.innerHTML = examenContexto.preguntasActivas.map((q, i) => {
+                const opciones = q.opciones.map(op => {
+                    const selected = examenContexto.respuestas[i] === op.id;
+                    return `<button onclick="cambiarRespuestaRevision(${i},'${escapeHtml(op.id)}')" class="w-full text-left p-2.5 rounded-lg border text-sm ${selected ? 'border-brand-500 bg-brand-50 font-semibold' : 'border-slate-200 hover:bg-slate-50'} flex items-center gap-2">
+                        <span class="w-4 h-4 rounded-full border flex items-center justify-center text-[10px] ${selected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'}">${selected ? '✓' : ''}</span>
+                        <span>${escapeHtml(op.id)}) ${escapeHtml(op.texto)}</span>
+                    </button>`;
+                }).join('');
+                const sinResponder = examenContexto.respuestas[i] === undefined;
+                return `<div class="border rounded-xl p-3 ${sinResponder ? 'border-rose-200 bg-rose-50/40' : 'border-slate-200'}">
+                    <p class="font-semibold text-sm mb-2">${i+1}. ${escapeHtml(q.pregunta)} ${sinResponder ? '<span class="text-rose-600 text-xs font-bold">(sin responder)</span>' : ''}</p>
+                    <div class="space-y-1.5">${opciones}</div>
+                </div>`;
+            }).join('');
+        }
+        function cambiarRespuestaRevision(indice, opcionId) {
+            if (!examenContexto) return;
+            examenContexto.respuestas[indice] = opcionId;
+            renderRevisionExamen();
+        }
+        // ---- FASE 3: botón de finalización (1 minuto para presionarlo) ----
+        function iniciarFaseFinalizarExamen() {
+            if (!examenContexto) return;
+            examenContexto.fase = 'finalizar';
+            document.getElementById('quiz-fase-revision').classList.add('hidden');
+            document.getElementById('quiz-fase-finalizar').classList.remove('hidden');
+            const btn = document.getElementById('btn-finalizar-examen');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            examenSegundosFinalizar = NPT_EXAMEN_TIEMPO_FINALIZAR;
+            document.getElementById('finalizar-timer').innerText = examenSegundosFinalizar;
+            if (examenTimerFinalizar) clearInterval(examenTimerFinalizar);
+            examenTimerFinalizar = setInterval(() => {
+                examenSegundosFinalizar--;
+                document.getElementById('finalizar-timer').innerText = Math.max(0, examenSegundosFinalizar);
+                if (examenSegundosFinalizar <= 0) {
+                    clearInterval(examenTimerFinalizar); examenTimerFinalizar = null;
+                    // Se agotó el minuto sin que el estudiante presione el botón: se desactiva y
+                    // el examen se finaliza y califica automáticamente con lo que respondió.
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    calificarYGuardarExamen();
+                }
+            }, 1000);
+        }
+        function finalizarExamenManual() {
+            if (!examenContexto || examenContexto.fase !== 'finalizar') return;
+            if (examenTimerFinalizar) { clearInterval(examenTimerFinalizar); examenTimerFinalizar = null; }
+            const btn = document.getElementById('btn-finalizar-examen');
+            if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
+            calificarYGuardarExamen();
+        }
+        function mensajeCualitativoExamen(nota) {
+            if (nota >= 9) return '🌟 ¡Excelente examen!';
+            if (nota >= 7) return '👍 Muy buen examen.';
+            if (nota >= 6) return '🙂 Buen examen.';
+            return '📚 No saliste bien en el examen. Conversa con tu docente para reforzar estos temas.';
+        }
+        async function calificarYGuardarExamen() {
             if (!examenContexto || !estudianteActual) return;
-            const { trimestre, preguntas: banco } = examenContexto;
+            const { trimestre, preguntasActivas: banco, respuestas: resp } = examenContexto;
+            examenContexto.horaFin = new Date();
             let correctas = 0;
             const detalle = banco.map((q, i) => {
-                const respuestaDada = respuestas[i];
-                const ok = respuestaDada === q.correcta;
+                const respuestaDada = resp[i];
+                const ok = respuestaDada !== undefined && respuestaDada === q.correcta;
                 if (ok) correctas++;
-                return { pregunta: q.pregunta, respuestaDada, correcta: q.correcta, ok };
+                return { pregunta: q.pregunta, respuestaDada: respuestaDada || null, correcta: q.correcta, ok };
             });
             const total = banco.length;
-            const nota = Math.round((correctas / total) * 10 * 100) / 100;
+            const nota = Math.round(correctas * NPT_EXAMEN_PUNTOS_POR_ACIERTO * 100) / 100;
             const registro = {
                 nota, correctas, total, detalle,
                 fecha: new Date().toLocaleString(),
+                horaInicio: examenContexto.horaInicio.toISOString(),
+                horaFin: examenContexto.horaFin.toISOString(),
                 cedula: estudianteActual.cedula, nombre: estudianteActual.nombre,
                 trimestre, tipo: 'examen'
             };
@@ -3793,20 +4027,19 @@ video {
                 alert('Hubo un problema al guardar tu examen. Vuelve a intentarlo antes de cerrar esta ventana.');
                 return;
             }
-            document.getElementById('result-nota').innerText = `${formatearNota(nota)} / 10`;
-            document.getElementById('result-detalle').innerHTML = detalle.map((d,i) => `
-                <div class="p-2 rounded-lg ${d.ok ? 'bg-emerald-50' : 'bg-rose-50'} flex items-start gap-2">
-                    <span>${d.ok ? '✅' : '❌'}</span>
-                    <div class="flex-1"><p class="font-medium">${i+1}. ${escapeHtml(d.pregunta)}</p>
-                    <p class="text-xs text-slate-500">Tu respuesta: ${escapeHtml(d.respuestaDada||'(sin responder)')} ${!d.ok ? `· Correcta: ${escapeHtml(d.correcta)}` : ''}</p></div>
-                </div>`).join('');
+            actualizarBarraMetaExamen();
+            document.getElementById('result-fecha').innerText = formatearFechaExamen(examenContexto.horaInicio);
+            document.getElementById('result-hora-inicio').innerText = formatearHoraExamen(examenContexto.horaInicio);
+            document.getElementById('result-hora-fin').innerText = formatearHoraExamen(examenContexto.horaFin);
+            document.getElementById('result-mensaje').innerText = mensajeCualitativoExamen(nota);
             mostrarPantalla('screen-results');
         }
-        function imprimirReporteExamen() {
-            if (!estudianteActual || !examenContexto) { alert('No hay un examen reciente para imprimir.'); return; }
-            const reg = nptNotas[estudianteActual.cedula]?.[`trimestre${examenContexto.trimestre}`]?.examen;
-            if (!reg) { alert('No se encontró el resultado del examen.'); return; }
-            const t = trimestresEfectivos().find(x => x.num === examenContexto.trimestre);
+        // Vista/impresión del examen para el DOCENTE (con aciertos y errores) — no se usa para el estudiante
+        function imprimirReporteExamenDocente(cedula, numTrimestre) {
+            const est = estudiantes.find(e => e.cedula === cedula);
+            const reg = nptNotas[cedula]?.[`trimestre${numTrimestre}`]?.examen;
+            if (!reg) { alert('No se encontró un examen rendido para este estudiante en este trimestre.'); return; }
+            const t = trimestresEfectivos().find(x => x.num === numTrimestre);
             const ventana = window.open('', '_blank');
             if (!ventana) { alert('El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'); return; }
             const filas = reg.detalle.map((d,i) => `<tr>
@@ -3814,14 +4047,17 @@ video {
                 <td style="text-align:center">${escapeHtml(d.respuestaDada||'-')}</td>
                 <td style="text-align:center">${escapeHtml(d.correcta)}</td>
                 <td style="text-align:center">${d.ok ? '✅' : '❌'}</td></tr>`).join('');
+            const horaIni = reg.horaInicio ? new Date(reg.horaInicio).toLocaleString('es-EC') : (reg.fecha || '-');
+            const horaFin = reg.horaFin ? new Date(reg.horaFin).toLocaleString('es-EC') : '-';
             ventana.document.write(`<html><head><title>Reporte de Examen</title>
                 <style>body{font-family:Arial,sans-serif;padding:30px;color:#1e293b}table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border:1px solid #cbd5e1;padding:6px;font-size:12px}</style>
                 </head><body>
                 <h2>Reporte de Examen · ${t?.label||''}</h2>
-                <p><strong>Estudiante:</strong> ${escapeHtml(estudianteActual.nombre)} (${escapeHtml(estudianteActual.cedula)})</p>
-                <p><strong>Curso/Paralelo:</strong> ${escapeHtml(estudianteActual.curso)} "${escapeHtml(estudianteActual.paralelo)}"</p>
-                <p><strong>Nota:</strong> ${formatearNota(reg.nota)} / 10 &nbsp; (${reg.correctas}/${reg.total} aciertos)</p>
-                <table><tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th><th>Resultado</th></tr>${filas}</table>
+                <p><strong>Estudiante:</strong> ${escapeHtml(est?.nombre || reg.nombre || '')} (${escapeHtml(cedula)})</p>
+                <p><strong>Curso/Paralelo:</strong> ${escapeHtml(est?.curso||'')} "${escapeHtml(est?.paralelo||'')}"</p>
+                <p><strong>Inicio:</strong> ${escapeHtml(horaIni)} &nbsp; <strong>Fin:</strong> ${escapeHtml(horaFin)}</p>
+                <p><strong>Nota:</strong> ${formatearNota(reg.nota)} / 10 &nbsp; (${reg.correctas}/${reg.total} aciertos · ${NPT_EXAMEN_PUNTOS_POR_ACIERTO} pts c/u)</p>
+                <table><tr><th>#</th><th>Pregunta</th><th>Respuesta del estudiante</th><th>Correcta</th><th>Resultado</th></tr>${filas}</table>
                 </body></html>`);
             ventana.document.close(); ventana.focus();
             setTimeout(() => ventana.print(), 300);
@@ -3833,6 +4069,9 @@ video {
             document.getElementById(id).classList.remove('hidden');
         }
         function volverAlInicio() {
+            detenerTimerPreguntaExamen();
+            if (examenTimerRevision) { clearInterval(examenTimerRevision); examenTimerRevision = null; }
+            if (examenTimerFinalizar) { clearInterval(examenTimerFinalizar); examenTimerFinalizar = null; }
             estudianteActual = null; indicePregunta = 0; respuestas = {}; examenContexto = null;
             document.getElementById('input-cedula').value = '';
             document.getElementById('input-email-local').value = '';
@@ -4788,7 +5027,7 @@ video {
                     <td class="p-2 text-center">${celda(nLibro)}</td>
                     <td class="p-2 text-center">${celda(nTarea)}</td>
                     <td class="p-2 text-center">${celda(nTalleres)}</td>
-                    <td class="p-2 text-center">${celda(nExamen)}</td>
+                    <td class="p-2 text-center">${celda(nExamen)}${nExamen !== null ? `<br><button onclick="imprimirReporteExamenDocente('${escapeHtml(est.cedula)}',${t})" class="mt-1 text-[10px] bg-slate-800 text-white px-2 py-0.5 rounded-lg font-bold hover:bg-slate-900" title="Ver e imprimir el examen completo con aciertos y errores">🖨️ Ver examen</button>` : ''}</td>
                     <td class="p-2 text-center">${promedio !== null ? `<span class="px-2 py-0.5 rounded-full font-bold ${promedio >= 7 ? 'nota-badge-AAR' : 'nota-badge-NAR'}">${formatearNota(promedio)}</span>` : '<span class="text-slate-300">—</span>'}</td>`;
                 tbody.appendChild(tr);
             });
@@ -5511,12 +5750,10 @@ video {
                 const notaExamen = nptNotas[cedula]?.[`trimestre${t.num}`]?.examen || null;
                 let examenHtml = '';
                 if (notaExamen) {
-                    examenHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                        <p class="text-xs text-slate-500 font-bold mb-1">Examen rendido:</p>
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl font-black ${numero(notaExamen.nota) >= 7 ? 'text-emerald-600' : 'text-rose-600'}">${formatearNota(numero(notaExamen.nota))} <span class="text-sm text-slate-400 font-normal">/ 10</span></span>
-                            <span class="text-xs text-slate-400">${notaExamen.correctas}/${notaExamen.total} aciertos</span>
-                        </div>
+                    examenHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+                        <p class="text-xs text-slate-500 font-bold mb-1">Examen rendido</p>
+                        <p class="text-sm font-black text-slate-700">${escapeHtml(mensajeCualitativoExamen(numero(notaExamen.nota)))}</p>
+                        <p class="text-[10px] text-slate-400 mt-1">Tu docente tiene el detalle completo de tu examen.</p>
                     </div>`;
                 } else if (examenHab) {
                     examenHtml = `<button onclick="comenzarExamenTrimestre(${t.num})" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">📝 Realizar examen del trimestre</button>`;
@@ -6894,8 +7131,10 @@ video {
         // Exponer funciones globales ANTES de iniciar (evita ReferenceError en onclick)
         window.verificarEstudiante = verificarEstudiante;
         window.comenzarExamenTrimestre = comenzarExamenTrimestre;
-        window.imprimirReporteExamen = imprimirReporteExamen;
-        window.siguientePregunta = siguientePregunta;
+        window.avanzarPreguntaManual = avanzarPreguntaManual;
+        window.cambiarRespuestaRevision = cambiarRespuestaRevision;
+        window.finalizarExamenManual = finalizarExamenManual;
+        window.imprimirReporteExamenDocente = imprimirReporteExamenDocente;
         window.mostrarAccesoDocente = mostrarAccesoDocente;
         window.validarAccesoDocente = validarAccesoDocente;
         window.cerrarSesionDocente = cerrarSesionDocente;
