@@ -2067,9 +2067,14 @@ video {
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Correo institucional</label>
                     <div class="flex items-stretch">
                         <input type="text" id="input-email-local"
+                            oninput="this.value = this.value.replace(/@/g, '')"
+                            onkeypress="if(event.key==='@') event.preventDefault()"
+                            onpaste="setTimeout(() => { this.value = this.value.replace(/@/g, ''); }, 0)"
+                            placeholder="nombre.apellido"
                             class="flex-1 px-4 py-3 bg-slate-50 border rounded-l-xl text-sm focus:ring-2 focus:ring-brand-500 min-w-0">
-                        <span class="px-3 py-3 bg-slate-100 border border-l-0 rounded-r-xl text-xs text-slate-500 font-mono whitespace-nowrap">@sagradocorazon.edu.ec</span>
+                        <span class="px-3 py-3 bg-brand-600 border border-brand-600 rounded-r-xl text-xs text-white font-bold font-mono whitespace-nowrap flex items-center">@sagradocorazon.edu.ec</span>
                     </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Solo escribe la parte antes del @, el dominio ya está incluido.</p>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Cédula (clave de acceso)</label>
@@ -2115,7 +2120,7 @@ video {
                     <button onclick="generarReporteEstudiantes()" class="bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold">📋 Reporte Estudiantes</button>
                     <button onclick="generarReporteNPTPorTrimestre()" class="bg-brand-600 text-white px-3 py-2 rounded-xl text-xs font-bold">📊 Reporte por Trimestre</button>
                     <button onclick="generarReporteNPTIndividual()" class="bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-bold">👤 Reporte Individual</button>
-                    <button onclick="cerrarSesionDocente()" class="bg-slate-700 text-white px-3 py-2 rounded-xl text-xs">Salir</button>
+                    <button onclick="cerrarSesionDocente()" class="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">🚪 Salir</button>
                 </div>
             </div>
 
@@ -2181,6 +2186,7 @@ video {
                                 <div id="npt-eval-progreso-barra" class="bg-indigo-600 h-2 rounded-full transition-all" style="width:0%"></div>
                             </div>
                         </div>
+                        <div id="npt-bloqueos-alerta" class="hidden mb-4"></div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full text-xs">
                                 <thead class="bg-slate-50">
@@ -2414,7 +2420,7 @@ video {
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="inline-flex items-center gap-1 text-[11px] text-slate-500" title="Tus ingresos al sistema"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold">👁️ <span id="cnt-accesos-estudiante-individual">0</span></span> tus accesos</span>
-                        <button onclick="volverAlInicio()" class="text-xs text-slate-500 underline">Cerrar sesión</button>
+                        <button onclick="volverAlInicio()" class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-xl hover:bg-rose-100 hover:border-rose-300 transition-colors">🚪 Cerrar sesión</button>
                     </div>
                 </div>
                 <p id="npt-accesos-diarios-msg" class="mt-2 text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
@@ -2427,11 +2433,23 @@ video {
         </div>
         <div id="screen-quiz" class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 relative">
             <!-- Overlay obligatorio: el examen no muestra preguntas hasta confirmar pantalla completa -->
-            <div id="exam-fullscreen-gate" class="hidden absolute inset-0 z-50 bg-slate-900/95 rounded-2xl flex flex-col items-center justify-center text-center p-8">
-                <div class="text-4xl mb-4">🔒</div>
+            <div id="exam-fullscreen-gate" class="hidden absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center text-center"
+                style="background-color:rgba(15,23,42,0.97);padding:2rem;">
+                <div style="font-size:3rem;line-height:1;margin-bottom:1rem;">🔒</div>
                 <p class="text-white font-bold text-lg mb-2">Este examen debe rendirse en pantalla completa</p>
-                <p class="text-slate-300 text-sm mb-6 max-w-sm">No podrás cambiar de pestaña, minimizar ni salir de la pantalla completa mientras rindes. Si lo haces, el examen se finalizará automáticamente con tus respuestas actuales.</p>
+                <p class="text-slate-300 text-sm mb-6 max-w-sm">No podrás cambiar de pestaña, minimizar ni salir de la pantalla completa mientras rindes. Si lo haces, el examen quedará bloqueado o se finalizará automáticamente.</p>
                 <button id="btn-exam-fullscreen-gate" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl">🔒 Iniciar examen en pantalla completa</button>
+            </div>
+            <div id="exam-block-overlay" class="hidden absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center text-center"
+                style="background-color:#dc2626;padding:2rem;">
+                <div style="font-size:3.5rem;line-height:1;margin-bottom:1rem;">🚨</div>
+                <p class="text-white font-black text-2xl mb-3" style="line-height:1.2;">¡ALERTA DE POSIBLE<br>FRAUDE ACADÉMICO!</p>
+                <p id="exam-block-motivo" class="text-white font-bold text-sm mb-3 max-w-md rounded-xl" style="background-color:rgba(127,29,29,0.75);border:1px solid rgba(255,255,255,0.4);padding:0.5rem 1rem;">Motivo: —</p>
+                <p class="text-white font-bold text-sm mb-2 max-w-md">🔒 Tu examen quedó bloqueado y el tiempo se detuvo.</p>
+                <p class="text-white font-black text-sm mb-4 max-w-md">📢 Tu docente ya fue notificado de inmediato y debe autorizar que continúes.</p>
+                <p class="text-white font-semibold text-xs mb-6 max-w-sm">Permanece en tu lugar, no cierres esta ventana y espera indicaciones.</p>
+                <div class="flex items-center gap-2 text-white text-xs font-bold rounded-full" style="background-color:rgba(127,29,29,0.75);border:1px solid rgba(255,255,255,0.4);padding:0.4rem 0.9rem;"><span class="animate-pulse">●</span> Esperando autorización del docente...</div>
+                <p class="text-white font-semibold mt-6 max-w-sm" style="font-size:11px;">⚠️ Si vuelves a salir de pantalla completa después de ser autorizado, el examen se finalizará automáticamente.</p>
             </div>
             <div class="flex justify-between items-center pb-3 border-b flex-wrap gap-2">
                 <span id="quiz-badge" class="font-bold text-brand-600">Estudiante</span>
@@ -2449,8 +2467,12 @@ video {
                 </div>
                 <div class="w-full bg-slate-100 h-2 rounded-full mb-5"><div id="quiz-bar" class="bg-brand-500 h-full w-0 transition-all rounded-full"></div></div>
                 <h3 id="quiz-question" class="text-lg font-bold mb-5">Cargando...</h3>
-                <div id="quiz-options" class="space-y-3 mb-6"></div>
-                <button id="quiz-next" onclick="avanzarPreguntaManual()" class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold">Siguiente</button>
+                <div id="quiz-options" class="space-y-3 mb-3"></div>
+                <div id="quiz-warning-aviso" class="hidden items-center gap-2 bg-amber-50 border border-amber-300 text-amber-800 text-xs font-bold rounded-xl px-3 py-2.5 mb-3">
+                    <span class="text-base leading-none">⚠️</span>
+                    <span>Debes seleccionar una respuesta antes de continuar.</span>
+                </div>
+                <button id="quiz-next" onclick="avanzarPreguntaManual()" class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold hover:bg-brand-700 transition-colors">Siguiente</button>
                 <p class="text-[11px] text-slate-400 text-center mt-3">No es posible regresar a una pregunta anterior. Si no respondes en 30 segundos, pasarás a la siguiente pregunta. No cambies de pestaña ni salgas de pantalla completa: el examen se finalizará automáticamente.</p>
             </div>
 
@@ -2685,6 +2707,9 @@ video {
         let examenSegundosRevision = 0;
         let examenTimerFinalizar = null;  // interval del minuto para presionar "Finalizar examen"
         let examenSegundosFinalizar = 0;
+        let examenDesuscribirBloqueo = null; // función para cancelar la escucha del bloqueo (lado estudiante)
+        let nptBloqueosActivos = {};         // último snapshot de exámenes bloqueados (lado docente)
+        let nptBloqueosListenerActivo = false;
         const NPT_EXAMEN_NUM_PREGUNTAS = 20;      // cantidad de preguntas por intento
         const NPT_EXAMEN_TIEMPO_PREGUNTA = 30;    // segundos por pregunta antes de avanzar automáticamente
         const NPT_EXAMEN_TIEMPO_REVISION = 30;    // segundos para revisar respuestas al terminar
@@ -3892,6 +3917,7 @@ video {
             document.addEventListener('contextmenu', bloquearMenuContextualExamen);
             document.addEventListener('keydown', bloquearAtajosExamen, true);
             window.addEventListener('beforeunload', advertirCierrePestanaExamen);
+            activarBloqueoWidgetsExternosExamen();
         }
         function detenerModoBloqueoExamen() {
             if (!examenListenersActivos) return;
@@ -3903,8 +3929,40 @@ video {
             document.removeEventListener('keydown', bloquearAtajosExamen, true);
             window.removeEventListener('beforeunload', advertirCierrePestanaExamen);
             document.getElementById('exam-fullscreen-gate')?.classList.add('hidden');
+            desactivarBloqueoWidgetsExternosExamen();
             const salir = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
             if (document.fullscreenElement && salir) { salir.call(document).catch(() => {}); }
+        }
+        // Oculta cualquier elemento inyectado directamente en <body> por scripts externos (por ejemplo,
+        // el widget de chat) mientras el examen está activo — así no queda ningún botón/icono ajeno a
+        // la vista flotando sobre el examen. No toca el header ni el <main> de la propia app.
+        let examenObserverBodyWidgets = null;
+        function esContenedorPermitidoDuranteExamen(el) {
+            if (!el || el.nodeType !== 1) return true;
+            if (['HEADER', 'MAIN', 'SCRIPT', 'STYLE', 'NOSCRIPT', 'LINK', 'TITLE', 'META'].includes(el.tagName)) return true;
+            if (el.id === 'security-block-screen') return true;
+            return false;
+        }
+        function ocultarSiEsWidgetExternoExamen(el) {
+            if (esContenedorPermitidoDuranteExamen(el)) return;
+            if (el.style && el.style.display === 'none') return; // ya lo oculta su propio dueño (ej. iframes internos de Firebase)
+            el.dataset.ocultadoPorExamen = '1';
+            el.style.setProperty('display', 'none', 'important');
+        }
+        function activarBloqueoWidgetsExternosExamen() {
+            Array.from(document.body.children).forEach(ocultarSiEsWidgetExternoExamen);
+            if (examenObserverBodyWidgets) return;
+            examenObserverBodyWidgets = new MutationObserver(mutaciones => {
+                mutaciones.forEach(m => m.addedNodes.forEach(n => ocultarSiEsWidgetExternoExamen(n)));
+            });
+            examenObserverBodyWidgets.observe(document.body, { childList: true });
+        }
+        function desactivarBloqueoWidgetsExternosExamen() {
+            if (examenObserverBodyWidgets) { examenObserverBodyWidgets.disconnect(); examenObserverBodyWidgets = null; }
+            document.querySelectorAll('[data-ocultado-por-examen="1"]').forEach(el => {
+                el.style.removeProperty('display');
+                delete el.dataset.ocultadoPorExamen;
+            });
         }
         function manejarCambioPantallaCompletaExamen() {
             if (examenSuprimirDeteccionSalida || !examenFaseActiva()) return;
@@ -3919,24 +3977,91 @@ video {
         }
         function bloquearAtajosExamen(e) {
             if (!examenFaseActiva()) return;
-            const k = e.key.toLowerCase();
-            const combo = (e.ctrlKey || e.metaKey) && ['t','n','w','r','p'].includes(k);
-            const devtools = e.key === 'F12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i','j','c'].includes(k));
-            if (combo || devtools || e.key === 'F11' || e.key === 'F5') { e.preventDefault(); e.stopPropagation(); }
+            // El examen se responde solo con clics del mouse: se bloquea todo el teclado mientras rinde.
+            // (La tecla Esc, cuando el navegador la usa para salir de pantalla completa, actúa a nivel
+            // del propio navegador y no puede ser interceptada por ninguna página web; ver nota al usuario.)
+            e.preventDefault();
+            e.stopPropagation();
         }
         function advertirCierrePestanaExamen(e) {
             if (examenFaseActiva()) { e.preventDefault(); e.returnValue = ''; }
         }
         // Se detectó que el estudiante salió de pantalla completa / cambió de pestaña: se finaliza de inmediato.
+        // Se detectó salida de pantalla completa / cambio de pestaña.
+        // 1er intento: se BLOQUEA el examen (tiempo detenido) hasta que el docente autorice continuar.
+        // 2do intento: se finaliza el examen automáticamente, sin más margen.
         function registrarSalidaExamen(motivo) {
-            if (!examenContexto || examenContexto.finalizandoPorSalida) return;
-            examenContexto.finalizandoPorSalida = true;
-            examenContexto.intentosSalida = (examenContexto.intentosSalida || 0) + 1;
-            examenContexto.motivoSalida = motivo;
+            if (!examenContexto || examenContexto.bloqueadoActualmente || examenContexto.finalizandoPorSalida) return;
             detenerTimerPreguntaExamen();
             if (examenTimerRevision) { clearInterval(examenTimerRevision); examenTimerRevision = null; }
             if (examenTimerFinalizar) { clearInterval(examenTimerFinalizar); examenTimerFinalizar = null; }
-            calificarYGuardarExamen();
+            examenContexto.intentosSalida = (examenContexto.intentosSalida || 0) + 1;
+            examenContexto.motivoSalida = motivo;
+            if (examenContexto.intentosSalida >= 2) {
+                examenContexto.finalizandoPorSalida = true;
+                calificarYGuardarExamen();
+                return;
+            }
+            bloquearExamenPorFraude(motivo);
+        }
+        // Bloquea la pantalla del estudiante (tiempo detenido) y notifica al docente en tiempo real.
+        async function bloquearExamenPorFraude(motivo) {
+            if (!examenContexto || !estudianteActual) return;
+            examenContexto.bloqueadoActualmente = true;
+            const motivoEl = document.getElementById('exam-block-motivo');
+            if (motivoEl) motivoEl.textContent = `Motivo: ${motivo}`;
+            document.getElementById('exam-block-overlay')?.classList.remove('hidden');
+            const ruta = `nptExamenBloqueos/${estudianteActual.cedula}/trimestre${examenContexto.trimestre}`;
+            try {
+                await guardarValorFirebase(ruta, {
+                    bloqueado: true, motivo,
+                    fecha: new Date().toISOString(),
+                    nombre: estudianteActual.nombre, cedula: estudianteActual.cedula,
+                    curso: estudianteActual.curso, paralelo: estudianteActual.paralelo,
+                    trimestre: examenContexto.trimestre
+                });
+            } catch (e) { console.error('No se pudo notificar el bloqueo al docente:', e); }
+            if (examenDesuscribirBloqueo) examenDesuscribirBloqueo();
+            examenDesuscribirBloqueo = escucharBloqueoExamen(estudianteActual.cedula, examenContexto.trimestre, (valor) => {
+                if (valor && valor.bloqueado === false) desbloquearExamenPorDocente();
+            });
+        }
+        // El docente autorizó continuar: se limpia el bloqueo y se exige reconfirmar pantalla completa
+        // (el navegador exige un clic del estudiante para volver a entrar), luego se reanuda el tiempo donde quedó.
+        function desbloquearExamenPorDocente() {
+            if (!examenContexto || !examenContexto.bloqueadoActualmente) return;
+            examenContexto.bloqueadoActualmente = false;
+            document.getElementById('exam-block-overlay')?.classList.add('hidden');
+            if (examenDesuscribirBloqueo) { examenDesuscribirBloqueo(); examenDesuscribirBloqueo = null; }
+            const cedula = estudianteActual?.cedula;
+            if (cedula) borrarValorFirebase(`nptExamenBloqueos/${cedula}/trimestre${examenContexto.trimestre}`).catch(() => {});
+            solicitarPantallaCompletaExamen(() => reanudarTemporizadorFaseExamen());
+        }
+        // Reanuda el temporizador de la fase en la que se quedó el examen, SIN reiniciar los segundos.
+        function reanudarTemporizadorFaseExamen() {
+            if (!examenContexto) return;
+            if (examenContexto.fase === 'preguntas') iniciarIntervaloPreguntaExamen();
+            else if (examenContexto.fase === 'revision') iniciarIntervaloRevisionExamen();
+            else if (examenContexto.fase === 'finalizar') iniciarIntervaloFinalizarExamen();
+        }
+        // Escucha en tiempo real el nodo de bloqueo de un estudiante. Devuelve función para cancelar la escucha.
+        function escucharBloqueoExamen(cedula, trimestre, callback) {
+            const ruta = `nptExamenBloqueos/${cedula}/trimestre${trimestre}`;
+            if (database) {
+                const ref = database.ref(ruta);
+                const handler = (snap) => callback(snap.val());
+                ref.on('value', handler);
+                return () => ref.off('value', handler);
+            }
+            // Sin SDK disponible: sondeo por REST cada 3s como respaldo.
+            let activo = true;
+            const sondear = async () => {
+                if (!activo) return;
+                try { callback(await leerValorRutaFirebase(ruta)); } catch (e) {}
+                if (activo) setTimeout(sondear, 3000);
+            };
+            sondear();
+            return () => { activo = false; };
         }
         function detenerTimerPreguntaExamen() {
             if (examenTimerPregunta) { clearInterval(examenTimerPregunta); examenTimerPregunta = null; }
@@ -3944,6 +4069,7 @@ video {
         function mostrarPreguntaExamen() {
             if (!examenContexto) return;
             detenerTimerPreguntaExamen();
+            ocultarAvisoPreguntaExamen();
             const q = examenContexto.preguntasActivas[indicePregunta];
             const total = examenContexto.preguntasActivas.length;
             document.getElementById('quiz-question').innerText = quitarNumeracionPregunta(q.pregunta);
@@ -3954,6 +4080,12 @@ video {
             // Temporizador de 30 segundos para esta pregunta (se inicia una sola vez por pregunta)
             examenSegundosPregunta = NPT_EXAMEN_TIEMPO_PREGUNTA;
             actualizarVisualTimerPregunta();
+            iniciarIntervaloPreguntaExamen();
+        }
+        // Arranca el interval del temporizador de pregunta usando el valor ACTUAL de examenSegundosPregunta
+        // (no lo reinicia) — así sirve tanto para una pregunta nueva como para reanudar tras un bloqueo.
+        function iniciarIntervaloPreguntaExamen() {
+            detenerTimerPreguntaExamen();
             examenTimerPregunta = setInterval(() => {
                 examenSegundosPregunta--;
                 actualizarVisualTimerPregunta();
@@ -3977,7 +4109,7 @@ video {
                 btn.className = `w-full text-left p-3 rounded-xl border ${selected ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:bg-slate-50'} transition-all flex items-center gap-3`;
                 btn.innerHTML = `<div class="w-5 h-5 rounded-full border flex items-center justify-center ${selected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'}">${selected ? '✓' : ''}</div><span>${op.id}) ${op.texto}</span>`;
                 // Seleccionar una respuesta SOLO actualiza la marca visual; el reloj de 30s sigue corriendo.
-                btn.onclick = () => { examenContexto.respuestas[indicePregunta] = op.id; renderOpcionesPreguntaExamen(); };
+                btn.onclick = () => { examenContexto.respuestas[indicePregunta] = op.id; renderOpcionesPreguntaExamen(); ocultarAvisoPreguntaExamen(); };
                 container.appendChild(btn);
             });
         }
@@ -4023,9 +4155,34 @@ video {
             }
         }
         // Botón "Siguiente" / "Finalizar preguntas" presionado manualmente
+        let quizAvisoTimeoutId = null;
+        function mostrarAvisoPreguntaExamen(mensaje) {
+            const banner = document.getElementById('quiz-warning-aviso');
+            if (!banner) return;
+            banner.querySelector('span:last-child').textContent = mensaje;
+            banner.classList.remove('hidden');
+            banner.classList.add('flex');
+            if (quizAvisoTimeoutId) clearTimeout(quizAvisoTimeoutId);
+            quizAvisoTimeoutId = setTimeout(() => {
+                banner.classList.add('hidden');
+                banner.classList.remove('flex');
+            }, 3500);
+        }
+        function ocultarAvisoPreguntaExamen() {
+            const banner = document.getElementById('quiz-warning-aviso');
+            if (!banner) return;
+            if (quizAvisoTimeoutId) { clearTimeout(quizAvisoTimeoutId); quizAvisoTimeoutId = null; }
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
         function avanzarPreguntaManual() {
             if (!examenContexto) return;
-            if (examenContexto.respuestas[indicePregunta] === undefined) { examenAlertaSegura('Selecciona una respuesta antes de continuar.'); return; }
+            if (examenContexto.respuestas[indicePregunta] === undefined) {
+                // Solo se muestra una advertencia en pantalla: no cambia de pregunta, no bloquea
+                // la pantalla ni finaliza el examen. El estudiante sigue teniendo su tiempo restante.
+                mostrarAvisoPreguntaExamen('Debes seleccionar una respuesta antes de continuar.');
+                return;
+            }
             detenerTimerPreguntaExamen();
             avanzarDespuesDePregunta();
         }
@@ -4040,6 +4197,9 @@ video {
             renderRevisionExamen();
             examenSegundosRevision = NPT_EXAMEN_TIEMPO_REVISION;
             document.getElementById('revision-timer').innerText = examenSegundosRevision;
+            iniciarIntervaloRevisionExamen();
+        }
+        function iniciarIntervaloRevisionExamen() {
             if (examenTimerRevision) clearInterval(examenTimerRevision);
             examenTimerRevision = setInterval(() => {
                 examenSegundosRevision--;
@@ -4084,16 +4244,19 @@ video {
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
             examenSegundosFinalizar = NPT_EXAMEN_TIEMPO_FINALIZAR;
             document.getElementById('finalizar-timer').innerText = examenSegundosFinalizar;
+            iniciarIntervaloFinalizarExamen();
+        }
+        function iniciarIntervaloFinalizarExamen() {
+            const btn = document.getElementById('btn-finalizar-examen');
             if (examenTimerFinalizar) clearInterval(examenTimerFinalizar);
             examenTimerFinalizar = setInterval(() => {
                 examenSegundosFinalizar--;
                 document.getElementById('finalizar-timer').innerText = Math.max(0, examenSegundosFinalizar);
                 if (examenSegundosFinalizar <= 0) {
                     clearInterval(examenTimerFinalizar); examenTimerFinalizar = null;
-                    // Se agotó el minuto sin que el estudiante presione el botón: se desactiva y
+                    // Se agotó el tiempo sin que el estudiante presione el botón: se desactiva y
                     // el examen se finaliza y califica automáticamente con lo que respondió.
-                    btn.disabled = true;
-                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
                     calificarYGuardarExamen();
                 }
             }, 1000);
@@ -4209,6 +4372,7 @@ video {
             if (examenTimerRevision) { clearInterval(examenTimerRevision); examenTimerRevision = null; }
             if (examenTimerFinalizar) { clearInterval(examenTimerFinalizar); examenTimerFinalizar = null; }
             detenerModoBloqueoExamen();
+            if (examenDesuscribirBloqueo) { examenDesuscribirBloqueo(); examenDesuscribirBloqueo = null; }
             estudianteActual = null; indicePregunta = 0; respuestas = {}; examenContexto = null;
             document.getElementById('input-cedula').value = '';
             document.getElementById('input-email-local').value = '';
@@ -5033,6 +5197,7 @@ video {
 
         // ---- Tabla docente de entregas NPT ----
         function renderNPTDocente() {
+            iniciarEscuchaBloqueosExamenDocente();
             const tbody  = document.getElementById('npt-tabla-body');
             const noData = document.getElementById('npt-no-datos');
             if (!tbody) return;
@@ -5659,6 +5824,58 @@ video {
             }
         }
 
+        // ==================== Monitoreo docente de exámenes bloqueados (tiempo real) ====================
+        function iniciarEscuchaBloqueosExamenDocente() {
+            if (nptBloqueosListenerActivo) return;
+            nptBloqueosListenerActivo = true;
+            if (database) {
+                database.ref('nptExamenBloqueos').on('value', (snap) => {
+                    nptBloqueosActivos = snap.val() || {};
+                    renderNPTBloqueosAlerta();
+                });
+            } else {
+                // Sin SDK disponible: sondeo por REST cada 4s.
+                const sondear = async () => {
+                    try { nptBloqueosActivos = await leerValorRutaFirebase('nptExamenBloqueos') || {}; renderNPTBloqueosAlerta(); } catch (e) {}
+                    setTimeout(sondear, 4000);
+                };
+                sondear();
+            }
+        }
+        function renderNPTBloqueosAlerta() {
+            const cont = document.getElementById('npt-bloqueos-alerta');
+            if (!cont) return;
+            const filas = [];
+            Object.entries(nptBloqueosActivos || {}).forEach(([cedula, porTrimestre]) => {
+                Object.entries(porTrimestre || {}).forEach(([claveTrimestre, reg]) => {
+                    if (reg && reg.bloqueado) {
+                        filas.push({ cedula, numTrimestre: parseInt(claveTrimestre.replace('trimestre', '')), reg });
+                    }
+                });
+            });
+            if (filas.length === 0) { cont.classList.add('hidden'); cont.innerHTML = ''; return; }
+            cont.classList.remove('hidden');
+            cont.innerHTML = `<div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4">
+                <p class="font-black text-rose-800 mb-3">🚨 ${filas.length} examen(es) bloqueado(s) esperando autorización</p>
+                <div class="space-y-2">
+                ${filas.map(f => `<div class="flex items-center justify-between bg-white rounded-xl p-3 border border-rose-200 flex-wrap gap-2">
+                    <div>
+                        <p class="font-bold text-sm">${escapeHtml(f.reg.nombre || f.cedula)} <span class="text-slate-400 font-normal">· T${f.numTrimestre}</span></p>
+                        <p class="text-xs text-slate-500">${escapeHtml(f.reg.motivo || '')}</p>
+                    </div>
+                    <button onclick="autorizarContinuarExamen('${escapeHtml(f.cedula)}',${f.numTrimestre})" class="bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-emerald-700">✅ Autorizar continuar</button>
+                </div>`).join('')}
+                </div>
+            </div>`;
+        }
+        async function autorizarContinuarExamen(cedula, numTrimestre) {
+            try {
+                await guardarValorFirebase(`nptExamenBloqueos/${cedula}/trimestre${numTrimestre}/bloqueado`, false);
+            } catch (e) {
+                console.error('Error autorizando continuar examen:', e);
+                alert('No se pudo enviar la autorización. Revisa tu conexión e intenta de nuevo.');
+            }
+        }
         // ---- Eliminar examen rendido (permite que el estudiante lo vuelva a rendir) ----
         async function eliminarExamenNPT(cedula, nombre, trimestre) {
             const t = trimestresEfectivos().find(x => x.num === trimestre);
@@ -7337,6 +7554,7 @@ video {
         window.finalizarExamenManual = finalizarExamenManual;
         window.imprimirReporteExamenDocente = imprimirReporteExamenDocente;
         window.eliminarExamenNPT = eliminarExamenNPT;
+        window.autorizarContinuarExamen = autorizarContinuarExamen;
         window.mostrarAccesoDocente = mostrarAccesoDocente;
         window.validarAccesoDocente = validarAccesoDocente;
         window.cerrarSesionDocente = cerrarSesionDocente;
