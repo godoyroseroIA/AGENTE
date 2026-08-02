@@ -5547,7 +5547,14 @@ video {
                 headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': NPT_AUTH_HEADER },
                 body: JSON.stringify(payload)
             });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            if (!resp.ok) {
+                let mensajeError = `HTTP ${resp.status}`;
+                try {
+                    const cuerpoError = await resp.json();
+                    if (cuerpoError?.error) mensajeError = cuerpoError.error;
+                } catch { /* el cuerpo no era JSON válido: nos quedamos con el HTTP status */ }
+                throw new Error(mensajeError);
+            }
             const data = await resp.json(); // { nota, comentario, desglose?, observaciones?, firmaDetectada?, firmaCoincide?, comentarioFirma?, fuenteInfo?, advertenciasFuente?, requiereRevisionManual? }
 
             // ---- Caso especial: el Worker no pudo leer contenido evaluable (típico de Tarea con
