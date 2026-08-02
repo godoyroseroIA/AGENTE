@@ -5549,11 +5549,14 @@ video {
             });
             if (!resp.ok) {
                 let mensajeError = `HTTP ${resp.status}`;
+                let cuerpoErrorJson = null;
                 try {
-                    const cuerpoError = await resp.json();
-                    if (cuerpoError?.error) mensajeError = cuerpoError.error;
+                    cuerpoErrorJson = await resp.json();
+                    if (cuerpoErrorJson?.error) mensajeError = cuerpoErrorJson.error;
                 } catch { /* el cuerpo no era JSON válido: nos quedamos con el HTTP status */ }
-                throw new Error(mensajeError);
+                const err = new Error(mensajeError);
+                if (resp.status === 429 || cuerpoErrorJson?.cuotaExcedida) err.esCuotaExcedida = true;
+                throw err;
             }
             const data = await resp.json(); // { nota, comentario, desglose?, observaciones?, firmaDetectada?, firmaCoincide?, comentarioFirma?, fuenteInfo?, advertenciasFuente?, requiereRevisionManual? }
 
@@ -5671,7 +5674,12 @@ video {
 
         // Botón "Evaluar todos los pendientes": procesa la cola secuencialmente (una petición a la vez, con
         // pausa entre cada una) para no exceder el límite de peticiones por minuto de la API de Gemini.
-        const NPT_EVAL_MASIVA_DELAY_MS = 4500;
+        // Ante un 429 (cuota excedida) el Worker YA reintenta solo con backoff — si aun así llega aquí como
+        // cuota excedida, es una señal fuerte de saturación sostenida: aquí se pausa más tiempo y se
+        // reintenta el MISMO ítem (nunca se descarta como "fallido" solo por un rate-limit transitorio).
+        const NPT_EVAL_MASIVA_DELAY_MS = 6500; // ~9.2 solicitudes/min: margen de seguridad bajo el límite típico de 10 RPM
+        const NPT_EVAL_MASIVA_PAUSA_CUOTA_MS = 65000; // 65s de enfriamiento cuando se detecta cuota excedida
+        const NPT_EVAL_MASIVA_MAX_REINTENTOS_CUOTA = 2; // por ítem, antes de darlo por fallido de verdad
         async function evaluarTodosPendientesIA() {
             if (nptEvalMasivaEnCurso) return;
             const pendientes = nptFilasPendientesIA();
@@ -5680,7 +5688,7 @@ video {
                 return;
             }
             const minutosAprox = Math.ceil((pendientes.length * NPT_EVAL_MASIVA_DELAY_MS) / 60000);
-            if (!confirm(`Se van a evaluar ${pendientes.length} entregas con IA, una por una (aprox. ${minutosAprox} min). No cierres esta pestaña mientras corre. ¿Continuar?`)) return;
+            if (!confirm(`Se van a evaluar ${pendientes.length} entregas con IA, una por una (aprox. ${minutosAprox} min, más pausas extra si se detecta cuota excedida). No cierres esta pestaña mientras corre. ¿Continuar?`)) return;
 
             nptEvalMasivaEnCurso = true;
             let ok = 0, fallidas = 0, revisionManual = 0;
@@ -5693,22 +5701,40 @@ video {
             if (progresoBarra) progresoBarra.style.width = '0%';
             renderNPTDocente(); // redibuja para deshabilitar visualmente los botones individuales
 
+            let detenidoPorCuotaSostenida = false;
             for (let i = 0; i < pendientes.length; i++) {
                 const { cedula, numTrimestre, tipo } = pendientes[i];
-                if (progresoTexto) progresoTexto.textContent = `Evaluando ${i + 1} de ${pendientes.length}...`;
-                try {
-                    await evaluarConIACore(cedula, numTrimestre, tipo);
-                    ok++;
-                } catch(e) {
-                    if (e.esRevisionManual) {
-                        revisionManual++;
-                    } else {
-                        console.error('Fallo evaluación masiva:', cedula, tipo, e);
-                        fallidas++;
+                let intentosCuota = 0;
+                while (true) {
+                    if (progresoTexto) progresoTexto.textContent = `Evaluando ${i + 1} de ${pendientes.length}...`;
+                    try {
+                        await evaluarConIACore(cedula, numTrimestre, tipo);
+                        ok++;
+                        break;
+                    } catch (e) {
+                        if (e.esRevisionManual) { revisionManual++; break; }
+                        if (e.esCuotaExcedida && intentosCuota < NPT_EVAL_MASIVA_MAX_REINTENTOS_CUOTA) {
+                            intentosCuota++;
+                            if (progresoTexto) progresoTexto.textContent = `Cuota de IA excedida — pausando ${Math.round(NPT_EVAL_MASIVA_PAUSA_CUOTA_MS/1000)}s antes de reintentar (${intentosCuota}/${NPT_EVAL_MASIVA_MAX_REINTENTOS_CUOTA})...`;
+                            await new Promise(r => setTimeout(r, NPT_EVAL_MASIVA_PAUSA_CUOTA_MS));
+                            continue; // reintenta el MISMO ítem, no avanza al siguiente
+                        }
+                        if (e.esCuotaExcedida) {
+                            // Ya se agotaron los reintentos por cuota para este ítem: la cuota está
+                            // sostenidamente agotada (probablemente el límite DIARIO, no el de minuto).
+                            // Seguir intentando el resto de la cola solo quemaría todo como "fallida"
+                            // sin ninguna posibilidad real de éxito — se detiene el lote por completo.
+                            detenidoPorCuotaSostenida = true;
+                        } else {
+                            console.error('Fallo evaluación masiva:', cedula, tipo, e);
+                            fallidas++;
+                        }
+                        break;
                     }
                 }
                 if (progresoBarra) progresoBarra.style.width = `${Math.round(((i + 1) / pendientes.length) * 100)}%`;
                 renderNPTDocente();
+                if (detenidoPorCuotaSostenida) break;
                 if (i < pendientes.length - 1) await new Promise(r => setTimeout(r, NPT_EVAL_MASIVA_DELAY_MS));
             }
 
@@ -5716,9 +5742,15 @@ video {
             if (btnMasivo) { btnMasivo.disabled = false; btnMasivo.classList.remove('opacity-50', 'cursor-not-allowed'); }
             progresoEl?.classList.add('hidden');
             renderNPTDocente();
-            alert(`Evaluación masiva terminada: ${ok} completadas, ${revisionManual} requieren revisión manual, ${fallidas} fallidas.` +
-                (revisionManual ? ' Los de revisión manual no se pudieron leer automáticamente (típico en Tarea con sitios que dependen de JavaScript); califícalos directamente.' : '') +
-                (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : ''));
+            if (detenidoPorCuotaSostenida) {
+                const restantes = pendientes.length - (ok + revisionManual + fallidas);
+                alert(`Se detuvo la evaluación masiva: la cuota de la API de Gemini sigue agotada después de varios reintentos con pausas de ${Math.round(NPT_EVAL_MASIVA_PAUSA_CUOTA_MS/1000)}s (probablemente el límite diario, no uno de minuto).\n\n` +
+                    `Completadas: ${ok}. Quedan ${restantes} sin procesar. Espera un rato (o hasta mañana si es el límite diario) y vuelve a presionar "Evaluar todos los pendientes" — retomará justo donde quedó.`);
+            } else {
+                alert(`Evaluación masiva terminada: ${ok} completadas, ${revisionManual} requieren revisión manual, ${fallidas} fallidas.` +
+                    (revisionManual ? ' Los de revisión manual no se pudieron leer automáticamente (típico en Tarea con sitios que dependen de JavaScript); califícalos directamente.' : '') +
+                    (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : ''));
+            }
         }
 
         // Abre el archivo del docente recuperando Base64 desde RTDB si no está en caché
