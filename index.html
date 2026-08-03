@@ -2119,6 +2119,7 @@ video {
                 <div class="flex flex-wrap gap-2">
                     <button onclick="generarReporteEstudiantes()" class="bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold">📋 Reporte Estudiantes</button>
                     <button onclick="generarReporteNPTPorTrimestre()" class="bg-brand-600 text-white px-3 py-2 rounded-xl text-xs font-bold">📊 Reporte por Trimestre</button>
+                    <button onclick="exportarReporteNPTPorTrimestreCSV()" class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold">📎 CSV Trimestre</button>
                     <button onclick="generarReporteNPTIndividual()" class="bg-indigo-600 text-white px-3 py-2 rounded-xl text-xs font-bold">👤 Reporte Individual</button>
                     <button onclick="cerrarSesionDocente()" class="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">🚪 Salir</button>
                 </div>
@@ -2230,10 +2231,11 @@ video {
                                     <th class="p-2 text-left">Cédula</th>
                                     <th class="p-2 text-center">📓 Cuaderno</th>
                                     <th class="p-2 text-center">📘 Libro</th>
-                                    <th class="p-2 text-center">🔗 Tarea</th>
                                     <th class="p-2 text-center">🛠️ Talleres</th>
-                                    <th class="p-2 text-center">📝 Examen</th>
-                                    <th class="p-2 text-center">Promedio</th>
+                                    <th class="p-2 text-center">🔗 Tarea</th>
+                                    <th class="p-2 text-center bg-indigo-50">Promedio Insumos (70%)</th>
+                                    <th class="p-2 text-center">📝 Examen (30%)</th>
+                                    <th class="p-2 text-center bg-emerald-50">Nota Final</th>
                                 </tr>
                             </thead>
                             <tbody id="cuadro-general-body"></tbody>
@@ -2273,15 +2275,14 @@ video {
                     <section class="bg-slate-50 rounded-xl p-4">
                         <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
                             <h4 class="font-bold text-sm">🧮 Fórmula del promedio (Cuadro General)</h4>
-                            <span id="cfg-formula-suma" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-600"></span>
                         </div>
-                        <p class="text-[11px] text-slate-500 mb-3">Fórmula por defecto: <strong>Examen 30%</strong> + <strong>Insumos 70% equitativo</strong> (17.5% c/u). La suma debe ser <strong>100%</strong>. Si un componente no tiene nota, su peso se reparte entre los demás (no se infla el promedio).</p>
+                        <p class="text-[11px] text-slate-500 mb-3">Por defecto: <strong>Examen 30%</strong> + <strong>Promedio de Insumos 70%</strong>. El promedio de insumos SIEMPRE se calcula sumando Cuaderno + Libro + Talleres + Tarea y dividiendo para 4 (un insumo sin registrar cuenta como 0 en la suma, el divisor no cambia). El examen es un componente aparte.</p>
                         <div id="cfg-formula-lista" class="space-y-2"></div>
                         <div class="flex gap-2 mt-3">
                             <button onclick="guardarFormulaPromedio()" class="bg-brand-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-brand-700">💾 Guardar fórmula</button>
                             <button onclick="restablecerFormulaPromedio()" class="bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-300">↺ Restablecer (30/70)</button>
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-2">Ejemplo personalizado: Examen 40%, Cuaderno 20%, Libro 20%, Tarea 10%, Talleres 10%.</p>
+                        <p class="text-[11px] text-slate-400 mt-2">Ejemplo personalizado: Examen 40% (los insumos pasarían a valer 60% en conjunto, repartidos a partes iguales entre los 4).</p>
                     </section>
 
                     <!-- (B2) Firma de referencia del docente -->
@@ -2802,6 +2803,16 @@ video {
                 return false;
             }
             return true;
+        }
+
+        // Trimestre "activo" para reportes: se reutiliza el selector de Cuadro General
+        // (el punto único de la app donde el docente elige explícitamente un trimestre),
+        // así el Reporte por Trimestre siempre coincide con lo que se está viendo ahí.
+        function trimestreActivoParaReportes() {
+            const val = document.getElementById('cuadro-filtro-trimestre')?.value;
+            const n = val ? parseInt(val, 10) : NaN;
+            if (!isNaN(n)) return n;
+            return trimestresEfectivos()[0]?.num || 1;
         }
 
         function escapeHtml(valor) {
@@ -5351,10 +5362,11 @@ video {
             alumnos.forEach((est, i) => {
                 const nCuaderno = notaNPTDe(est.cedula, t, 'cuaderno');
                 const nLibro    = notaNPTDe(est.cedula, t, 'libro');
-                const nTarea    = notaNPTDe(est.cedula, t, 'tarea');
                 const nTalleres = notaNPTDe(est.cedula, t, 'talleres');
+                const nTarea    = notaNPTDe(est.cedula, t, 'tarea');
                 const nExamen   = notaNPTDe(est.cedula, t, 'examen');
-                const promedio = calcularPromedioNPT(est.cedula, t);
+                const promInsumos = calcularPromedioInsumosNPT(est.cedula, t);
+                const notaFinal = calcularPromedioNPT(est.cedula, t);
 
                 const celda = (val) => val !== null
                     ? `<span class="font-bold ${val >= 7 ? 'text-emerald-600' : 'text-rose-600'}">${formatearNota(val)}</span>`
@@ -5368,10 +5380,11 @@ video {
                     <td class="p-2 font-mono text-xs">${escapeHtml(est.cedula)}</td>
                     <td class="p-2 text-center">${celda(nCuaderno)}</td>
                     <td class="p-2 text-center">${celda(nLibro)}</td>
-                    <td class="p-2 text-center">${celda(nTarea)}</td>
                     <td class="p-2 text-center">${celda(nTalleres)}</td>
+                    <td class="p-2 text-center">${celda(nTarea)}</td>
+                    <td class="p-2 text-center bg-indigo-50/50">${celda(promInsumos)}</td>
                     <td class="p-2 text-center">${celda(nExamen)}${nExamen !== null ? `<br><button onclick="imprimirReporteExamenDocente('${escapeHtml(est.cedula)}',${t})" class="mt-1 text-[10px] bg-slate-800 text-white px-2 py-0.5 rounded-lg font-bold hover:bg-slate-900" title="Ver e imprimir el examen completo con aciertos y errores">🖨️ Ver examen</button>` : ''}</td>
-                    <td class="p-2 text-center">${promedio !== null ? `<span class="px-2 py-0.5 rounded-full font-bold ${promedio >= 7 ? 'nota-badge-AAR' : 'nota-badge-NAR'}">${formatearNota(promedio)}</span>` : '<span class="text-slate-300">—</span>'}</td>`;
+                    <td class="p-2 text-center bg-emerald-50/50">${notaFinal !== null ? `<span class="px-2 py-0.5 rounded-full font-bold ${notaFinal >= 7 ? 'nota-badge-AAR' : 'nota-badge-NAR'}">${formatearNota(notaFinal)}</span>` : '<span class="text-slate-300">—</span>'}</td>`;
                 tbody.appendChild(tr);
             });
         }
@@ -5379,22 +5392,24 @@ video {
             const t = parseInt(document.getElementById('cuadro-filtro-trimestre')?.value || '1', 10);
             const alumnos = estudiantesFiltrados();
             if (alumnos.length === 0) { alert('No hay estudiantes para exportar con el filtro actual.'); return; }
-            let csv = 'Estudiante,Cédula,Curso,Paralelo,Cuaderno,Libro,Tarea,Talleres,Examen,Promedio\n';
+            let csv = 'Estudiante,Cédula,Curso,Paralelo,Cuaderno,Libro,Talleres,Tarea,Promedio Insumos,Examen,Nota Final\n';
             alumnos.forEach(est => {
                 const nCuaderno = notaNPTDe(est.cedula, t, 'cuaderno');
                 const nLibro    = notaNPTDe(est.cedula, t, 'libro');
-                const nTarea    = notaNPTDe(est.cedula, t, 'tarea');
                 const nTalleres = notaNPTDe(est.cedula, t, 'talleres');
+                const nTarea    = notaNPTDe(est.cedula, t, 'tarea');
                 const nExamen   = notaNPTDe(est.cedula, t, 'examen');
-                const promedio = calcularPromedioNPT(est.cedula, t);
+                const promInsumos = calcularPromedioInsumosNPT(est.cedula, t);
+                const notaFinal = calcularPromedioNPT(est.cedula, t);
                 csv += [
                     csvCampo(est.nombre), csvCampo(est.cedula), csvCampo(est.curso), csvCampo(est.paralelo),
                     csvCampo(nCuaderno !== null ? formatearNota(nCuaderno) : ''),
                     csvCampo(nLibro !== null ? formatearNota(nLibro) : ''),
-                    csvCampo(nTarea !== null ? formatearNota(nTarea) : ''),
                     csvCampo(nTalleres !== null ? formatearNota(nTalleres) : ''),
+                    csvCampo(nTarea !== null ? formatearNota(nTarea) : ''),
+                    csvCampo(promInsumos !== null ? formatearNota(promInsumos) : ''),
                     csvCampo(nExamen !== null ? formatearNota(nExamen) : ''),
-                    csvCampo(promedio !== null ? formatearNota(promedio) : '')
+                    csvCampo(notaFinal !== null ? formatearNota(notaFinal) : '')
                 ].join(',') + '\n';
             });
             descargarArchivo(`cuadro_general_T${t}_${fechaArchivo()}.csv`, csv, 'text/csv;charset=utf-8');
@@ -5556,6 +5571,7 @@ video {
                 } catch { /* el cuerpo no era JSON válido: nos quedamos con el HTTP status */ }
                 const err = new Error(mensajeError);
                 if (resp.status === 429 || cuerpoErrorJson?.cuotaExcedida) err.esCuotaExcedida = true;
+                if (cuerpoErrorJson?.esLimiteDiario) err.esLimiteDiario = true;
                 throw err;
             }
             const data = await resp.json(); // { nota, comentario, desglose?, observaciones?, firmaDetectada?, firmaCoincide?, comentarioFirma?, fuenteInfo?, advertenciasFuente?, requiereRevisionManual? }
@@ -5692,6 +5708,7 @@ video {
 
             nptEvalMasivaEnCurso = true;
             let ok = 0, fallidas = 0, revisionManual = 0;
+            const erroresDetalle = []; // { cedula, tipo, mensaje } — para el resumen real al final
             const btnMasivo = document.getElementById('npt-btn-evaluar-todos');
             const progresoEl = document.getElementById('npt-eval-progreso');
             const progresoTexto = document.getElementById('npt-eval-progreso-texto');
@@ -5701,7 +5718,7 @@ video {
             if (progresoBarra) progresoBarra.style.width = '0%';
             renderNPTDocente(); // redibuja para deshabilitar visualmente los botones individuales
 
-            let detenidoPorCuotaSostenida = false;
+            let detenidoPorCuotaSostenida = false, detenidoPorLimiteDiario = false;
             for (let i = 0; i < pendientes.length; i++) {
                 const { cedula, numTrimestre, tipo } = pendientes[i];
                 let intentosCuota = 0;
@@ -5713,22 +5730,31 @@ video {
                         break;
                     } catch (e) {
                         if (e.esRevisionManual) { revisionManual++; break; }
+                        if (e.esCuotaExcedida && e.esLimiteDiario) {
+                            // Límite DIARIO confirmado por el Worker: ningún reintento en minutos lo
+                            // resuelve. Se detiene el lote DE INMEDIATO, sin pausas inútiles — esto es
+                            // justo lo que antes causaba que decenas de ítems terminaran "fallidos": se
+                            // agotaba el tiempo esperando reintentos condenados a fallar siempre.
+                            detenidoPorCuotaSostenida = true;
+                            detenidoPorLimiteDiario = true;
+                            erroresDetalle.push({ cedula, tipo, mensaje: e.message });
+                            break;
+                        }
                         if (e.esCuotaExcedida && intentosCuota < NPT_EVAL_MASIVA_MAX_REINTENTOS_CUOTA) {
                             intentosCuota++;
-                            if (progresoTexto) progresoTexto.textContent = `Cuota de IA excedida — pausando ${Math.round(NPT_EVAL_MASIVA_PAUSA_CUOTA_MS/1000)}s antes de reintentar (${intentosCuota}/${NPT_EVAL_MASIVA_MAX_REINTENTOS_CUOTA})...`;
+                            if (progresoTexto) progresoTexto.textContent = `Cuota de IA excedida (límite por minuto) — pausando ${Math.round(NPT_EVAL_MASIVA_PAUSA_CUOTA_MS/1000)}s antes de reintentar (${intentosCuota}/${NPT_EVAL_MASIVA_MAX_REINTENTOS_CUOTA})...`;
                             await new Promise(r => setTimeout(r, NPT_EVAL_MASIVA_PAUSA_CUOTA_MS));
                             continue; // reintenta el MISMO ítem, no avanza al siguiente
                         }
                         if (e.esCuotaExcedida) {
-                            // Ya se agotaron los reintentos por cuota para este ítem: la cuota está
-                            // sostenidamente agotada (probablemente el límite DIARIO, no el de minuto).
-                            // Seguir intentando el resto de la cola solo quemaría todo como "fallida"
-                            // sin ninguna posibilidad real de éxito — se detiene el lote por completo.
+                            // Se agotaron los reintentos y sigue como cuota (pero sin poder confirmar
+                            // que sea diaria): se detiene el lote por completo, igual de conservador.
                             detenidoPorCuotaSostenida = true;
                         } else {
                             console.error('Fallo evaluación masiva:', cedula, tipo, e);
                             fallidas++;
                         }
+                        erroresDetalle.push({ cedula, tipo, mensaje: e.message });
                         break;
                     }
                 }
@@ -5742,14 +5768,33 @@ video {
             if (btnMasivo) { btnMasivo.disabled = false; btnMasivo.classList.remove('opacity-50', 'cursor-not-allowed'); }
             progresoEl?.classList.add('hidden');
             renderNPTDocente();
-            if (detenidoPorCuotaSostenida) {
+
+            // Resumen real de errores: agrupa mensajes repetidos en vez de un simple conteo,
+            // así queda claro DE UNA VEZ cuál es la causa (en vez de tener que adivinar).
+            const resumenErrores = (() => {
+                if (erroresDetalle.length === 0) return '';
+                const grupos = {};
+                erroresDetalle.forEach(e => { grupos[e.mensaje] = (grupos[e.mensaje] || 0) + 1; });
+                const lineas = Object.entries(grupos)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([msg, n]) => `  • (${n}×) ${msg.slice(0, 180)}`);
+                return '\n\nDetalle de errores encontrados:\n' + lineas.join('\n');
+            })();
+            console.log('Resumen de errores de la evaluación masiva:', erroresDetalle);
+
+            if (detenidoPorLimiteDiario) {
                 const restantes = pendientes.length - (ok + revisionManual + fallidas);
-                alert(`Se detuvo la evaluación masiva: la cuota de la API de Gemini sigue agotada después de varios reintentos con pausas de ${Math.round(NPT_EVAL_MASIVA_PAUSA_CUOTA_MS/1000)}s (probablemente el límite diario, no uno de minuto).\n\n` +
-                    `Completadas: ${ok}. Quedan ${restantes} sin procesar. Espera un rato (o hasta mañana si es el límite diario) y vuelve a presionar "Evaluar todos los pendientes" — retomará justo donde quedó.`);
+                alert(`Se detuvo la evaluación masiva: se confirmó el LÍMITE DIARIO de la API de Gemini (no es un límite por minuto, así que esperar minutos no sirve).\n\n` +
+                    `Completadas: ${ok}. Quedan ${restantes} sin procesar. Vuelve a intentarlo mañana, o agrega otra API key de un proyecto nuevo en el Worker para seguir hoy mismo (revisa la consola del navegador para el detalle completo).${resumenErrores}`);
+            } else if (detenidoPorCuotaSostenida) {
+                const restantes = pendientes.length - (ok + revisionManual + fallidas);
+                alert(`Se detuvo la evaluación masiva: la cuota de la API de Gemini sigue agotada después de varios reintentos con pausas de ${Math.round(NPT_EVAL_MASIVA_PAUSA_CUOTA_MS/1000)}s.\n\n` +
+                    `Completadas: ${ok}. Quedan ${restantes} sin procesar. Espera un rato y vuelve a presionar "Evaluar todos los pendientes" — retomará justo donde quedó.${resumenErrores}`);
             } else {
                 alert(`Evaluación masiva terminada: ${ok} completadas, ${revisionManual} requieren revisión manual, ${fallidas} fallidas.` +
                     (revisionManual ? ' Los de revisión manual no se pudieron leer automáticamente (típico en Tarea con sitios que dependen de JavaScript); califícalos directamente.' : '') +
-                    (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : ''));
+                    (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : '') +
+                    resumenErrores);
             }
         }
 
@@ -6605,9 +6650,11 @@ video {
             if (!validarFiltroReporte()) return;
             const alumnos = estudiantesFiltrados();
             if (!alumnos.length) { alert('No hay estudiantes para el curso/paralelo seleccionado.'); return; }
-            const trim = trimestresEfectivos();
+            const numTrim = trimestreActivoParaReportes();
+            const t = trimestresEfectivos().find(x => x.num === numTrim);
+            if (!t) { alert('No se encontró el trimestre seleccionado.'); return; }
             const periodo = cfgPeriodoActivo?.nombre || 'Período no configurado';
-            let html = `<div class="filtro"><strong>Filtro aplicado:</strong> ${escapeHtml(etiquetaFiltroReporte())}<br><strong>Período académico:</strong> ${escapeHtml(periodo)}</div>`;
+            let html = `<div class="filtro"><strong>Filtro aplicado:</strong> ${escapeHtml(etiquetaFiltroReporte())}<br><strong>Período académico:</strong> ${escapeHtml(periodo)}<br><strong>Trimestre:</strong> ${escapeHtml(t.label)}${t.meses ? ' ('+escapeHtml(t.meses)+')' : ''}</div>`;
             // Agrupar por curso/paralelo
             const grupos = {};
             alumnos.forEach(e => {
@@ -6615,36 +6662,62 @@ video {
                 if (!grupos[key]) grupos[key] = [];
                 grupos[key].push(e);
             });
-            trim.forEach(t => {
-                html += `<h2>${escapeHtml(t.label)} — Notas por insumo</h2>`;
-                if (t.meses) html += `<p class="meta">${escapeHtml(t.meses)}</p>`;
-                Object.entries(grupos).forEach(([g, lista]) => {
-                    html += `<h2>${escapeHtml(g)} (${lista.length})</h2><table><tr><th class="col-num">#</th><th class="col-nombre">Estudiante</th><th class="col-cedula">Cédula</th><th class="col-abrev">📓 Cuaderno</th><th class="col-abrev">📘 Libro</th><th class="col-abrev">🔗 Tarea</th><th class="col-abrev">🛠️ Talleres</th><th class="col-abrev">📝 Examen</th><th class="col-abrev right">Promedio</th></tr>`;
-                    // Recoger promedios del grupo para la estadística
-                    const promediosGrupo = [];
-                    lista.forEach((e, i) => {
-                        const nC = notaNPTDe(e.cedula, t.num, 'cuaderno');
-                        const nL = notaNPTDe(e.cedula, t.num, 'libro');
-                        const nT = notaNPTDe(e.cedula, t.num, 'tarea');
-                        const nW = notaNPTDe(e.cedula, t.num, 'talleres');
-                        const nE = notaNPTDe(e.cedula, t.num, 'examen');
-                        const prom = calcularPromedioNPT(e.cedula, t.num);
-                        if (prom !== null) promediosGrupo.push(prom);
-                        const c = v => v !== null ? formatearNota(v) : '—';
-                        html += `<tr><td class="center">${i+1}</td><td>${escapeHtml(e.nombre)}</td><td>${escapeHtml(e.cedula)}</td><td class="center">${c(nC)}</td><td class="center">${c(nL)}</td><td class="center">${c(nT)}</td><td class="center">${c(nW)}</td><td class="center">${c(nE)}</td><td class="right"><strong>${prom !== null ? formatearNota(prom) : '—'}</strong></td></tr>`;
-                    });
-                    html += `</table>`;
-                    // Estadística de diagnóstico DAR/AAR/PAR/NAR del grupo en este trimestre
-                    if (promediosGrupo.length) {
-                        const promCurso = promediosGrupo.reduce((a,b) => a+b, 0) / promediosGrupo.length;
-                        html += `<p class="meta">Promedio del curso/paralelo en este trimestre: <strong>${promCurso.toFixed(2)}</strong> · Estudiantes con notas: ${promediosGrupo.length} de ${lista.length}</p>`;
-                        html += tablaResultadosEvaluacion(promediosGrupo, `RESULTADOS DEL DIAGNÓSTICO — CURSO: ${g} · ${escapeHtml(t.label)}`);
-                    } else {
-                        html += `<p class="meta">Sin notas registradas en este trimestre para ${escapeHtml(g)}.</p>`;
-                    }
+            Object.entries(grupos).forEach(([g, lista]) => {
+                html += `<h2>${escapeHtml(g)} (${lista.length})</h2><table><tr><th class="col-num">#</th><th class="col-nombre">Estudiante</th><th class="col-cedula">Cédula</th><th class="col-abrev">📓 Cuaderno</th><th class="col-abrev">📘 Libro</th><th class="col-abrev">🛠️ Talleres</th><th class="col-abrev">🔗 Tarea</th><th class="col-abrev right">Prom. Insumos (70%)</th><th class="col-abrev">📝 Examen (30%)</th><th class="col-abrev right">Nota Final</th></tr>`;
+                const promediosGrupo = [];
+                lista.forEach((e, i) => {
+                    const nC = notaNPTDe(e.cedula, t.num, 'cuaderno');
+                    const nL = notaNPTDe(e.cedula, t.num, 'libro');
+                    const nW = notaNPTDe(e.cedula, t.num, 'talleres');
+                    const nT = notaNPTDe(e.cedula, t.num, 'tarea');
+                    const nE = notaNPTDe(e.cedula, t.num, 'examen');
+                    const promIns = calcularPromedioInsumosNPT(e.cedula, t.num);
+                    const notaFinal = calcularPromedioNPT(e.cedula, t.num);
+                    if (notaFinal !== null) promediosGrupo.push(notaFinal);
+                    const c = v => v !== null ? formatearNota(v) : '—';
+                    html += `<tr><td class="center">${i+1}</td><td>${escapeHtml(e.nombre)}</td><td>${escapeHtml(e.cedula)}</td><td class="center">${c(nC)}</td><td class="center">${c(nL)}</td><td class="center">${c(nW)}</td><td class="center">${c(nT)}</td><td class="right">${c(promIns)}</td><td class="center">${c(nE)}</td><td class="right"><strong>${c(notaFinal)}</strong></td></tr>`;
                 });
+                html += `</table>`;
+                if (promediosGrupo.length) {
+                    const promCurso = promediosGrupo.reduce((a,b) => a+b, 0) / promediosGrupo.length;
+                    html += `<p class="meta">Nota final promedio del curso/paralelo en este trimestre: <strong>${promCurso.toFixed(2)}</strong> · Estudiantes con notas: ${promediosGrupo.length} de ${lista.length}</p>`;
+                    html += tablaResultadosEvaluacion(promediosGrupo, `RESULTADOS DEL DIAGNÓSTICO — CURSO: ${g} · ${escapeHtml(t.label)}`);
+                } else {
+                    html += `<p class="meta">Sin notas registradas en este trimestre para ${escapeHtml(g)}.</p>`;
+                }
             });
-            abrirODescargarReporte('Reporte por Trimestre — Notas por insumo', html, `reporte_por_trimestre_${fechaArchivo()}.html`);
+            abrirODescargarReporte(`Reporte ${t.label} — Notas por insumo`, html, `reporte_trimestre_${t.num}_${fechaArchivo()}.html`);
+        }
+
+        // Exporta a CSV el mismo contenido del Reporte por Trimestre (solo el trimestre activo).
+        function exportarReporteNPTPorTrimestreCSV() {
+            if (!validarFiltroReporte()) return;
+            const alumnos = estudiantesFiltrados();
+            if (!alumnos.length) { alert('No hay estudiantes para el curso/paralelo seleccionado.'); return; }
+            const numTrim = trimestreActivoParaReportes();
+            const t = trimestresEfectivos().find(x => x.num === numTrim);
+            if (!t) { alert('No se encontró el trimestre seleccionado.'); return; }
+            let csv = 'Estudiante,Cédula,Curso,Paralelo,Cuaderno,Libro,Talleres,Tarea,Promedio Insumos,Examen,Nota Final\n';
+            alumnos.forEach(e => {
+                const nC = notaNPTDe(e.cedula, t.num, 'cuaderno');
+                const nL = notaNPTDe(e.cedula, t.num, 'libro');
+                const nW = notaNPTDe(e.cedula, t.num, 'talleres');
+                const nT = notaNPTDe(e.cedula, t.num, 'tarea');
+                const nE = notaNPTDe(e.cedula, t.num, 'examen');
+                const promIns = calcularPromedioInsumosNPT(e.cedula, t.num);
+                const notaFinal = calcularPromedioNPT(e.cedula, t.num);
+                csv += [
+                    csvCampo(e.nombre), csvCampo(e.cedula), csvCampo(e.curso), csvCampo(e.paralelo),
+                    csvCampo(nC !== null ? formatearNota(nC) : ''),
+                    csvCampo(nL !== null ? formatearNota(nL) : ''),
+                    csvCampo(nW !== null ? formatearNota(nW) : ''),
+                    csvCampo(nT !== null ? formatearNota(nT) : ''),
+                    csvCampo(promIns !== null ? formatearNota(promIns) : ''),
+                    csvCampo(nE !== null ? formatearNota(nE) : ''),
+                    csvCampo(notaFinal !== null ? formatearNota(notaFinal) : '')
+                ].join(',') + '\n';
+            });
+            descargarArchivo(`reporte_trimestre_${t.num}_${fechaArchivo()}.csv`, csv, 'text/csv;charset=utf-8');
         }
 
         function generarReporteNPTIndividual() {
@@ -6656,49 +6729,47 @@ video {
             const idx = parseInt(idxStr, 10) - 1;
             if (isNaN(idx) || idx < 0 || idx >= alumnos.length) { if (idxStr !== null) alert('Selección inválida.'); return; }
             const est = alumnos[idx];
-            const trim = trimestresEfectivos();
+            const numTrim = trimestreActivoParaReportes();
+            const t = trimestresEfectivos().find(x => x.num === numTrim);
+            if (!t) { alert('No se encontró el trimestre seleccionado.'); return; }
             const periodo = cfgPeriodoActivo?.nombre || 'Período no configurado';
             const formulaTxt = (() => {
                 const f = formulaPromedioEfectiva() || FORMULA_DEFECTO;
-                return `Examen ${f.examen||0}% · Insumos ${['cuaderno','libro','tarea','talleres'].map(t => `${t} ${f[t]||0}%`).join(' · ')}`;
+                const pesoExamen = numero(f.examen, 30);
+                return `Examen ${pesoExamen}% + Promedio de Insumos ${(100 - pesoExamen).toFixed(1)}% (Cuaderno+Libro+Talleres+Tarea ÷ 4)`;
             })();
-            let html = `<div class="filtro"><strong>Estudiante:</strong> ${escapeHtml(est.nombre)}<br><strong>Cédula:</strong> ${escapeHtml(est.cedula)}<br><strong>Curso/Paralelo:</strong> ${escapeHtml(est.curso||'-')} "${escapeHtml(est.paralelo||'-')}"<br><strong>Período académico:</strong> ${escapeHtml(periodo)}<br><strong>Fórmula aplicada:</strong> ${escapeHtml(formulaTxt)}</div>`;
+            let html = `<div class="filtro"><strong>Estudiante:</strong> ${escapeHtml(est.nombre)}<br><strong>Cédula:</strong> ${escapeHtml(est.cedula)}<br><strong>Curso/Paralelo:</strong> ${escapeHtml(est.curso||'-')} "${escapeHtml(est.paralelo||'-')}"<br><strong>Período académico:</strong> ${escapeHtml(periodo)}<br><strong>Trimestre:</strong> ${escapeHtml(t.label)}${t.meses ? ' ('+escapeHtml(t.meses)+')' : ''}<br><strong>Fórmula aplicada:</strong> ${escapeHtml(formulaTxt)}</div>`;
             html += `<table><tr><th>Estudiante</th><td>${escapeHtml(est.nombre)}</td></tr><tr><th>Cédula</th><td>${escapeHtml(est.cedula)}</td></tr><tr><th>Curso / Paralelo</th><td>${escapeHtml(est.curso||'-')} "${escapeHtml(est.paralelo||'-')}"</td></tr><tr><th>Correo</th><td>${escapeHtml(est.correo||'-')}</td></tr><tr><th>Representante</th><td>${escapeHtml(est.repNombre||'-')} — ${escapeHtml(est.repCelular||'-')}</td></tr></table>`;
-            // Recoger promedios anuales para diagnóstico
-            const promsAnualesTrim = [];
-            trim.forEach(t => {
-                const nC = notaNPTDe(est.cedula, t.num, 'cuaderno');
-                const nL = notaNPTDe(est.cedula, t.num, 'libro');
-                const nT = notaNPTDe(est.cedula, t.num, 'tarea');
-                const nW = notaNPTDe(est.cedula, t.num, 'talleres');
-                const nE = notaNPTDe(est.cedula, t.num, 'examen');
-                const prom = calcularPromedioNPT(est.cedula, t.num);
-                if (prom !== null) promsAnualesTrim.push(prom);
-                const c = v => v !== null ? formatearNota(v) : '—';
-                // Color de la barra según valor
-                const colorBarra = v => v === null ? '#cbd5e1' : (v >= 9 ? '#059669' : v >= 7 ? '#10b981' : v >= 4 ? '#f59e0b' : '#ef4444');
-                const barra = (v) => {
-                    if (v === null) return '<div style="background:#f1f5f9;height:10px;border-radius:5px;width:100%"></div>';
-                    const pct = Math.max(0, Math.min(100, (v / 10) * 100));
-                    return `<div style="background:#f1f5f9;height:14px;border-radius:7px;width:100%;position:relative"><div style="background:${colorBarra(v)};height:14px;border-radius:7px;width:${pct}%"></div><span style="position:absolute;right:6px;top:-1px;font-size:11px;font-weight:bold;color:#0f172a">${formatearNota(v)}</span></div>`;
-                };
-                html += `<h2>${escapeHtml(t.label)} ${t.meses ? '<span class="meta">('+escapeHtml(t.meses)+')</span>' : ''}</h2>`;
-                html += `<table><tr><th>Insumo</th><th>Nota</th><th style="width:45%">Visual</th></tr>`;
-                html += `<tr><td>📓 Cuaderno</td><td class="right">${c(nC)}</td><td>${barra(nC)}</td></tr>`;
-                html += `<tr><td>📘 Libro</td><td class="right">${c(nL)}</td><td>${barra(nL)}</td></tr>`;
-                html += `<tr><td>🔗 Tarea</td><td class="right">${c(nT)}</td><td>${barra(nT)}</td></tr>`;
-                html += `<tr><td>🛠️ Talleres</td><td class="right">${c(nW)}</td><td>${barra(nW)}</td></tr>`;
-                html += `<tr><td>📝 Examen</td><td class="right">${c(nE)}</td><td>${barra(nE)}</td></tr>`;
-                html += `<tr><th>Promedio del trimestre</th><td class="right"><strong>${prom !== null ? formatearNota(prom) : '—'}</strong></td><td>${barra(prom)}</td></tr></table>`;
-            });
-            // Promedio general del año
-            const promAnual = promsAnualesTrim.length ? (promsAnualesTrim.reduce((a,b) => a+b, 0) / promsAnualesTrim.length) : null;
-            if (promAnual !== null) {
-                html += `<div class="resumen"><h2>PROMEDIO ANUAL</h2><p style="font-size:22px"><strong>${formatearNota(promAnual)} / 10</strong> (promedio de ${promsAnualesTrim.length} trimestre(s) con notas)</p></div>`;
-                // Diagnóstico del estudiante según sus promedios trimestrales
-                html += tablaResultadosEvaluacion(promsAnualesTrim, `RESULTADOS DEL DIAGNÓSTICO — ${escapeHtml(est.nombre)}`);
+
+            const nC = notaNPTDe(est.cedula, t.num, 'cuaderno');
+            const nL = notaNPTDe(est.cedula, t.num, 'libro');
+            const nW = notaNPTDe(est.cedula, t.num, 'talleres');
+            const nT = notaNPTDe(est.cedula, t.num, 'tarea');
+            const nE = notaNPTDe(est.cedula, t.num, 'examen');
+            const promIns = calcularPromedioInsumosNPT(est.cedula, t.num);
+            const prom = calcularPromedioNPT(est.cedula, t.num);
+            const c = v => v !== null ? formatearNota(v) : '—';
+            const colorBarra = v => v === null ? '#cbd5e1' : (v >= 9 ? '#059669' : v >= 7 ? '#10b981' : v >= 4 ? '#f59e0b' : '#ef4444');
+            const barra = (v) => {
+                if (v === null) return '<div style="background:#f1f5f9;height:10px;border-radius:5px;width:100%"></div>';
+                const pct = Math.max(0, Math.min(100, (v / 10) * 100));
+                return `<div style="background:#f1f5f9;height:14px;border-radius:7px;width:100%;position:relative"><div style="background:${colorBarra(v)};height:14px;border-radius:7px;width:${pct}%"></div><span style="position:absolute;right:6px;top:-1px;font-size:11px;font-weight:bold;color:#0f172a">${formatearNota(v)}</span></div>`;
+            };
+            html += `<h2>${escapeHtml(t.label)} ${t.meses ? '<span class="meta">('+escapeHtml(t.meses)+')</span>' : ''}</h2>`;
+            html += `<table><tr><th>Insumo</th><th>Nota</th><th style="width:45%">Visual</th></tr>`;
+            html += `<tr><td>📓 Cuaderno</td><td class="right">${c(nC)}</td><td>${barra(nC)}</td></tr>`;
+            html += `<tr><td>📘 Libro</td><td class="right">${c(nL)}</td><td>${barra(nL)}</td></tr>`;
+            html += `<tr><td>🛠️ Talleres</td><td class="right">${c(nW)}</td><td>${barra(nW)}</td></tr>`;
+            html += `<tr><td>🔗 Tarea</td><td class="right">${c(nT)}</td><td>${barra(nT)}</td></tr>`;
+            html += `<tr><th>Promedio de Insumos (70%)</th><td class="right"><strong>${c(promIns)}</strong></td><td>${barra(promIns)}</td></tr>`;
+            html += `<tr><td>📝 Examen (30%)</td><td class="right">${c(nE)}</td><td>${barra(nE)}</td></tr>`;
+            html += `<tr><th>Nota Final del trimestre</th><td class="right"><strong>${prom !== null ? formatearNota(prom) : '—'}</strong></td><td>${barra(prom)}</td></tr></table>`;
+
+            if (prom !== null) {
+                html += `<div class="resumen"><h2>NOTA FINAL — ${escapeHtml(t.label)}</h2><p style="font-size:22px"><strong>${formatearNota(prom)} / 10</strong></p></div>`;
+                html += tablaResultadosEvaluacion([prom], `RESULTADOS DEL DIAGNÓSTICO — ${escapeHtml(est.nombre)} · ${escapeHtml(t.label)}`);
             }
-            abrirODescargarReporte(`Reporte Individual — ${est.nombre}`, html, `reporte_individual_${est.cedula}_${fechaArchivo()}.html`);
+            abrirODescargarReporte(`Reporte Individual — ${est.nombre} — ${t.label}`, html, `reporte_individual_${est.cedula}_t${t.num}_${fechaArchivo()}.html`);
         }
 
         async function limpiarRegistros() { if(confirm("¿Borrar todas las calificaciones?")) await limpiarCalificaciones(); }
@@ -6857,38 +6928,42 @@ video {
             }
             return null;
         }
-        // Calcula el promedio de un estudiante en un trimestre según la fórmula configurada
-        // Fórmula por defecto del sistema: examen 30% + insumos 70% equitativo (17.5% c/u)
-        // Requisito: "el examen tiene un porcentaje del 30% y los insumos un valor equitativo entre ellos, dando el 70%"
+        // Fórmula por defecto del sistema: examen 30% + insumos 70% (repartido a partes
+        // iguales entre los 4 insumos al promediarlos — ver calcularPromedioInsumosNPT).
         const FORMULA_DEFECTO = {
             cuaderno: 17.5, libro: 17.5, tarea: 17.5, talleres: 17.5, examen: 30
         };
-        // Todos los componentes que entran en el promedio (insumos + examen)
-        const NPT_COMPONENTES_PROMEDIO = ['cuaderno', 'libro', 'tarea', 'talleres', 'examen'];
 
-        function calcularPromedioNPT(cedula, numTrimestre) {
-            const notas = {
-                cuaderno: notaNPTDe(cedula, numTrimestre, 'cuaderno'),
-                libro:    notaNPTDe(cedula, numTrimestre, 'libro'),
-                tarea:    notaNPTDe(cedula, numTrimestre, 'tarea'),
-                talleres: notaNPTDe(cedula, numTrimestre, 'talleres'),
-                examen:   notaNPTDe(cedula, numTrimestre, 'examen')
-            };
-            // Fórmula efectiva: la configurada o, si no hay, la por defecto (30/70)
-            const formula = formulaPromedioEfectiva() || FORMULA_DEFECTO;
-            // Promedio ponderado con redistribución: si un componente no tiene nota,
-            // su peso se reparte proporcionalmente entre los que sí tienen nota.
-            // Esto evita que el promedio se "inflé" artificialmente por faltar insumos.
-            let sumaPonderada = 0, sumaPesos = 0;
-            NPT_COMPONENTES_PROMEDIO.forEach(tipo => {
-                const peso = numero(formula[tipo]);
-                if (notas[tipo] !== null && peso > 0) {
-                    sumaPonderada += notas[tipo] * peso;
-                    sumaPesos += peso;
-                }
+        // Promedio de los 4 insumos (Cuaderno, Libro, Talleres, Tarea): se SUMAN los que
+        // tengan nota registrada y SIEMPRE se divide para 4 (el número total de insumos),
+        // sin importar cuántos tengan valor todavía — un insumo sin registrar cuenta como 0
+        // en la suma, pero el divisor nunca cambia. El examen es aparte, no entra aquí.
+        function calcularPromedioInsumosNPT(cedula, numTrimestre) {
+            const tipos = ['cuaderno', 'libro', 'talleres', 'tarea'];
+            let suma = 0, hayAlguno = false;
+            tipos.forEach(tipo => {
+                const nota = notaNPTDe(cedula, numTrimestre, tipo);
+                if (nota !== null) { suma += nota; hayAlguno = true; }
             });
-            if (sumaPesos === 0) return null; // no hay ninguna nota
-            return sumaPonderada / sumaPesos;
+            if (!hayAlguno) return null; // ningún insumo registrado todavía: aún no hay nada que mostrar
+            return suma / tipos.length; // siempre ÷4, nunca ÷cantidad-con-nota
+        }
+
+        // Nota final del trimestre: Promedio de Insumos (70%) + Examen (30%), como dos
+        // componentes independientes ("el examen es aparte"). El peso del examen es
+        // configurable (por defecto 30%); el de insumos es el resto (por defecto 70%).
+        // Si todavía falta uno de los dos componentes por completo, la nota final refleja
+        // únicamente el que sí existe (no se puede combinar lo que no está).
+        function calcularPromedioNPT(cedula, numTrimestre) {
+            const formula = formulaPromedioEfectiva() || FORMULA_DEFECTO;
+            const pesoExamen = numero(formula.examen, 30);
+            const pesoInsumos = 100 - pesoExamen;
+            const promIns = calcularPromedioInsumosNPT(cedula, numTrimestre);
+            const examen = notaNPTDe(cedula, numTrimestre, 'examen');
+            if (promIns === null && examen === null) return null;
+            if (examen === null) return promIns;
+            if (promIns === null) return examen;
+            return (promIns * pesoInsumos + examen * pesoExamen) / 100;
         }
 
         // ---- Render del tab de configuración ----
@@ -6979,55 +7054,41 @@ video {
         // ---- Fórmula de promedio ----
         function renderFormulaPromedio() {
             const cont = document.getElementById('cfg-formula-lista');
-            const sumaEl = document.getElementById('cfg-formula-suma');
             if (!cont) return;
             // Fórmula a mostrar: la configurada, o la por defecto (30/70) si no hay
             const formula = formulaPromedioEfectiva() || FORMULA_DEFECTO;
-            cont.innerHTML = NPT_COMPONENTES_PROMEDIO.map(tipo => {
-                const tp = NPT_TIPOS.find(x => x.id === tipo);
-                const icono = tipo === 'examen' ? '📝' : (tp?.icono || '');
-                const etiqueta = tipo === 'examen' ? 'Examen' : (tp ? tp.label.replace(/^[^\s]+ /, '') : tipo);
-                const peso = formula[tipo] !== undefined ? numero(formula[tipo]) : '';
-                const esExamen = tipo === 'examen';
-                return `<div class="flex items-center gap-2 ${esExamen ? 'bg-indigo-50 p-1.5 rounded-lg' : ''}">
-                    <span class="text-xs font-bold w-40">${icono} ${escapeHtml(etiqueta)}${esExamen ? ' <span class="text-[9px] text-indigo-500">(evaluación)</span>' : ''}</span>
-                    <input type="number" min="0" max="100" step="0.1" data-insumo-formula="${tipo}" value="${peso}" class="w-20 px-2 py-1 border rounded text-xs" onchange="actualizarSumaFormula()">
+            const pesoExamen = numero(formula.examen, 30);
+            cont.innerHTML = `
+                <div class="flex items-center gap-2 bg-indigo-50 p-1.5 rounded-lg">
+                    <span class="text-xs font-bold w-40">📝 Examen <span class="text-[9px] text-indigo-500">(evaluación)</span></span>
+                    <input type="number" min="0" max="100" step="0.1" id="cfg-formula-examen" value="${pesoExamen}" class="w-20 px-2 py-1 border rounded text-xs" onchange="actualizarSumaFormula()">
                     <span class="text-xs text-slate-500">%</span>
-                </div>`;
-            }).join('');
+                </div>
+                <p class="text-[11px] text-slate-500">Los 4 insumos (Cuaderno, Libro, Talleres, Tarea) valen en conjunto <strong id="cfg-formula-insumos-pct">${(100 - pesoExamen).toFixed(1)}</strong>% — siempre repartido a partes iguales entre ellos.</p>`;
             actualizarSumaFormula();
         }
         function actualizarSumaFormula() {
-            const inputs = document.querySelectorAll('#cfg-formula-lista [data-insumo-formula]');
-            let suma = 0;
-            inputs.forEach(inp => { const v = parseFloat(inp.value); if (!isNaN(v)) suma += v; });
-            const sumaEl = document.getElementById('cfg-formula-suma');
-            if (sumaEl) {
-                const ok = Math.abs(suma - 100) < 0.01;
-                sumaEl.textContent = `Suma: ${suma.toFixed(1)}% ${ok ? '✓' : '⚠️ debe ser 100%'}`;
-                sumaEl.className = `text-xs font-bold px-2 py-0.5 rounded-full ${ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`;
-            }
+            const input = document.getElementById('cfg-formula-examen');
+            const v = parseFloat(input?.value);
+            const pesoExamen = isNaN(v) ? 0 : Math.max(0, Math.min(100, v));
+            const insumosEl = document.getElementById('cfg-formula-insumos-pct');
+            if (insumosEl) insumosEl.textContent = (100 - pesoExamen).toFixed(1);
         }
         async function guardarFormulaPromedio() {
-            const inputs = document.querySelectorAll('#cfg-formula-lista [data-insumo-formula]');
-            const formula = {};
-            let suma = 0;
-            inputs.forEach(inp => {
-                const tipo = inp.getAttribute('data-insumo-formula');
-                const v = parseFloat(inp.value) || 0;
-                formula[tipo] = v;
-                suma += v;
-            });
-            if (Math.abs(suma - 100) > 0.01) {
-                if (!confirm(`La suma de pesos es ${suma.toFixed(1)}%, no 100%. ¿Guardar de todas formas? (el cálculo usará los pesos tal cual; si no suman 100, el promedio quedará desproporcionado)`)) return;
+            const input = document.getElementById('cfg-formula-examen');
+            const pesoExamen = parseFloat(input?.value);
+            if (isNaN(pesoExamen) || pesoExamen < 0 || pesoExamen > 100) {
+                alert('Ingresa un porcentaje válido para el examen (entre 0 y 100).');
+                return;
             }
+            const formula = { examen: pesoExamen };
             cfgFormulaPromedio = formula;
             const authOk = await ensureAuth();
             if (authOk) {
-                try { await guardarValorFirebase('configuracion/formulaPromedio', formula); await registrarAuditoria('formula_promedio', `Fórmula guardada: ${JSON.stringify(formula)}`); }
+                try { await guardarValorFirebase('configuracion/formulaPromedio', formula); await registrarAuditoria('formula_promedio', `Fórmula guardada: Examen ${pesoExamen}% + Insumos ${(100-pesoExamen).toFixed(1)}%`); }
                 catch(e) { console.error(e); alert('Error al guardar la fórmula.'); return; }
             }
-            alert('✅ Fórmula de promedio guardada.');
+            alert(`✅ Fórmula guardada: Examen ${pesoExamen}% + Promedio de Insumos ${(100-pesoExamen).toFixed(1)}%.`);
             renderCuadroGeneral();
         }
         function restablecerFormulaPromedio() {
@@ -7038,7 +7099,7 @@ video {
                 if (authOk) { try { await guardarValorFirebase('configuracion/formulaPromedio', FORMULA_DEFECTO); await registrarAuditoria('formula_promedio', 'Restablecida a fórmula por defecto (30/70)'); } catch(e) {} }
                 renderTabConfiguracion();
                 renderCuadroGeneral();
-                alert('Fórmula restablecida a: Examen 30% + Insumos 70% equitativo (17.5% c/u).');
+                alert('Fórmula restablecida a: Examen 30% + Insumos 70% equitativo.');
             })();
         }
 
