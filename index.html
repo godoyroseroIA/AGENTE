@@ -5557,11 +5557,26 @@ video {
                     firmaDocenteBase64: cfgFirmaDocente?.base64 || null, firmaDocenteMime: cfgFirmaDocente?.mime || 'image/png' };
             if (!arch.url && !arch.base64) throw new Error('No se encontró el archivo subido por el estudiante.');
 
-            const resp = await fetch(NPT_EVAL_API_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': NPT_AUTH_HEADER },
-                body: JSON.stringify(payload)
-            });
+            // El fetch en sí (no la respuesta HTTP) puede fallar por una falla de red
+            // transitoria ("Failed to fetch": DNS, conexión cortada, un parpadeo del wifi
+            // durante un lote largo). Se reintenta UNA vez automáticamente antes de darlo
+            // por fallido — la enorme mayoría de estos son blips pasajeros, no errores reales.
+            let resp;
+            try {
+                resp = await fetch(NPT_EVAL_API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': NPT_AUTH_HEADER },
+                    body: JSON.stringify(payload)
+                });
+            } catch (fallaRed) {
+                console.warn('Falla de red al llamar al Worker, reintentando una vez en 3s:', fallaRed.message);
+                await new Promise(r => setTimeout(r, 3000));
+                resp = await fetch(NPT_EVAL_API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': NPT_AUTH_HEADER },
+                    body: JSON.stringify(payload)
+                });
+            }
             if (!resp.ok) {
                 let mensajeError = `HTTP ${resp.status}`;
                 let cuerpoErrorJson = null;
