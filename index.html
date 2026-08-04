@@ -2631,7 +2631,7 @@ video {
                                 class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs focus:ring-2 focus:ring-brand-500"></textarea>
                         </div>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-3">Los 4 insumos se entregan por enlace y se evalúan por IA contra su rúbrica. <strong>Cuaderno y Libro</strong> no se pueden enviar sin rúbrica publicada. <strong>Tarea y Talleres sí se pueden enviar sin rúbrica</strong> — la evaluación automática queda pendiente hasta que la publiques, y mientras tanto se califican manualmente.</p>
+                    <p class="text-[11px] text-slate-400 mt-3">Los 4 insumos se entregan por enlace y se evalúan por IA contra su rúbrica. <strong>Cuaderno y Libro</strong> no se pueden enviar sin rúbrica publicada. <strong>Tarea y Talleres sí se pueden enviar sin rúbrica</strong> — la evaluación automática queda pendiente hasta que la publiques.</p>
                 </section>
 
                 <!-- Pestaña 3: Examen -->
@@ -5589,15 +5589,22 @@ video {
                 if (cuerpoErrorJson?.esLimiteDiario) err.esLimiteDiario = true;
                 throw err;
             }
-            const data = await resp.json(); // { nota, comentario, desglose?, observaciones?, firmaDetectada?, firmaCoincide?, comentarioFirma?, fuenteInfo?, advertenciasFuente?, requiereRevisionManual? }
+            let data = await resp.json(); // { nota, comentario, desglose?, observaciones?, firmaDetectada?, firmaCoincide?, comentarioFirma?, fuenteInfo?, advertenciasFuente?, sinEvidencia? }
 
-            // ---- Caso especial: el Worker no pudo leer contenido evaluable (típico de Tarea con
-            // sitios que dependen de JavaScript) — no es un error, es un resultado honesto que el
-            // docente debe atender manualmente. No se guarda ninguna nota automática.
+            // Compatibilidad con workers anteriores: ya no se debe pedir revisión manual.
+            // Si un worker viejo devuelve este estado, se guarda como evaluación sin evidencia
+            // para que la fila quede calificada por IA/automatización y no bloquee el lote.
             if (data.requiereRevisionManual) {
-                const err = new Error(data.motivo || 'Este envío requiere revisión manual del docente: no se pudo leer su contenido automáticamente.');
-                err.esRevisionManual = true;
-                throw err;
+                const motivo = data.motivo || 'No se pudo leer contenido evaluable automáticamente.';
+                data = {
+                    nota: 0,
+                    comentario: `No se pudo acceder a tu entrega para evaluarla (${motivo}). Verifica que el enlace sea correcto y público.`,
+                    desglose: [],
+                    observaciones: [{ ubicacion: 'General', aspecto: 'Acceso a la entrega', observacion: `No se pudo leer contenido evaluable: ${motivo}` }],
+                    fuenteInfo: { tipo: data.metodo || 'no-legible', sinContenidoEvaluable: true },
+                    advertenciasFuente: [motivo],
+                    sinEvidencia: true
+                };
             }
 
             // desglose/observaciones dependen ÚNICAMENTE de la rúbrica activa en ese momento para
@@ -5643,6 +5650,7 @@ video {
                 comentarioFirma: texto(data.comentarioFirma || ''),
                 fuenteInfo: data.fuenteInfo || null,
                 advertenciasFuente: Array.isArray(data.advertenciasFuente) ? data.advertenciasFuente : [],
+                sinEvidencia: data.sinEvidencia === true,
                 advertenciaIntegridad
             };
             await guardarValorFirebase(`nptEvaluacionesIA/${cedula}/trimestre${numTrimestre}/${tipo}`, registro);
@@ -5666,11 +5674,7 @@ video {
                 renderNPTDocente();
             } catch(e) {
                 console.error(e);
-                if (e.esRevisionManual) {
-                    alert(`ℹ️ Este envío requiere revisión manual:\n\n${e.message}\n\nNo se generó una nota automática — califícalo directamente en el campo de nota.`);
-                } else {
-                    alert(`Error al evaluar con IA: ${e.message}`);
-                }
+                alert(`Error al evaluar con IA: ${e.message}`);
                 if (btnEl) {
                     btnEl.disabled = false;
                     btnEl.textContent = textoOriginal;
@@ -5744,7 +5748,7 @@ video {
                         ok++;
                         break;
                     } catch (e) {
-                        if (e.esRevisionManual) { revisionManual++; break; }
+                        if (e.esRevisionManual) { fallidas++; erroresDetalle.push({ cedula, tipo, mensaje: e.message }); break; }
                         if (e.esCuotaExcedida && e.esLimiteDiario) {
                             // Límite DIARIO confirmado por el Worker: ningún reintento en minutos lo
                             // resuelve. Se detiene el lote DE INMEDIATO, sin pausas inútiles — esto es
@@ -5806,8 +5810,7 @@ video {
                 alert(`Se detuvo la evaluación masiva: la cuota de la API de Gemini sigue agotada después de varios reintentos con pausas de ${Math.round(NPT_EVAL_MASIVA_PAUSA_CUOTA_MS/1000)}s.\n\n` +
                     `Completadas: ${ok}. Quedan ${restantes} sin procesar. Espera un rato y vuelve a presionar "Evaluar todos los pendientes" — retomará justo donde quedó.${resumenErrores}`);
             } else {
-                alert(`Evaluación masiva terminada: ${ok} completadas, ${revisionManual} requieren revisión manual, ${fallidas} fallidas.` +
-                    (revisionManual ? ' Los de revisión manual no se pudieron leer automáticamente (típico en Tarea con sitios que dependen de JavaScript); califícalos directamente.' : '') +
+                alert(`Evaluación masiva terminada: ${ok} completadas por IA, ${fallidas} fallidas.` +
                     (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : '') +
                     resumenErrores);
             }
@@ -6194,6 +6197,7 @@ video {
                         } else if (ia) {
                             estadoHtml += `<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-2 text-xs text-amber-700">
                                 ⏳ Evaluado automáticamente (${formatearNota(numero(ia.nota))}/10) — pendiente de verificación por el docente. El reporte se podrá imprimir cuando el docente confirme la nota.
+                                ${ia.sinEvidencia ? '<br><span class="font-semibold">La IA no encontró evidencia evaluable en el enlace y aplicó la rúbrica como entrega sin evidencia.</span>' : ''}
                             </div>`;
                         } else {
                             estadoHtml += `<div class="text-xs text-slate-400 mb-2">📊 Pendiente de revisión por el docente.</div>`;
@@ -6343,7 +6347,7 @@ video {
                 if (!confirm(`⚠️ El archivo/carpeta pertenece a ${validacion.ownerEmail || 'otro correo'}, distinto de tu correo institucional (${estudianteActual.correo || 'no registrado'}).\n\n¿Confirmas que quieres enviarlo igual?`)) return;
             }
             if (validacion?.ok && validacion.requiereRevisionManual) {
-                if (!confirm(`⚠️ No pudimos leer automáticamente el contenido de ese enlace (${validacion.motivo || 'contenido insuficiente'}).\n\nSe puede enviar igual — el docente lo revisará manualmente. ¿Continuar?`)) return;
+                if (!confirm(`⚠️ No pudimos leer automáticamente el contenido de ese enlace (${validacion.motivo || 'contenido insuficiente'}).\n\nSe puede enviar igual, pero si la IA tampoco encuentra evidencia al evaluar, registrará 0 según la rúbrica por falta de contenido evaluable. ¿Continuar?`)) return;
             }
 
             const cedula = estudianteActual.cedula;
