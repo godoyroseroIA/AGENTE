@@ -2175,7 +2175,29 @@ video {
                                     <option value="2">2do Trimestre</option>
                                     <option value="3">3er Trimestre</option>
                                 </select>
+                                <select id="npt-filtro-tipo-envio" onchange="renderNPTDocente()" class="text-xs border rounded-lg px-2 py-1">
+                                    <option value="">Todos</option>
+                                    <option value="insumos">Insumos</option>
+                                    <option value="examen">Exámenes</option>
+                                    <option value="cuaderno">Cuaderno</option>
+                                    <option value="libro">Libro</option>
+                                    <option value="talleres">Talleres</option>
+                                    <option value="tarea">Tarea</option>
+                                </select>
+                                <select id="npt-filtro-estado-envio" onchange="renderNPTDocente()" class="text-xs border rounded-lg px-2 py-1">
+                                    <option value="">Todos los estados</option>
+                                    <option value="calificados">Calificados</option>
+                                    <option value="no-calificados">No calificados</option>
+                                    <option value="ia-pendiente">IA pendiente de verificar</option>
+                                </select>
+                                <select id="npt-orden-envios" onchange="renderNPTDocente()" class="text-xs border rounded-lg px-2 py-1">
+                                    <option value="fecha-desc">Más recientes</option>
+                                    <option value="fecha-asc">Más antiguos</option>
+                                    <option value="apellido-asc">Apellidos A-Z</option>
+                                    <option value="apellido-desc">Apellidos Z-A</option>
+                                </select>
                                 <button id="npt-btn-evaluar-todos" onclick="evaluarTodosPendientesIA()" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-700">🤖 Evaluar todos los pendientes</button>
+                                <button id="npt-btn-reevaluar-pendientes-verificar" onclick="reevaluarTodosPendientesVerificarIA()" class="bg-violet-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-violet-700">🔁 Re-evaluar IA pendientes de verificar</button>
                                 <button onclick="exportarNPTCSV()" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold">📎 Exportar CSV</button>
                             </div>
                         </div>
@@ -5206,6 +5228,32 @@ video {
             }
         }
 
+        function fechaOrdenNPT(valor) {
+            if (!valor) return 0;
+            if (valor instanceof Date) return valor.getTime();
+            const textoFecha = String(valor).trim();
+            const m = textoFecha.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})(?:,\s*|\s+)?(\d{1,2})?:?(\d{2})?:?(\d{2})?\s*(a\.?\s*m\.?|p\.?\s*m\.?|am|pm)?/i);
+            if (!m) {
+                const directo = Date.parse(textoFecha);
+                return Number.isNaN(directo) ? 0 : directo;
+            }
+            let [, dia, mes, anio, hora = '0', minuto = '0', segundo = '0', meridiano = ''] = m;
+            let h = parseInt(hora, 10) || 0;
+            const mer = meridiano.toLowerCase().replace(/\s|\./g, '');
+            if (mer === 'pm' && h < 12) h += 12;
+            if (mer === 'am' && h === 12) h = 0;
+            const y = parseInt(anio, 10);
+            return new Date(y < 100 ? 2000 + y : y, parseInt(mes, 10) - 1, parseInt(dia, 10), h, parseInt(minuto, 10) || 0, parseInt(segundo, 10) || 0).getTime();
+        }
+
+        function claveApellidoNPT(nombre) {
+            return texto(nombre)
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+
         // ---- Tabla docente de entregas NPT ----
         function renderNPTDocente() {
             iniciarEscuchaBloqueosExamenDocente();
@@ -5214,6 +5262,9 @@ video {
             if (!tbody) return;
 
             const filtroT = document.getElementById('npt-filtro-trimestre')?.value || '';
+            const filtroTipoEnvio = document.getElementById('npt-filtro-tipo-envio')?.value || '';
+            const filtroEstadoEnvio = document.getElementById('npt-filtro-estado-envio')?.value || '';
+            const ordenEnvios = document.getElementById('npt-orden-envios')?.value || 'fecha-desc';
             const alumnos = estudiantesFiltrados();
             const faltanMetadatos = alumnos.some(est => !nptArchivosMeta[est.cedula] && !nptArchivosCargadosPorCedula[est.cedula]);
             if (faltanMetadatos && !nptPrecargaDocenteEnCurso) {
@@ -5230,20 +5281,43 @@ video {
                         const arch = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
                         const nota = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
                         const ia   = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
-                        if (arch) filas.push({ est, t, tp, arch, nota, ia });
+                        if (arch) filas.push({ clase: 'insumo', estado: nota ? 'calificado' : (ia ? 'ia-pendiente' : 'no-calificado'), fechaOrden: fechaOrdenNPT(arch.fechaEntrega), est, t, tp, arch, nota, ia });
                     });
                     // Examen: se gestiona igual que un insumo (ver/imprimir + eliminar para permitir repetir),
                     // aunque no hay archivo subido — es una evaluación automática.
                     const examen = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examen || null;
-                    if (examen) filas.push({ est, t, examen });
+                    if (examen) filas.push({ clase: 'examen', estado: 'calificado', fechaOrden: fechaOrdenNPT(examen.fecha), est, t, examen });
                 });
             });
 
+            let filasFiltradas = filas.filter(fila => {
+                if (filtroTipoEnvio === 'insumos' && fila.clase !== 'insumo') return false;
+                if (filtroTipoEnvio === 'examen' && fila.clase !== 'examen') return false;
+                if (['cuaderno','libro','talleres','tarea'].includes(filtroTipoEnvio) && fila.tp?.id !== filtroTipoEnvio) return false;
+                if (filtroEstadoEnvio === 'calificados' && fila.estado !== 'calificado') return false;
+                if (filtroEstadoEnvio === 'no-calificados' && fila.estado !== 'no-calificado') return false;
+                if (filtroEstadoEnvio === 'ia-pendiente' && fila.estado !== 'ia-pendiente') return false;
+                return true;
+            });
+
+            filasFiltradas.sort((a, b) => {
+                const nombreA = claveApellidoNPT(a.est?.nombre || '');
+                const nombreB = claveApellidoNPT(b.est?.nombre || '');
+                if (ordenEnvios === 'apellido-asc' || ordenEnvios === 'apellido-desc') {
+                    const cmpNombre = nombreA.localeCompare(nombreB, 'es', { sensitivity: 'base' });
+                    if (cmpNombre !== 0) return ordenEnvios === 'apellido-asc' ? cmpNombre : -cmpNombre;
+                    return (b.fechaOrden || 0) - (a.fechaOrden || 0);
+                }
+                const cmpFecha = (a.fechaOrden || 0) - (b.fechaOrden || 0);
+                if (cmpFecha !== 0) return ordenEnvios === 'fecha-asc' ? cmpFecha : -cmpFecha;
+                return nombreA.localeCompare(nombreB, 'es', { sensitivity: 'base' });
+            });
+
             tbody.innerHTML = '';
-            if (filas.length === 0) { noData?.classList.remove('hidden'); return; }
+            if (filasFiltradas.length === 0) { noData?.classList.remove('hidden'); return; }
             noData?.classList.add('hidden');
 
-            filas.forEach((fila, i) => {
+            filasFiltradas.forEach((fila, i) => {
                 if (fila.examen) {
                     const { est, t, examen } = fila;
                     const notaVal = numero(examen.nota);
@@ -5707,6 +5781,30 @@ video {
             return pendientes;
         }
 
+        // Recolecta entregas visibles que ya tienen evaluación IA, pero todavía no han sido
+        // verificadas por el docente. Sirve para re-evaluar en lote antes de confirmar notas.
+        function nptFilasIAPendientesVerificar() {
+            const filtroT = document.getElementById('npt-filtro-trimestre')?.value || '';
+            const alumnos = estudiantesFiltrados();
+            const pendientes = [];
+            alumnos.forEach(est => {
+                trimestresEfectivos().forEach(t => {
+                    if (filtroT && String(t.num) !== filtroT) return;
+                    NPT_TIPOS.forEach(tp => {
+                        if (!NPT_TIPOS_RUBRICA.includes(tp.id)) return;
+                        const arch = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
+                        if (!arch) return;
+                        const nota = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
+                        if (nota?.verificado) return;
+                        const ia = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
+                        if (!ia) return;
+                        pendientes.push({ cedula: est.cedula, numTrimestre: t.num, tipo: tp.id });
+                    });
+                });
+            });
+            return pendientes;
+        }
+
         // Botón "Evaluar todos los pendientes": procesa la cola secuencialmente (una petición a la vez, con
         // pausa entre cada una) para no exceder el límite de peticiones por minuto de la API de Gemini.
         // Ante un 429 (cuota excedida) el Worker YA reintenta solo con backoff — si aun así llega aquí como
@@ -5715,24 +5813,26 @@ video {
         const NPT_EVAL_MASIVA_DELAY_MS = 6500; // ~9.2 solicitudes/min: margen de seguridad bajo el límite típico de 10 RPM
         const NPT_EVAL_MASIVA_PAUSA_CUOTA_MS = 65000; // 65s de enfriamiento cuando se detecta cuota excedida
         const NPT_EVAL_MASIVA_MAX_REINTENTOS_CUOTA = 2; // por ítem, antes de darlo por fallido de verdad
-        async function evaluarTodosPendientesIA() {
+        async function procesarLoteEvaluacionIA(pendientes, opciones = {}) {
             if (nptEvalMasivaEnCurso) return;
-            const pendientes = nptFilasPendientesIA();
             if (pendientes.length === 0) {
-                alert('No hay entregas pendientes de evaluación automática (con rúbrica) en la vista actual.');
+                alert(opciones.mensajeVacio || 'No hay entregas pendientes de evaluación automática (con rúbrica) en la vista actual.');
                 return;
             }
             const minutosAprox = Math.ceil((pendientes.length * NPT_EVAL_MASIVA_DELAY_MS) / 60000);
-            if (!confirm(`Se van a evaluar ${pendientes.length} entregas con IA, una por una (aprox. ${minutosAprox} min, más pausas extra si se detecta cuota excedida). No cierres esta pestaña mientras corre. ¿Continuar?`)) return;
+            const accion = opciones.accion || 'evaluar';
+            if (!confirm(`Se van a ${accion} ${pendientes.length} entregas con IA, una por una (aprox. ${minutosAprox} min, más pausas extra si se detecta cuota excedida). No cierres esta pestaña mientras corre. ¿Continuar?`)) return;
 
             nptEvalMasivaEnCurso = true;
             let ok = 0, fallidas = 0, revisionManual = 0;
             const erroresDetalle = []; // { cedula, tipo, mensaje } — para el resumen real al final
             const btnMasivo = document.getElementById('npt-btn-evaluar-todos');
+            const btnReevaluar = document.getElementById('npt-btn-reevaluar-pendientes-verificar');
             const progresoEl = document.getElementById('npt-eval-progreso');
             const progresoTexto = document.getElementById('npt-eval-progreso-texto');
             const progresoBarra = document.getElementById('npt-eval-progreso-barra');
             if (btnMasivo) { btnMasivo.disabled = true; btnMasivo.classList.add('opacity-50', 'cursor-not-allowed'); }
+            if (btnReevaluar) { btnReevaluar.disabled = true; btnReevaluar.classList.add('opacity-50', 'cursor-not-allowed'); }
             progresoEl?.classList.remove('hidden');
             if (progresoBarra) progresoBarra.style.width = '0%';
             renderNPTDocente(); // redibuja para deshabilitar visualmente los botones individuales
@@ -5785,6 +5885,7 @@ video {
 
             nptEvalMasivaEnCurso = false;
             if (btnMasivo) { btnMasivo.disabled = false; btnMasivo.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            if (btnReevaluar) { btnReevaluar.disabled = false; btnReevaluar.classList.remove('opacity-50', 'cursor-not-allowed'); }
             progresoEl?.classList.add('hidden');
             renderNPTDocente();
 
@@ -5808,12 +5909,28 @@ video {
             } else if (detenidoPorCuotaSostenida) {
                 const restantes = pendientes.length - (ok + revisionManual + fallidas);
                 alert(`Se detuvo la evaluación masiva: la cuota de la API de Gemini sigue agotada después de varios reintentos con pausas de ${Math.round(NPT_EVAL_MASIVA_PAUSA_CUOTA_MS/1000)}s.\n\n` +
-                    `Completadas: ${ok}. Quedan ${restantes} sin procesar. Espera un rato y vuelve a presionar "Evaluar todos los pendientes" — retomará justo donde quedó.${resumenErrores}`);
+                    `Completadas: ${ok}. Quedan ${restantes} sin procesar. Espera un rato y vuelve a presionar el botón del lote — retomará justo donde quedó.${resumenErrores}`);
             } else {
-                alert(`Evaluación masiva terminada: ${ok} completadas por IA, ${fallidas} fallidas.` +
+                alert(`${opciones.tituloFinal || 'Evaluación masiva terminada'}: ${ok} completadas por IA, ${fallidas} fallidas.` +
                     (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : '') +
                     resumenErrores);
             }
+        }
+
+        async function evaluarTodosPendientesIA() {
+            await procesarLoteEvaluacionIA(nptFilasPendientesIA(), {
+                accion: 'evaluar',
+                mensajeVacio: 'No hay entregas pendientes de evaluación automática (con rúbrica) en la vista actual.',
+                tituloFinal: 'Evaluación masiva terminada'
+            });
+        }
+
+        async function reevaluarTodosPendientesVerificarIA() {
+            await procesarLoteEvaluacionIA(nptFilasIAPendientesVerificar(), {
+                accion: 're-evaluar',
+                mensajeVacio: 'No hay evaluaciones IA pendientes de verificación docente en la vista actual.',
+                tituloFinal: 'Re-evaluación masiva terminada'
+            });
         }
 
         // Abre el archivo del docente recuperando Base64 desde RTDB si no está en caché
@@ -7713,6 +7830,7 @@ video {
         window.guardarGestionTrimestreNPT = guardarGestionTrimestreNPT;
         window.evaluarConIA = evaluarConIA;
         window.evaluarTodosPendientesIA = evaluarTodosPendientesIA;
+        window.reevaluarTodosPendientesVerificarIA = reevaluarTodosPendientesVerificarIA;
         window.toggleExamenTrimestre = toggleExamenTrimestre;
         window.guardarURLInsumo = guardarURLInsumo;
         window.nptGestionTodosInsumos = nptGestionTodosInsumos;
