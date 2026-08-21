@@ -2482,11 +2482,11 @@ video {
                 </div>
             </div>
 
-            <!-- FASE 1: preguntas, una por una con temporizador de 30s -->
+            <!-- FASE 1: preguntas, una por una con temporizador de 60s -->
             <div id="quiz-fase-preguntas">
                 <div class="flex justify-between items-center mt-4 mb-2">
                     <span id="quiz-progress" class="text-sm font-bold text-slate-600">Pregunta 1/20</span>
-                    <span id="quiz-timer" class="text-sm font-black px-3 py-1 rounded-full bg-amber-50 text-amber-700">⏱️ 30s</span>
+                    <span id="quiz-timer" class="text-sm font-black px-3 py-1 rounded-full bg-amber-50 text-amber-700">⏱️ 60s</span>
                 </div>
                 <div class="w-full bg-slate-100 h-2 rounded-full mb-5"><div id="quiz-bar" class="bg-brand-500 h-full w-0 transition-all rounded-full"></div></div>
                 <h3 id="quiz-question" class="text-lg font-bold mb-5">Cargando...</h3>
@@ -2496,13 +2496,13 @@ video {
                     <span>Debes seleccionar una respuesta antes de continuar.</span>
                 </div>
                 <button id="quiz-next" onclick="avanzarPreguntaManual()" class="w-full bg-brand-600 text-white py-3 rounded-xl font-bold hover:bg-brand-700 transition-colors">Siguiente</button>
-                <p class="text-[11px] text-slate-400 text-center mt-3">No es posible regresar a una pregunta anterior. Si no respondes en 30 segundos, pasarás a la siguiente pregunta. No cambies de pestaña ni salgas de pantalla completa: el examen se finalizará automáticamente.</p>
+                <p class="text-[11px] text-slate-400 text-center mt-3">No es posible regresar a una pregunta anterior. Si no respondes en 60 segundos, pasarás a la siguiente pregunta. No cambies de pestaña ni salgas de pantalla completa: el examen se finalizará automáticamente.</p>
             </div>
 
-            <!-- FASE 2: revisión de respuestas (30s) -->
+            <!-- FASE 2: revisión de respuestas (60s) -->
             <div id="quiz-fase-revision" class="hidden">
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-800 font-bold text-center">
-                    ⏳ Tienes <span id="revision-timer">30</span> segundos para revisar y corregir tus respuestas.
+                    ⏳ Tienes <span id="revision-timer">60</span> segundos para revisar y corregir tus respuestas.
                 </div>
                 <div id="revision-lista" class="space-y-4 max-h-[28rem] overflow-y-auto pr-1"></div>
             </div>
@@ -2724,7 +2724,7 @@ video {
         let indicePregunta = 0;
         let respuestas = {};
         let examenContexto = null; // { trimestre, preguntasActivas, poolReemplazo, reemplazadas, respuestas, horaInicio, horaFin, fase }
-        let examenTimerPregunta = null;   // interval del temporizador de 30s por pregunta
+        let examenTimerPregunta = null;   // interval del temporizador de 60s por pregunta
         let examenSegundosPregunta = 0;
         let examenTimerRevision = null;   // interval del minuto de revisión
         let examenSegundosRevision = 0;
@@ -2734,8 +2734,8 @@ video {
         let nptBloqueosActivos = {};         // último snapshot de exámenes bloqueados (lado docente)
         let nptBloqueosListenerActivo = false;
         const NPT_EXAMEN_NUM_PREGUNTAS = 20;      // cantidad de preguntas por intento
-        const NPT_EXAMEN_TIEMPO_PREGUNTA = 30;    // segundos por pregunta antes de avanzar automáticamente
-        const NPT_EXAMEN_TIEMPO_REVISION = 30;    // segundos para revisar respuestas al terminar
+        const NPT_EXAMEN_TIEMPO_PREGUNTA = 60;    // segundos por pregunta antes de avanzar automáticamente
+        const NPT_EXAMEN_TIEMPO_REVISION = 60;    // segundos para revisar respuestas al terminar
         const NPT_EXAMEN_TIEMPO_FINALIZAR = 10;   // segundos para presionar "Finalizar examen"
         const NPT_EXAMEN_PUNTOS_POR_ACIERTO = 0.5; // 20 preguntas x 0.5 = 10 puntos
         const NPT_NOMBRE_DOCENTE = 'Ing. César Godoy Rosero, Mgt.';
@@ -3877,7 +3877,7 @@ video {
                 alert('Ya rendiste el examen de este trimestre. No es posible repetirlo.');
                 return;
             }
-            if (!confirm(`Vas a iniciar el examen del trimestre. Se te presentarán ${Math.min(NPT_EXAMEN_NUM_PREGUNTAS, bancoOriginal.length)} preguntas, una a la vez, con 30 segundos para responder cada una.\n\nEl examen se abre en pantalla completa y no debes salir de ella, cambiar de pestaña ni minimizar la ventana: si lo haces, el examen se finalizará automáticamente con lo que hayas respondido hasta ese momento.\n\nUna vez iniciado no podrás pausarlo ni repetirlo. ¿Deseas continuar?`)) return;
+            if (!confirm(`Vas a iniciar el examen del trimestre. Se te presentarán ${Math.min(NPT_EXAMEN_NUM_PREGUNTAS, bancoOriginal.length)} preguntas, una a la vez, con 60 segundos para responder cada una.\n\nEl examen se abre en pantalla completa y no debes salir de ella, cambiar de pestaña ni minimizar la ventana: si lo haces, el examen se finalizará automáticamente con lo que hayas respondido hasta ese momento.\n\nUna vez iniciado no podrás pausarlo ni repetirlo. ¿Deseas continuar?`)) return;
 
             // Etiquetamos cada pregunta con su índice original en el banco para no repetirla nunca en este intento
             const bancoIndexado = bancoOriginal.map((q, i) => ({ ...q, _idxBanco: i }));
@@ -4110,7 +4110,7 @@ video {
             document.getElementById('quiz-bar').style.width = `${((indicePregunta+1)/total)*100}%`;
             renderOpcionesPreguntaExamen();
             document.getElementById('quiz-next').innerText = indicePregunta === total - 1 ? "Finalizar preguntas" : "Siguiente";
-            // Temporizador de 30 segundos para esta pregunta (se inicia una sola vez por pregunta)
+            // Temporizador de 60 segundos para esta pregunta (se inicia una sola vez por pregunta)
             examenSegundosPregunta = NPT_EXAMEN_TIEMPO_PREGUNTA;
             actualizarVisualTimerPregunta();
             iniciarIntervaloPreguntaExamen();
