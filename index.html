@@ -2179,6 +2179,7 @@ video {
                                     <option value="">Todos</option>
                                     <option value="insumos">Insumos</option>
                                     <option value="examen">Exámenes</option>
+                                    <option value="examenRecuperacion">Recuperaciones</option>
                                     <option value="cuaderno">Cuaderno</option>
                                     <option value="libro">Libro</option>
                                     <option value="talleres">Talleres</option>
@@ -2401,6 +2402,22 @@ video {
                         <div id="cfg-backup-resultado" class="hidden mt-3 text-xs p-2 rounded-lg"></div>
                     </section>
 
+                    <!-- (E-bis) Diagnóstico y corrección de nombres con la Ñ dañada -->
+                    <section class="bg-slate-50 rounded-xl p-4">
+                        <h4 class="font-bold text-sm mb-3">🔤 Diagnóstico de texto dañado (Ñ / tildes)</h4>
+                        <p class="text-[11px] text-slate-500 mb-3">
+                            Busca estudiantes cuyo nombre, curso, paralelo, representante u observaciones contengan
+                            el carácter "�" (dato dañado). Esto ocurría al importar un CSV de Excel que no estaba
+                            guardado como "CSV UTF-8" (la Ñ se pierde de forma irreversible al leerlo). <strong>Ya se
+                            corrigió la importación</strong> para que esto no vuelva a pasar; esta herramienta solo
+                            ayuda a corregir a mano los registros que quedaron dañados antes de la corrección.
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="buscarTextoDanadoNPT()" class="bg-rose-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-rose-700">🔍 Buscar registros dañados</button>
+                        </div>
+                        <div id="cfg-danado-resultado" class="hidden mt-3 text-xs"></div>
+                    </section>
+
                     <!-- (F) Medidor de espacio ocupado por PDFs -->
                     <section class="bg-slate-50 rounded-xl p-4">
                         <h4 class="font-bold text-sm mb-3">📏 Espacio ocupado por PDFs (entregas NPT)</h4>
@@ -2517,7 +2534,7 @@ video {
         </div>
         <div id="screen-results" class="hidden w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 text-center">
             <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"><svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-            <h3 class="text-2xl font-black">Examen Completado</h3>
+            <h3 id="result-titulo" class="text-2xl font-black">Examen Completado</h3>
             <p class="text-[11px] text-slate-400 mt-2">📅 <span id="result-fecha"></span> · 🕐 Inicio: <span id="result-hora-inicio"></span> · Fin: <span id="result-hora-fin"></span></p>
             <p id="result-aviso-salida" class="hidden text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3 mt-3"></p>
             <div class="bg-slate-50 rounded-xl p-5 my-5">
@@ -2531,7 +2548,7 @@ video {
     </main>
 
     <!-- Modales -->
-    <div id="detail-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-5 max-w-2xl w-full"><div class="flex justify-between border-b pb-2 mb-3"><h3 class="font-black">Detalles del Estudiante</h3><button onclick="cerrarDetalle()">✖</button></div><div id="detail-content" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"></div></div></div>
+    <div id="detail-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-5 max-w-2xl w-full"><div class="flex justify-between items-center border-b pb-2 mb-3"><h3 class="font-black" id="detail-titulo">Detalles del Estudiante</h3><div class="flex items-center gap-2"><button id="detail-btn-editar" onclick="editarFichaEstudiante()" class="text-brand-600 text-xs font-bold bg-brand-50 px-2 py-1 rounded-lg hover:bg-brand-100">✏️ Editar</button><button onclick="cerrarDetalle()">✖</button></div></div><div id="detail-content" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"></div></div></div>
     <div id="import-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-5 w-96"><h4 class="font-bold mb-3">Configurar curso/paralelo para importación</h4><select id="import-curso" class="w-full p-2 border rounded mb-2"><option>1°</option><option>2°</option><option>3°</option></select><select id="import-paralelo" class="w-full p-2 border rounded mb-4"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option><option>H</option><option>I</option></select><div class="flex justify-end gap-3"><button onclick="cerrarModalImportacion()">Cancelar</button><button onclick="confirmarImportacion()" class="bg-brand-600 text-white px-4 py-2 rounded-lg">Confirmar e Importar</button></div></div></div>
 
     <!-- Modal calificación NPT docente -->
@@ -2676,6 +2693,7 @@ video {
                             <input type="text" id="npt-gestion-buscar" oninput="nptGestionFiltrarEstudiantes()" placeholder="Buscar estudiante..." class="px-3 py-1.5 border rounded-lg text-xs w-48 focus:ring-2 focus:ring-brand-500">
                             <button type="button" onclick="nptSeleccionarTodosEstudiantes('insumos', true)" class="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg font-bold hover:bg-emerald-100" title="Marcar todos los insumos">✓ Todos insumos</button>
                             <button type="button" onclick="nptSeleccionarTodosEstudiantes('examen', true)" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg font-bold hover:bg-indigo-100" title="Marcar todos los exámenes">✓ Todos examen</button>
+                            <button type="button" onclick="nptSeleccionarTodosEstudiantes('recuperacion', true)" class="text-[11px] bg-purple-50 text-purple-700 px-2 py-1 rounded-lg font-bold hover:bg-purple-100" title="Marcar todas las recuperaciones">✓ Todos recuperación</button>
                         </div>
                     </div>
                     <div class="overflow-x-auto border rounded-xl max-h-96 overflow-y-auto">
@@ -2686,6 +2704,7 @@ video {
                                     <th class="p-2 text-left">Cédula</th>
                                     <th class="p-2 text-center">Insumos<br><input type="checkbox" id="npt-check-todos-insumos" onchange="nptSeleccionarTodosEstudiantes('insumos', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
                                     <th class="p-2 text-center">Examen<br><input type="checkbox" id="npt-check-todos-examen" onchange="nptSeleccionarTodosEstudiantes('examen', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
+                                    <th class="p-2 text-center">Recuperación<br><input type="checkbox" id="npt-check-todos-recuperacion" onchange="nptSeleccionarTodosEstudiantes('recuperacion', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
                                 </tr>
                             </thead>
                             <tbody id="npt-gestion-estudiantes-body"></tbody>
@@ -3597,14 +3616,85 @@ video {
                 tbody.insertRow().innerHTML = row;
             });
         }
+        let cedulaFichaActual = null; // cédula del estudiante que está abierto en el modal de ficha
+        const NPT_CURSOS_DISPONIBLES = ['1°', '2°', '3°'];
+        const NPT_PARALELOS_DISPONIBLES = ['A','B','C','D','E','F','G','H','I'];
+
         function verDetalle(ced) {
             let e = estudiantes.find(s => s.cedula === ced);
             if(!e) return;
+            cedulaFichaActual = ced;
+            document.getElementById('detail-titulo').textContent = 'Detalles del Estudiante';
+            document.getElementById('detail-btn-editar').classList.remove('hidden');
             let cont = document.getElementById('detail-content');
             cont.innerHTML = `<div><strong>Nombre:</strong> ${escapeHtml(e.nombre)||'-'}</div><div><strong>Cédula:</strong> ${escapeHtml(e.cedula)||'-'}</div><div><strong>Curso/Paralelo:</strong> ${escapeHtml(e.curso)||'-'} "${escapeHtml(e.paralelo)||'-'}"</div><div><strong>Fecha Nac.:</strong> ${escapeHtml(e.fechaNac)||'-'}</div><div><strong>Correo:</strong> ${escapeHtml(e.correo)||'-'}</div><div><strong>Representante:</strong> ${escapeHtml(e.repNombre)||'-'}</div><div><strong>Cédula R.:</strong> ${escapeHtml(e.repCedula)||'-'}</div><div><strong>Celular R.:</strong> ${escapeHtml(e.repCelular)||'-'}</div><div class="md:col-span-2"><strong>Observaciones:</strong> ${escapeHtml(e.observaciones)||'-'}</div>`;
             document.getElementById('detail-modal').classList.remove('hidden');
         }
-        function cerrarDetalle() { document.getElementById('detail-modal').classList.add('hidden'); }
+        function cerrarDetalle() { document.getElementById('detail-modal').classList.add('hidden'); cedulaFichaActual = null; }
+
+        // ---- Edición de la ficha del estudiante ----
+        function editarFichaEstudiante() {
+            const e = estudiantes.find(s => s.cedula === cedulaFichaActual);
+            if (!e) { alert('No se encontró el estudiante.'); return; }
+            document.getElementById('detail-titulo').textContent = '✏️ Editando estudiante';
+            document.getElementById('detail-btn-editar').classList.add('hidden');
+            const opcionesCurso = NPT_CURSOS_DISPONIBLES.map(c => `<option value="${c}" ${e.curso===c?'selected':''}>${c}</option>`).join('');
+            const opcionesParalelo = NPT_PARALELOS_DISPONIBLES.map(p => `<option value="${p}" ${e.paralelo===p?'selected':''}>${p}</option>`).join('');
+            const cont = document.getElementById('detail-content');
+            cont.innerHTML = `
+                <div class="md:col-span-2"><label class="text-xs font-bold text-slate-500">Nombre completo</label><input type="text" id="edit-nombre" value="${escapeHtml(e.nombre)}" class="w-full p-2 border rounded-lg text-sm mt-1"></div>
+                <div><label class="text-xs font-bold text-slate-500">Curso</label><select id="edit-curso" class="w-full p-2 border rounded-lg text-sm mt-1">${opcionesCurso}</select></div>
+                <div><label class="text-xs font-bold text-slate-500">Paralelo</label><select id="edit-paralelo" class="w-full p-2 border rounded-lg text-sm mt-1">${opcionesParalelo}</select></div>
+                <div><label class="text-xs font-bold text-slate-500">Cédula</label><input type="text" value="${escapeHtml(e.cedula)}" disabled title="La cédula no se puede editar porque es la identificación única del estudiante en el sistema. Si es incorrecta, elimina el registro y créalo de nuevo con la cédula correcta." class="w-full p-2 border rounded-lg text-sm mt-1 bg-slate-100 text-slate-400"></div>
+                <div><label class="text-xs font-bold text-slate-500">Fecha de nacimiento</label><input type="date" id="edit-fecha" value="${escapeHtml(e.fechaNac)}" class="w-full p-2 border rounded-lg text-sm mt-1"></div>
+                <div class="md:col-span-2"><label class="text-xs font-bold text-slate-500">Correo</label><input type="email" id="edit-correo" value="${escapeHtml(e.correo)}" class="w-full p-2 border rounded-lg text-sm mt-1"></div>
+                <div class="md:col-span-2"><label class="text-xs font-bold text-slate-500">Representante</label><input type="text" id="edit-rep-nombre" value="${escapeHtml(e.repNombre)}" class="w-full p-2 border rounded-lg text-sm mt-1"></div>
+                <div><label class="text-xs font-bold text-slate-500">Cédula del representante</label><input type="text" id="edit-rep-cedula" value="${escapeHtml(e.repCedula)}" class="w-full p-2 border rounded-lg text-sm mt-1"></div>
+                <div><label class="text-xs font-bold text-slate-500">Celular del representante</label><input type="text" id="edit-rep-celular" value="${escapeHtml(e.repCelular)}" class="w-full p-2 border rounded-lg text-sm mt-1"></div>
+                <div class="md:col-span-2"><label class="text-xs font-bold text-slate-500">Observaciones</label><textarea id="edit-observaciones" class="w-full p-2 border rounded-lg text-sm mt-1">${escapeHtml(e.observaciones)}</textarea></div>
+                <div class="md:col-span-2 flex gap-2 pt-2 border-t">
+                    <button onclick="guardarEdicionFichaEstudiante()" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-emerald-700">💾 Guardar cambios</button>
+                    <button onclick="verDetalle(cedulaFichaActual)" class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg text-sm font-bold hover:bg-slate-300">Cancelar</button>
+                </div>`;
+        }
+        async function guardarEdicionFichaEstudiante() {
+            const e = estudiantes.find(s => s.cedula === cedulaFichaActual);
+            if (!e) { alert('No se encontró el estudiante.'); return; }
+            const nombre = texto(document.getElementById('edit-nombre').value).toUpperCase();
+            const curso = document.getElementById('edit-curso').value;
+            const paralelo = document.getElementById('edit-paralelo').value;
+            if (!nombre) { alert('El nombre no puede estar vacío.'); return; }
+
+            const anterior = { ...e };
+            e.nombre = nombre;
+            e.curso = curso;
+            e.paralelo = paralelo;
+            e.fechaNac = texto(document.getElementById('edit-fecha').value);
+            e.correo = texto(document.getElementById('edit-correo').value);
+            e.repNombre = texto(document.getElementById('edit-rep-nombre').value).toUpperCase();
+            e.repCedula = texto(document.getElementById('edit-rep-cedula').value);
+            e.repCelular = texto(document.getElementById('edit-rep-celular').value);
+            e.observaciones = texto(document.getElementById('edit-observaciones').value);
+
+            const btn = document.querySelector('#detail-content button[onclick="guardarEdicionFichaEstudiante()"]');
+            if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+            try {
+                const authOk = await ensureAuth();
+                if (authOk) await guardarValorFirebase(`${rutaEstudiantes}/${e.cedula}`, e);
+                guardarBackup();
+                actualizarSelectores();
+                actualizarPaneles();
+                try {
+                    await registrarAuditoria('editar_estudiante', `Cédula ${e.cedula}: "${anterior.nombre}" (${anterior.curso} "${anterior.paralelo}") -> "${e.nombre}" (${e.curso} "${e.paralelo}")`);
+                } catch {}
+                verDetalle(e.cedula);
+            } catch (err) {
+                console.error(err);
+                alert('No se pudo guardar la edición. Revisa la conexión e intenta de nuevo.');
+                if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar cambios'; }
+            }
+        }
+
         function forzarRecargaDatos() { location.reload(); }
 
         // ==================== IMPORTACIÓN DE ESTUDIANTES (CORREGIDA) ====================
@@ -3665,12 +3755,39 @@ video {
             importacionManual = false;
         }
 
+        // NOTA IMPORTANTE SOBRE LA Ñ (corregido):
+        // Antes este archivo se leía siempre como 'UTF-8'. El problema es que Excel,
+        // al hacer "Guardar como > CSV (delimitado por comas)", genera el archivo en
+        // Windows-1252/ANSI por defecto (NO en UTF-8). En ese formato la Ñ ocupa un
+        // solo byte (0xD1) que NO es una secuencia válida en UTF-8, así que al forzar
+        // la lectura como UTF-8 el navegador lo reemplaza por el carácter "�"
+        // (U+FFFD) de forma IRREVERSIBLE — el dato original ya no se puede recuperar
+        // después de eso. Esto es lo que producía nombres como "A�APA PROA�O" en
+        // listados y reportes.
+        // La solución: leer el archivo como bytes crudos e intentar decodificarlo
+        // como UTF-8 en modo estricto (fatal:true). Si el archivo SÍ es UTF-8 válido
+        // (lo normal si se exportó como "CSV UTF-8"), se usa tal cual y nada cambia.
+        // Si falla (no es UTF-8 válido), se decodifica como windows-1252, que es el
+        // caso real de la mayoría de los CSV exportados por Excel en español.
         function leerArchivoComoTexto(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
+                reader.onload = (e) => {
+                    try {
+                        const bytes = new Uint8Array(e.target.result);
+                        let texto;
+                        try {
+                            texto = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+                        } catch (noEsUtf8) {
+                            texto = new TextDecoder('windows-1252').decode(bytes);
+                        }
+                        resolve(texto);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
                 reader.onerror = (e) => reject(e);
-                reader.readAsText(file, 'UTF-8');
+                reader.readAsArrayBuffer(file);
             });
         }
 
@@ -3886,6 +4003,7 @@ video {
 
             examenContexto = {
                 trimestre: numTrimestre,
+                tipoExamen: 'regular',                            // distingue de 'recuperacion' al calificar/guardar
                 preguntasActivas: barajado.slice(0, cantidad),   // preguntas mostradas al estudiante (pueden reemplazarse)
                 poolReemplazo: barajado.slice(cantidad),          // preguntas restantes, nunca usadas, disponibles para reemplazo
                 reemplazadas: {},                                 // índice de posición -> ya se le dio su reemplazo por tiempo agotado
@@ -3906,6 +4024,55 @@ video {
             actualizarBarraMetaExamen();
             mostrarPantalla('screen-quiz');
             // La primera pregunta solo se muestra una vez confirmada la pantalla completa.
+            solicitarPantallaCompletaExamen(() => mostrarPreguntaExamen());
+        }
+
+        // ---- Examen de RECUPERACIÓN del trimestre: mismo flujo que el examen regular, mismo banco de preguntas ----
+        // (reutiliza mezclarArrayExamen, NPT_EXAMEN_NUM_PREGUNTAS, mostrarPreguntaExamen, etc.)
+        function comenzarExamenRecuperacionTrimestre(numTrimestre) {
+            if (!estudianteActual) return;
+            if (!nptExamenRecuperacionEstudianteHabilitado(estudianteActual.curso, estudianteActual.paralelo, numTrimestre, estudianteActual.cedula)) {
+                alert('No tienes habilitado el examen de recuperación de este trimestre.');
+                return;
+            }
+            const bancoOriginal = nptExamenesPreguntas(estudianteActual.curso, estudianteActual.paralelo, numTrimestre);
+            if (!bancoOriginal || bancoOriginal.length === 0) {
+                alert('El docente aún no ha publicado las preguntas del examen para este trimestre.');
+                return;
+            }
+            const yaTiene = nptNotas[estudianteActual.cedula]?.[`trimestre${numTrimestre}`]?.examenRecuperacion;
+            if (yaTiene) {
+                alert('Ya rendiste el examen de recuperación de este trimestre. No es posible repetirlo.');
+                return;
+            }
+            if (!confirm(`Vas a iniciar el examen de RECUPERACIÓN del trimestre. Se te presentarán ${Math.min(NPT_EXAMEN_NUM_PREGUNTAS, bancoOriginal.length)} preguntas, una a la vez, con 60 segundos para responder cada una.\n\nEl examen se abre en pantalla completa y no debes salir de ella, cambiar de pestaña ni minimizar la ventana: si lo haces, el examen se finalizará automáticamente con lo que hayas respondido hasta ese momento.\n\nUna vez iniciado no podrás pausarlo ni repetirlo. ¿Deseas continuar?`)) return;
+
+            const bancoIndexado = bancoOriginal.map((q, i) => ({ ...q, _idxBanco: i }));
+            const barajado = mezclarArrayExamen(bancoIndexado);
+            const cantidad = Math.min(NPT_EXAMEN_NUM_PREGUNTAS, barajado.length);
+
+            examenContexto = {
+                trimestre: numTrimestre,
+                tipoExamen: 'recuperacion',
+                preguntasActivas: barajado.slice(0, cantidad),
+                poolReemplazo: barajado.slice(cantidad),
+                reemplazadas: {},
+                respuestas: {},
+                horaInicio: new Date(),
+                horaFin: null,
+                fase: 'preguntas',
+                bancoAgotadoAvisado: false,
+                intentosSalida: 0,
+                motivoSalida: null,
+                finalizandoPorSalida: false
+            };
+            respuestas = examenContexto.respuestas;
+            indicePregunta = 0;
+            document.getElementById('quiz-fase-preguntas').classList.remove('hidden');
+            document.getElementById('quiz-fase-revision').classList.add('hidden');
+            document.getElementById('quiz-fase-finalizar').classList.add('hidden');
+            actualizarBarraMetaExamen();
+            mostrarPantalla('screen-quiz');
             solicitarPantallaCompletaExamen(() => mostrarPreguntaExamen());
         }
 
@@ -4312,7 +4479,9 @@ video {
             const motivoSalida = examenContexto.motivoSalida || null;
             examenContexto.fase = 'terminado'; // evita doble finalización y hace que los listeners dejen de actuar
             detenerModoBloqueoExamen();
-            const { trimestre, preguntasActivas: banco, respuestas: resp } = examenContexto;
+            const { trimestre, preguntasActivas: banco, respuestas: resp, tipoExamen } = examenContexto;
+            const esRecuperacion = tipoExamen === 'recuperacion';
+            const campoNota = esRecuperacion ? 'examenRecuperacion' : 'examen';
             examenContexto.horaFin = new Date();
             let correctas = 0;
             const detalle = banco.map((q, i) => {
@@ -4329,21 +4498,23 @@ video {
                 horaInicio: examenContexto.horaInicio.toISOString(),
                 horaFin: examenContexto.horaFin.toISOString(),
                 cedula: estudianteActual.cedula, nombre: estudianteActual.nombre,
-                trimestre, tipo: 'examen',
+                trimestre, tipo: esRecuperacion ? 'examen_recuperacion' : 'examen',
                 intentosSalida: examenContexto.intentosSalida || 0,
                 motivoSalida
             };
             try {
-                await guardarValorFirebase(`nptNotas/${estudianteActual.cedula}/trimestre${trimestre}/examen`, registro);
+                await guardarValorFirebase(`nptNotas/${estudianteActual.cedula}/trimestre${trimestre}/${campoNota}`, registro);
                 if (!nptNotas[estudianteActual.cedula]) nptNotas[estudianteActual.cedula] = {};
                 if (!nptNotas[estudianteActual.cedula][`trimestre${trimestre}`]) nptNotas[estudianteActual.cedula][`trimestre${trimestre}`] = {};
-                nptNotas[estudianteActual.cedula][`trimestre${trimestre}`].examen = registro;
+                nptNotas[estudianteActual.cedula][`trimestre${trimestre}`][campoNota] = registro;
             } catch(e) {
                 console.error('Error guardando resultado de examen:', e);
                 alert('Hubo un problema al guardar tu examen. Vuelve a intentarlo antes de cerrar esta ventana.');
                 return;
             }
             actualizarBarraMetaExamen();
+            const tituloResultado = document.getElementById('result-titulo');
+            if (tituloResultado) tituloResultado.innerText = esRecuperacion ? 'Examen de Recuperación Completado' : 'Examen Completado';
             document.getElementById('result-fecha').innerText = formatearFechaExamen(examenContexto.horaInicio);
             document.getElementById('result-hora-inicio').innerText = formatearHoraExamen(examenContexto.horaInicio);
             document.getElementById('result-hora-fin').innerText = formatearHoraExamen(examenContexto.horaFin);
@@ -4360,10 +4531,12 @@ video {
             mostrarPantalla('screen-results');
         }
         // Vista/impresión del examen para el DOCENTE (con aciertos y errores) — no se usa para el estudiante
-        function imprimirReporteExamenDocente(cedula, numTrimestre) {
+        function imprimirReporteExamenDocente(cedula, numTrimestre, campo) {
+            campo = campo || 'examen';
+            const esRecuperacion = campo === 'examenRecuperacion';
             const est = estudiantes.find(e => e.cedula === cedula);
-            const reg = nptNotas[cedula]?.[`trimestre${numTrimestre}`]?.examen;
-            if (!reg) { alert('No se encontró un examen rendido para este estudiante en este trimestre.'); return; }
+            const reg = nptNotas[cedula]?.[`trimestre${numTrimestre}`]?.[campo];
+            if (!reg) { alert(`No se encontró un examen${esRecuperacion ? ' de recuperación' : ''} rendido para este estudiante en este trimestre.`); return; }
             const t = trimestresEfectivos().find(x => x.num === numTrimestre);
             const horaIni = reg.horaInicio ? new Date(reg.horaInicio).toLocaleString('es-EC') : (reg.fecha || '-');
             const horaFin = reg.horaFin ? new Date(reg.horaFin).toLocaleString('es-EC') : '-';
@@ -4379,7 +4552,7 @@ video {
                     <strong>Docente:</strong> ${escapeHtml(NPT_NOMBRE_DOCENTE)}<br>
                     <strong>Estudiante:</strong> ${escapeHtml(est?.nombre || reg.nombre || '')} &nbsp; <strong>Cédula:</strong> ${escapeHtml(cedula)}<br>
                     <strong>Curso/Paralelo:</strong> ${escapeHtml(est?.curso||'')} "${escapeHtml(est?.paralelo||'')}"<br>
-                    <strong>Período:</strong> ${escapeHtml(t?.label||'')}<br>
+                    <strong>Período:</strong> ${escapeHtml(t?.label||'')}${esRecuperacion ? ' — <strong>Examen de RECUPERACIÓN</strong>' : ''}<br>
                     <strong>Inicio:</strong> ${escapeHtml(horaIni)} &nbsp; <strong>Fin:</strong> ${escapeHtml(horaFin)}
                 </div>
                 ${reg.motivoSalida ? `<div class="filtro" style="background:#fef2f2;border-color:#fecaca;color:#991b1b"><strong>⚠️ Examen finalizado automáticamente:</strong> ${escapeHtml(reg.motivoSalida)}</div>` : ''}
@@ -4392,7 +4565,7 @@ video {
                     <tr><th class="col-num">#</th><th>Pregunta</th><th class="col-abrev">Respuesta del estudiante</th><th class="col-abrev">Correcta</th><th class="col-abrev">Resultado</th></tr>
                     ${filas}
                 </table>`;
-            abrirODescargarReporte(`Reporte de Examen — ${est?.nombre || reg.nombre || cedula}`, contenido, `reporte_examen_${cedula}_t${numTrimestre}_${fechaArchivo()}.html`);
+            abrirODescargarReporte(`Reporte de Examen${esRecuperacion ? ' de Recuperación' : ''} — ${est?.nombre || reg.nombre || cedula}`, contenido, `reporte_examen${esRecuperacion ? '_recuperacion' : ''}_${cedula}_t${numTrimestre}_${fechaArchivo()}.html`);
         }
 
         // ==================== NAVEGACIÓN ====================
@@ -4518,6 +4691,7 @@ video {
         let nptConfig = {};                 // { [curso]: { [paralelo]: { [n]: {habilitado, examenHabilitado} } } }
         let nptHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [cedula]: bool } } } }
         let nptExamenHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [cedula]: bool } } } }
+        let nptExamenRecuperacionHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [cedula]: bool } } } }
         let nptExamenes = {}; // { [curso]: { [paralelo]: { [n]: [ {pregunta, opciones:[{id,texto}], correcta} ... ] } } }
         let nptRubricas = {};                // { [curso]: { [paralelo]: { [n]: { [tipo]: {texto, fecha} } } } }
         let nptArchivos = {};   // cache liviana: { cedula: { trimestre1: { cuaderno:{...}, libro:{...} }, ... } }
@@ -4610,6 +4784,10 @@ video {
         async function cargarExamenHabilitacionEstudiantesNPT() {
             try { nptExamenHabilitacionEstudiantes = (await leerValorRutaFirebase('nptExamenHabilitacionEstudiantes')) || {}; }
             catch(e) { nptExamenHabilitacionEstudiantes = {}; }
+        }
+        async function cargarExamenRecuperacionHabilitacionEstudiantesNPT() {
+            try { nptExamenRecuperacionHabilitacionEstudiantes = (await leerValorRutaFirebase('nptExamenRecuperacionHabilitacionEstudiantes')) || {}; }
+            catch(e) { nptExamenRecuperacionHabilitacionEstudiantes = {}; }
         }
         async function cargarExamenesNPT() {
             try { nptExamenes = (await leerValorRutaFirebase('nptExamenes')) || {}; }
@@ -4713,6 +4891,7 @@ video {
         async function iniciarModuloNPT() {
             await Promise.all([
                 cargarConfigNPT(), cargarHabilitacionEstudiantesNPT(), cargarExamenHabilitacionEstudiantesNPT(),
+                cargarExamenRecuperacionHabilitacionEstudiantesNPT(),
                 cargarExamenesNPT(), cargarRubricasNPT(), cargarArchivosNPT(), cargarNotasNPT(), cargarEvaluacionesIANPT(),
                 cargarObservacionesDevolucionNPT()
             ]);
@@ -4732,6 +4911,10 @@ video {
                 });
                 database.ref('nptExamenHabilitacionEstudiantes').on('value', snap => {
                     nptExamenHabilitacionEstudiantes = snap.val() || {};
+                    renderTrimestresEstudiante();
+                });
+                database.ref('nptExamenRecuperacionHabilitacionEstudiantes').on('value', snap => {
+                    nptExamenRecuperacionHabilitacionEstudiantes = snap.val() || {};
                     renderTrimestresEstudiante();
                 });
                 database.ref('nptExamenes').on('value', snap => {
@@ -4835,6 +5018,15 @@ video {
             if (!mapa || mapa[cedula] === undefined) return nptExamenHabilitado(curso, paralelo, n);
             return !!mapa[cedula];
         }
+        // ---- Examen de RECUPERACIÓN: mismo mecanismo de habilitación (general + override por estudiante) ----
+        function nptExamenRecuperacionHabilitado(curso, paralelo, n) {
+            return !!nptTrimestreInfo(curso, paralelo, n)?.examenRecuperacionHabilitado;
+        }
+        function nptExamenRecuperacionEstudianteHabilitado(curso, paralelo, n, cedula) {
+            const mapa = nptNodoTrimestre(nptExamenRecuperacionHabilitacionEstudiantes, curso, paralelo, n);
+            if (!mapa || mapa[cedula] === undefined) return nptExamenRecuperacionHabilitado(curso, paralelo, n);
+            return !!mapa[cedula];
+        }
         function nptExamenesPreguntas(curso, paralelo, n) {
             return nptNodoTrimestre(nptExamenes, curso, paralelo, n) || [];
         }
@@ -4891,6 +5083,7 @@ video {
                 const totalInsumos = NPT_INSUMOS_ENTREGA.length;
                 const hab = insumosActivos > 0;
                 const habExamen = nptExamenHabilitado(cursoActual, paraleloActual, t.num);
+                const habExamenRecuperacion = nptExamenRecuperacionHabilitado(cursoActual, paraleloActual, t.num);
                 return `<div class="bg-white border-2 ${hab ? 'border-brand-400' : 'border-slate-200'} rounded-xl p-3">
                     <div class="flex items-center justify-between gap-2 mb-1">
                         <span class="font-bold text-sm">${t.label}</span>
@@ -4910,6 +5103,10 @@ video {
                     <button onclick="toggleExamenTrimestre(${t.num})"
                         class="w-full py-1.5 rounded-lg text-xs font-bold transition-colors ${habExamen ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-indigo-600 text-white hover:bg-indigo-700'}">
                         ${habExamen ? '🔒 Cerrar examen' : '📝 Habilitar examen'}
+                    </button>
+                    <button onclick="toggleExamenRecuperacionTrimestre(${t.num})"
+                        class="w-full py-1.5 rounded-lg text-xs font-bold transition-colors mt-2 ${habExamenRecuperacion ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-purple-600 text-white hover:bg-purple-700'}">
+                        ${habExamenRecuperacion ? '🔒 Cerrar recuperación' : '🔁 Habilitar recuperación'}
                     </button>
                 </div>`;
             }).join('');
@@ -4937,6 +5134,33 @@ video {
             } catch(e) {
                 console.error(e);
                 nptConfig[cv][pv][num].examenHabilitado = actual;
+                renderControlTrimestres();
+                alert('Error al guardar. Revisa la conexión.');
+            }
+        }
+
+        async function toggleExamenRecuperacionTrimestre(num) {
+            if (!cursoActual || !paraleloActual) { alert('Selecciona curso y paralelo primero.'); return; }
+            const cv = sanitizarClave(cursoActual), pv = sanitizarClave(paraleloActual);
+            const actual = nptExamenRecuperacionHabilitado(cursoActual, paraleloActual, num);
+            const nuevoEstado = !actual;
+            const banco = nptExamenesPreguntas(cursoActual, paraleloActual, num);
+            if (nuevoEstado && banco.length === 0) {
+                alert('No puedes habilitar la recuperación: aún no has cargado preguntas del examen para este trimestre. Usa "⚙️ Gestionar".');
+                return;
+            }
+            const t = trimestresEfectivos().find(x => x.num === num);
+            if (!confirm(`¿${nuevoEstado ? 'Habilitar' : 'Cerrar'} el examen de recuperación del ${t.label} para ${cursoActual} "${paraleloActual}"?\n\nRecuerda que además debes marcar individualmente a cada estudiante que rendirá la recuperación, en "⚙️ Gestionar".`)) return;
+            if (!nptConfig[cv]) nptConfig[cv] = {};
+            if (!nptConfig[cv][pv]) nptConfig[cv][pv] = {};
+            if (!nptConfig[cv][pv][num]) nptConfig[cv][pv][num] = {};
+            nptConfig[cv][pv][num].examenRecuperacionHabilitado = nuevoEstado;
+            renderControlTrimestres();
+            try {
+                await guardarValorFirebase(`nptConfig/${cv}/${pv}/${num}/examenRecuperacionHabilitado`, nuevoEstado);
+            } catch(e) {
+                console.error(e);
+                nptConfig[cv][pv][num].examenRecuperacionHabilitado = actual;
                 renderControlTrimestres();
                 alert('Error al guardar. Revisa la conexión.');
             }
@@ -5012,7 +5236,9 @@ video {
             });
         }
         function nptSeleccionarTodosEstudiantes(col, estado) {
-            const sel = col === 'examen' ? '.npt-check-examen-estudiante' : '.npt-check-estudiante';
+            const sel = col === 'examen' ? '.npt-check-examen-estudiante'
+                : col === 'recuperacion' ? '.npt-check-recuperacion-estudiante'
+                : '.npt-check-estudiante';
             document.querySelectorAll(`#npt-gestion-estudiantes-body ${sel}`).forEach(chk => chk.checked = estado);
             nptSyncMasterEstudiantes();
         }
@@ -5045,6 +5271,7 @@ video {
             tbody.innerHTML = filtrados.length ? filtrados.map(est => {
                 const checked = nptEstudianteHabilitado(cursoActual, paraleloActual, nptGestionCtx.trimestre, est.cedula);
                 const checkedExamen = nptExamenEstudianteHabilitado(cursoActual, paraleloActual, nptGestionCtx.trimestre, est.cedula);
+                const checkedRecuperacion = nptExamenRecuperacionEstudianteHabilitado(cursoActual, paraleloActual, nptGestionCtx.trimestre, est.cedula);
                 return `<tr class="border-b">
                     <td class="p-2 text-xs">${escapeHtml(est.nombre)}</td>
                     <td class="p-2 text-xs font-mono">${escapeHtml(est.cedula)}</td>
@@ -5054,8 +5281,11 @@ video {
                     <td class="p-2 text-center">
                         <input type="checkbox" data-cedula="${escapeHtml(est.cedula)}" class="npt-check-examen-estudiante w-4 h-4 align-middle" ${checkedExamen ? 'checked' : ''} onchange="nptSyncMasterEstudiantes()">
                     </td>
+                    <td class="p-2 text-center">
+                        <input type="checkbox" data-cedula="${escapeHtml(est.cedula)}" class="npt-check-recuperacion-estudiante w-4 h-4 align-middle" ${checkedRecuperacion ? 'checked' : ''} onchange="nptSyncMasterEstudiantes()">
+                    </td>
                 </tr>`;
-            }).join('') : `<tr><td colspan="4" class="p-4 text-center text-slate-400 text-xs">Sin resultados para "${escapeHtml(term)}".</td></tr>`;
+            }).join('') : `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Sin resultados para "${escapeHtml(term)}".</td></tr>`;
             nptSyncMasterEstudiantes();
         }
         function nptSyncMasterEstudiantes() {
@@ -5068,6 +5298,7 @@ video {
             };
             sync('.npt-check-estudiante', 'npt-check-todos-insumos');
             sync('.npt-check-examen-estudiante', 'npt-check-todos-examen');
+            sync('.npt-check-recuperacion-estudiante', 'npt-check-todos-recuperacion');
         }
 
         // ---- Modal de gestión por trimestre: insumos+fechas, rúbricas, examen y estudiantes ----
@@ -5216,10 +5447,23 @@ video {
                 });
                 await guardarValorFirebase(`nptExamenHabilitacionEstudiantes/${cv}/${pv}/${trimestre}`, actualizacionExamen);
 
+                // 5) Habilitación individual de estudiantes (examen de RECUPERACIÓN)
+                const checksRecuperacion = document.querySelectorAll('#npt-gestion-estudiantes-body .npt-check-recuperacion-estudiante');
+                if (!nptExamenRecuperacionHabilitacionEstudiantes[cv]) nptExamenRecuperacionHabilitacionEstudiantes[cv] = {};
+                if (!nptExamenRecuperacionHabilitacionEstudiantes[cv][pv]) nptExamenRecuperacionHabilitacionEstudiantes[cv][pv] = {};
+                if (!nptExamenRecuperacionHabilitacionEstudiantes[cv][pv][trimestre]) nptExamenRecuperacionHabilitacionEstudiantes[cv][pv][trimestre] = {};
+                const actualizacionRecuperacion = {};
+                checksRecuperacion.forEach(chk => {
+                    const ced = chk.getAttribute('data-cedula');
+                    actualizacionRecuperacion[ced] = chk.checked;
+                    nptExamenRecuperacionHabilitacionEstudiantes[cv][pv][trimestre][ced] = chk.checked;
+                });
+                await guardarValorFirebase(`nptExamenRecuperacionHabilitacionEstudiantes/${cv}/${pv}/${trimestre}`, actualizacionRecuperacion);
+
                 cerrarGestionTrimestreNPT();
                 renderControlTrimestres();
                 renderTrimestresEstudiante();
-                alert('Configuración guardada: insumos, fechas máximas, rúbricas, examen y habilitación individual.');
+                alert('Configuración guardada: insumos, fechas máximas, rúbricas, examen, recuperación y habilitación individual.');
             } catch(e) {
                 console.error(e);
                 alert('Error al guardar. Revisa la conexión e intenta de nuevo.');
@@ -5247,11 +5491,21 @@ video {
         }
 
         function claveApellidoNPT(nombre) {
+            // Solo se quitan tildes de vocales (á,é,í,ó,ú,ü) para que "CORDOVA" y "CÓRDOVA"
+            // ordenen igual. La Ñ/ñ NUNCA se toca aquí: es una letra propia del alfabeto
+            // español (va después de la N y antes de la O), no una "N con acento". Antes
+            // se usaba normalize('NFD') + strip de \u0300-\u036f, pero ese rango incluye la
+            // virgulilla de la Ñ (U+0303) y la convertía en una "N" más para ordenar,
+            // haciendo que la Ñ "desapareciera" del orden alfabético correcto.
             return texto(nombre)
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[áàäâ]/g, 'a')
+                .replace(/[éèëê]/g, 'e')
+                .replace(/[íìïî]/g, 'i')
+                .replace(/[óòöô]/g, 'o')
+                .replace(/[úùüû]/g, 'u')
                 .replace(/\s+/g, ' ')
-                .trim()
-                .toLowerCase();
+                .trim();
         }
 
         // ---- Tabla docente de entregas NPT ----
@@ -5287,12 +5541,16 @@ video {
                     // aunque no hay archivo subido — es una evaluación automática.
                     const examen = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examen || null;
                     if (examen) filas.push({ clase: 'examen', estado: 'calificado', fechaOrden: fechaOrdenNPT(examen.fecha), est, t, examen });
+                    // Examen de RECUPERACIÓN: mismo tratamiento, campo separado (no entra en la nota ponderada).
+                    const examenRecuperacion = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examenRecuperacion || null;
+                    if (examenRecuperacion) filas.push({ clase: 'examenRecuperacion', estado: 'calificado', fechaOrden: fechaOrdenNPT(examenRecuperacion.fecha), est, t, examenRecuperacion });
                 });
             });
 
             let filasFiltradas = filas.filter(fila => {
                 if (filtroTipoEnvio === 'insumos' && fila.clase !== 'insumo') return false;
                 if (filtroTipoEnvio === 'examen' && fila.clase !== 'examen') return false;
+                if (filtroTipoEnvio === 'examenRecuperacion' && fila.clase !== 'examenRecuperacion') return false;
                 if (['cuaderno','libro','talleres','tarea'].includes(filtroTipoEnvio) && fila.tp?.id !== filtroTipoEnvio) return false;
                 if (filtroEstadoEnvio === 'calificados' && fila.estado !== 'calificado') return false;
                 if (filtroEstadoEnvio === 'no-calificados' && fila.estado !== 'no-calificado') return false;
@@ -5349,6 +5607,43 @@ video {
                             <button onclick="eliminarExamenNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num})"
                                 class="block w-full bg-rose-100 text-rose-700 text-xs px-2 py-1 rounded-lg hover:bg-rose-200"
                                 title="Elimina el examen rendido para que el estudiante pueda volver a rendirlo">
+                                🗑️ Eliminar examen</button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                    return;
+                }
+                if (fila.examenRecuperacion) {
+                    const { est, t, examenRecuperacion: examen } = fila;
+                    const notaVal = numero(examen.nota);
+                    const badgeClass = notaVal >= 9 ? 'nota-badge-DAR' :
+                        notaVal >= 7 ? 'nota-badge-AAR' :
+                        notaVal >= 4 ? 'nota-badge-PAR' : 'nota-badge-NAR';
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b hover:bg-slate-50';
+                    tr.innerHTML = `
+                        <td class="p-2 text-center text-slate-400">${i+1}</td>
+                        <td class="p-2 font-medium text-xs">${escapeHtml(est.nombre)}</td>
+                        <td class="p-2 font-mono text-xs">${escapeHtml(est.cedula)}</td>
+                        <td class="p-2 text-center">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">${t.label}</span><br>
+                            <span class="text-[10px] text-slate-500">🔁 Recuperación</span>
+                            ${examen.motivoSalida ? '<div class="text-[10px] text-rose-600 font-bold mt-0.5" title="'+escapeHtml(examen.motivoSalida)+'">⚠️ Salió del examen</div>' : ''}
+                        </td>
+                        <td class="p-2 text-center">
+                            <button onclick="imprimirReporteExamenDocente('${escapeHtml(est.cedula)}',${t.num},'examenRecuperacion')"
+                                class="inline-flex items-center gap-1 text-xs bg-brand-50 text-brand-700 font-bold px-2 py-1 rounded-lg hover:bg-brand-100">
+                                🖨️ Ver examen</button>
+                        </td>
+                        <td class="p-2 text-center text-[11px] text-slate-500">${escapeHtml(examen.fecha||'-')}</td>
+                        <td class="p-2 text-center">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full ${badgeClass}">${formatearNota(notaVal)}</span>
+                            <div class="text-[10px] text-slate-400 mt-0.5">${examen.correctas}/${examen.total} aciertos</div>
+                            <div class="text-[9px] text-slate-400 mt-0.5">(no afecta la nota final)</div>
+                        </td>
+                        <td class="p-2 text-center space-y-1">
+                            <button onclick="eliminarExamenNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'examenRecuperacion')"
+                                class="block w-full bg-rose-100 text-rose-700 text-xs px-2 py-1 rounded-lg hover:bg-rose-200"
+                                title="Elimina el examen de recuperación rendido para que el estudiante pueda volver a rendirlo">
                                 🗑️ Eliminar examen</button>
                         </td>`;
                     tbody.appendChild(tr);
@@ -6096,22 +6391,24 @@ video {
             }
         }
         // ---- Eliminar examen rendido (permite que el estudiante lo vuelva a rendir) ----
-        async function eliminarExamenNPT(cedula, nombre, trimestre) {
+        async function eliminarExamenNPT(cedula, nombre, trimestre, campo) {
+            campo = campo || 'examen';
+            const esRecuperacion = campo === 'examenRecuperacion';
             const t = trimestresEfectivos().find(x => x.num === trimestre);
-            const reg = nptNotas[cedula]?.[`trimestre${trimestre}`]?.examen;
-            if (!reg) { alert('No hay examen registrado para este estudiante en este trimestre.'); return; }
-            if (!confirm(`🗑️ ¿Eliminar el examen de ${nombre} (${t?.label || ''})?\n\nEl estudiante podrá volver a rendir el examen desde cero (con 20 nuevas preguntas aleatorias). Esta acción no se puede deshacer.`)) return;
+            const reg = nptNotas[cedula]?.[`trimestre${trimestre}`]?.[campo];
+            if (!reg) { alert(`No hay examen${esRecuperacion ? ' de recuperación' : ''} registrado para este estudiante en este trimestre.`); return; }
+            if (!confirm(`🗑️ ¿Eliminar el examen${esRecuperacion ? ' de recuperación' : ''} de ${nombre} (${t?.label || ''})?\n\nEl estudiante podrá volver a rendir el examen${esRecuperacion ? ' de recuperación' : ''} desde cero (con 20 nuevas preguntas aleatorias). Esta acción no se puede deshacer.`)) return;
 
             const authOk = await ensureAuth();
             try {
-                if (authOk) await borrarValorFirebase(`nptNotas/${cedula}/trimestre${trimestre}/examen`);
-                if (nptNotas[cedula]?.[`trimestre${trimestre}`]?.examen) {
-                    delete nptNotas[cedula][`trimestre${trimestre}`].examen;
+                if (authOk) await borrarValorFirebase(`nptNotas/${cedula}/trimestre${trimestre}/${campo}`);
+                if (nptNotas[cedula]?.[`trimestre${trimestre}`]?.[campo]) {
+                    delete nptNotas[cedula][`trimestre${trimestre}`][campo];
                 }
                 renderNPTDocente();
                 renderCuadroGeneral();
-                await registrarAuditoria('eliminar_examen', `Examen eliminado: ${nombre} (${cedula}) — T${trimestre}. Podrá volver a rendirlo.`);
-                alert('✅ Examen eliminado. El estudiante podrá volver a rendirlo.');
+                await registrarAuditoria('eliminar_examen', `Examen${esRecuperacion ? ' de recuperación' : ''} eliminado: ${nombre} (${cedula}) — T${trimestre}. Podrá volver a rendirlo.`);
+                alert(`✅ Examen${esRecuperacion ? ' de recuperación' : ''} eliminado. El estudiante podrá volver a rendirlo.`);
             } catch(e) {
                 console.error('Error al eliminar examen:', e);
                 alert('Error al eliminar el examen. Revisa la conexión e intenta de nuevo.');
@@ -6399,6 +6696,22 @@ video {
                     examenHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center text-xs text-slate-500">El docente aún no ha habilitado el examen de este trimestre.</div>`;
                 }
 
+                // ---- Bloque de examen de RECUPERACIÓN (solo visible si aplica a este estudiante) ----
+                const examenRecHabGeneral = nptExamenRecuperacionHabilitado(curso, paralelo, t.num);
+                const examenRecHabEstudiante = nptExamenRecuperacionEstudianteHabilitado(curso, paralelo, t.num, cedula);
+                const examenRecHab = examenRecHabGeneral && examenRecHabEstudiante;
+                const notaExamenRecuperacion = nptNotas[cedula]?.[`trimestre${t.num}`]?.examenRecuperacion || null;
+                let examenRecHtml = '';
+                if (notaExamenRecuperacion) {
+                    examenRecHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center mt-2">
+                        <p class="text-xs text-slate-500 font-bold mb-1">Examen de recuperación rendido</p>
+                        <p class="text-sm font-black text-slate-700">${escapeHtml(mensajeCualitativoExamen(numero(notaExamenRecuperacion.nota)))}</p>
+                        <p class="text-[10px] text-slate-400 mt-1">Tu docente tiene el detalle completo de tu examen de recuperación.</p>
+                    </div>`;
+                } else if (examenRecHab) {
+                    examenRecHtml = `<button onclick="comenzarExamenRecuperacionTrimestre(${t.num})" class="w-full bg-purple-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-purple-700 mt-2">🔁 Realizar examen de recuperación</button>`;
+                }
+
                 return `<div class="bg-white rounded-2xl shadow-md border-2 ${hab ? 'trimestre-card habilitado' : 'trimestre-card bloqueado border-slate-100'} p-5">
                     <div class="flex items-center justify-between mb-3">
                         <div>
@@ -6413,6 +6726,7 @@ video {
                     <div class="mb-1">
                         <p class="text-xs font-bold text-slate-600 mb-1">📝 Examen</p>
                         ${examenHtml}
+                        ${examenRecHtml}
                     </div>
                 </div>`;
             }).join('');
@@ -7432,6 +7746,7 @@ video {
         const NODOS_BACKUP = [
             'estudiantes', 'calificaciones', 'configuracion',
             'nptConfig', 'nptHabilitacionEstudiantes', 'nptExamenHabilitacionEstudiantes',
+            'nptExamenRecuperacionHabilitacionEstudiantes',
             'nptExamenes', 'nptRubricas', 'nptNotas', 'nptArchivosMeta',
             'nptEvaluacionesIA', 'nptObservacionesDevolucion', 'auditoria',
             'contadoresEstudiantesIndividuales'
@@ -7510,6 +7825,83 @@ video {
                 if (resultado) { resultado.className = 'mt-3 text-xs p-2 rounded-lg bg-rose-50 text-rose-700'; resultado.textContent = `❌ Error: ${e.message}`; }
             }
             event.target.value = '';
+        }
+
+        // ==================== DIAGNÓSTICO/CORRECCIÓN DE TEXTO DAÑADO (Ñ, tildes) ====================
+        // Campos de "estudiantes" donde puede haberse guardado texto dañado por la
+        // importación antigua (CSV no-UTF-8). El carácter U+FFFD ("�") aparece cuando
+        // un byte no se pudo decodificar como UTF-8; es una pérdida de información
+        // IRREVERSIBLE a nivel de programa: no se puede reconstruir la Ñ original por
+        // código, así que esta herramienta solo ayuda a UBICAR los registros afectados
+        // para que alguien los corrija a mano (comparando con la cédula/lista real).
+        const NPT_CAMPOS_DIAGNOSTICO_DANO = [
+            { campo: 'nombre',     etiqueta: 'Nombre del estudiante' },
+            { campo: 'curso',      etiqueta: 'Curso' },
+            { campo: 'paralelo',   etiqueta: 'Paralelo' },
+            { campo: 'repNombre',  etiqueta: 'Nombre del representante' },
+            { campo: 'observaciones', etiqueta: 'Observaciones' }
+        ];
+        function buscarTextoDanadoNPT() {
+            const cont = document.getElementById('cfg-danado-resultado');
+            if (!cont) return;
+            const hallazgos = [];
+            estudiantes.forEach(e => {
+                NPT_CAMPOS_DIAGNOSTICO_DANO.forEach(({ campo, etiqueta }) => {
+                    const valor = texto(e[campo]);
+                    if (valor.includes('\uFFFD')) {
+                        hallazgos.push({ cedula: e.cedula, nombre: e.nombre, campo, etiqueta, valor });
+                    }
+                });
+            });
+            cont.classList.remove('hidden');
+            if (hallazgos.length === 0) {
+                cont.className = 'mt-3 text-xs p-3 rounded-lg bg-emerald-50 text-emerald-700';
+                cont.textContent = '✅ No se encontró texto dañado (�) en los estudiantes registrados.';
+                return;
+            }
+            cont.className = 'mt-3 text-xs';
+            const filas = hallazgos.map((h, i) => {
+                const inputId = `npt-danado-fix-${i}`;
+                return `<tr class="border-b">
+                    <td class="p-2 font-mono">${escapeHtml(h.cedula)}</td>
+                    <td class="p-2">${escapeHtml(h.etiqueta)}</td>
+                    <td class="p-2 text-rose-600 font-mono">${escapeHtml(h.valor)}</td>
+                    <td class="p-2"><input id="${inputId}" type="text" value="${escapeHtml(h.valor.replace(/\uFFFD/g, ''))}" class="border rounded px-2 py-1 w-48 text-xs" placeholder="Escribe el valor correcto (con Ñ)"></td>
+                    <td class="p-2"><button onclick="corregirCampoEstudianteNPT('${h.cedula}','${h.campo}','${inputId}')" class="bg-brand-600 text-white px-2 py-1 rounded text-[11px] font-bold hover:bg-brand-700">💾 Corregir</button></td>
+                </tr>`;
+            }).join('');
+            cont.innerHTML = `
+                <p class="mb-2 p-2 rounded-lg bg-amber-50 text-amber-700">⚠️ Se encontraron ${hallazgos.length} campo(s) dañado(s). Escribe el valor correcto en cada casilla (incluyendo la Ñ) y presiona "Corregir".</p>
+                <div class="overflow-x-auto border rounded-lg max-h-80 overflow-y-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-100"><tr>
+                            <th class="p-2">Cédula</th><th class="p-2">Campo</th><th class="p-2">Valor actual (dañado)</th><th class="p-2">Valor corregido</th><th class="p-2"></th>
+                        </tr></thead>
+                        <tbody>${filas}</tbody>
+                    </table>
+                </div>`;
+        }
+        async function corregirCampoEstudianteNPT(cedula, campo, inputId) {
+            const est = estudiantes.find(e => e.cedula === cedula);
+            if (!est) { alert('No se encontró ese estudiante (puede que ya haya sido editado o eliminado).'); return; }
+            const input = document.getElementById(inputId);
+            const nuevoValor = texto(input?.value);
+            if (!nuevoValor) { alert('Escribe el valor correcto antes de guardar.'); return; }
+            if (nuevoValor.includes('\uFFFD')) { alert('El valor sigue conteniendo el carácter dañado "�". Vuelve a escribirlo manualmente.'); return; }
+            const valorAnterior = est[campo];
+            est[campo] = (campo === 'nombre' || campo === 'repNombre') ? nuevoValor.toUpperCase() : nuevoValor;
+            try {
+                const authOk = await ensureAuth();
+                if (authOk) await guardarValorFirebase(`${rutaEstudiantes}/${cedula}`, est);
+                guardarBackup();
+                actualizarSelectores();
+                actualizarPaneles();
+                try { await registrarAuditoria('corregir_texto_danado', `Cédula ${cedula}, campo "${campo}": "${valorAnterior}" -> "${est[campo]}"`); } catch {}
+                buscarTextoDanadoNPT();
+            } catch (e) {
+                console.error(e);
+                alert('No se pudo guardar la corrección. Revisa la conexión e intenta de nuevo.');
+            }
         }
 
         // ---- Medidor de espacio ocupado por PDFs (sin descargar archivos) ----
@@ -7785,6 +8177,7 @@ video {
         // Exponer funciones globales ANTES de iniciar (evita ReferenceError en onclick)
         window.verificarEstudiante = verificarEstudiante;
         window.comenzarExamenTrimestre = comenzarExamenTrimestre;
+        window.comenzarExamenRecuperacionTrimestre = comenzarExamenRecuperacionTrimestre;
         window.avanzarPreguntaManual = avanzarPreguntaManual;
         window.cambiarRespuestaRevision = cambiarRespuestaRevision;
         window.finalizarExamenManual = finalizarExamenManual;
@@ -7808,6 +8201,8 @@ video {
         window.eliminarEstudiante = eliminarEstudiante;
         window.verDetalle = verDetalle;
         window.cerrarDetalle = cerrarDetalle;
+        window.editarFichaEstudiante = editarFichaEstudiante;
+        window.guardarEdicionFichaEstudiante = guardarEdicionFichaEstudiante;
         window.cambiarFiltro = cambiarFiltro;
         window.generarReporteEstudiantes = generarReporteEstudiantes;
         window.forzarRecargaDatos = forzarRecargaDatos;
@@ -7832,6 +8227,7 @@ video {
         window.evaluarTodosPendientesIA = evaluarTodosPendientesIA;
         window.reevaluarTodosPendientesVerificarIA = reevaluarTodosPendientesVerificarIA;
         window.toggleExamenTrimestre = toggleExamenTrimestre;
+        window.toggleExamenRecuperacionTrimestre = toggleExamenRecuperacionTrimestre;
         window.guardarURLInsumo = guardarURLInsumo;
         window.nptGestionTodosInsumos = nptGestionTodosInsumos;
         window.nptGestionQuitarFechas = nptGestionQuitarFechas;
@@ -7859,6 +8255,8 @@ video {
         window.eliminarEstudiantesSeleccionados = eliminarEstudiantesSeleccionados;
         window.generarBackupJSON = generarBackupJSON;
         window.restaurarBackupJSON = restaurarBackupJSON;
+        window.buscarTextoDanadoNPT = buscarTextoDanadoNPT;
+        window.corregirCampoEstudianteNPT = corregirCampoEstudianteNPT;
         window.asignarPeriodoActivoALegacy = asignarPeriodoActivoALegacy;
         window.registrarAccesoEstudiante = registrarAccesoEstudiante;
         window.registrarAccesoDocente = registrarAccesoDocente;
