@@ -2179,7 +2179,7 @@ video {
                                     <option value="">Todos</option>
                                     <option value="insumos">Insumos</option>
                                     <option value="examen">Exámenes</option>
-                                    <option value="examenRecuperacion">Recuperaciones</option>
+                                    <option value="recuperacion">Recuperaciones (todas)</option>
                                     <option value="cuaderno">Cuaderno</option>
                                     <option value="libro">Libro</option>
                                     <option value="talleres">Talleres</option>
@@ -2637,12 +2637,14 @@ video {
                                     <th class="p-2 text-center w-24">Habilitado</th>
                                     <th class="p-2 text-left">Fecha máxima de entrega</th>
                                     <th class="p-2 text-center w-44">Estado</th>
+                                    <th class="p-2 text-center w-28">🔁 Recuperación</th>
                                 </tr>
                             </thead>
                             <tbody id="npt-gestion-insumos-body"></tbody>
                         </table>
                     </div>
                     <p class="text-[11px] text-slate-400 mt-2">Al cumplirse la fecha máxima, el estudiante ya no podrá subir ese insumo. Puedes cambiar la fecha en cualquier momento para reabrirlo. La fecha se valida también al guardar la entrega (defensa contra reloj manipulado).</p>
+                    <p class="text-[11px] text-purple-600 mt-1">🔁 La columna "Recuperación" habilita, a nivel general del trimestre, que el insumo pueda recuperarse. Además debes marcar individualmente a cada estudiante que rendirá esa recuperación en la pestaña "Estudiantes". La nota de recuperación es informativa y no reemplaza ni promedia con la nota original.</p>
                 </section>
 
                 <!-- Pestaña 2: Rúbricas -->
@@ -2693,7 +2695,8 @@ video {
                             <input type="text" id="npt-gestion-buscar" oninput="nptGestionFiltrarEstudiantes()" placeholder="Buscar estudiante..." class="px-3 py-1.5 border rounded-lg text-xs w-48 focus:ring-2 focus:ring-brand-500">
                             <button type="button" onclick="nptSeleccionarTodosEstudiantes('insumos', true)" class="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg font-bold hover:bg-emerald-100" title="Marcar todos los insumos">✓ Todos insumos</button>
                             <button type="button" onclick="nptSeleccionarTodosEstudiantes('examen', true)" class="text-[11px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg font-bold hover:bg-indigo-100" title="Marcar todos los exámenes">✓ Todos examen</button>
-                            <button type="button" onclick="nptSeleccionarTodosEstudiantes('recuperacion', true)" class="text-[11px] bg-purple-50 text-purple-700 px-2 py-1 rounded-lg font-bold hover:bg-purple-100" title="Marcar todas las recuperaciones">✓ Todos recuperación</button>
+                            <button type="button" onclick="nptSeleccionarTodosEstudiantes('recuperacion', true)" class="text-[11px] bg-purple-50 text-purple-700 px-2 py-1 rounded-lg font-bold hover:bg-purple-100" title="Marcar todas las recuperaciones de examen">✓ Todos recup. examen</button>
+                            <button type="button" onclick="nptSeleccionarTodosEstudiantesRecuperacionInsumos(true)" class="text-[11px] bg-purple-50 text-purple-700 px-2 py-1 rounded-lg font-bold hover:bg-purple-100" title="Marcar todas las recuperaciones de insumos">✓ Todos recup. insumos</button>
                         </div>
                     </div>
                     <div class="overflow-x-auto border rounded-xl max-h-96 overflow-y-auto">
@@ -2704,7 +2707,11 @@ video {
                                     <th class="p-2 text-left">Cédula</th>
                                     <th class="p-2 text-center">Insumos<br><input type="checkbox" id="npt-check-todos-insumos" onchange="nptSeleccionarTodosEstudiantes('insumos', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
                                     <th class="p-2 text-center">Examen<br><input type="checkbox" id="npt-check-todos-examen" onchange="nptSeleccionarTodosEstudiantes('examen', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
-                                    <th class="p-2 text-center">Recuperación<br><input type="checkbox" id="npt-check-todos-recuperacion" onchange="nptSeleccionarTodosEstudiantes('recuperacion', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
+                                    <th class="p-2 text-center">Recup. examen<br><input type="checkbox" id="npt-check-todos-recuperacion" onchange="nptSeleccionarTodosEstudiantes('recuperacion', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
+                                    ${NPT_INSUMOS_ENTREGA.map(tipoId => {
+                                        const tp = NPT_TIPOS.find(x => x.id === tipoId);
+                                        return `<th class="p-2 text-center">Recup. ${tp?.icono||''}<br><input type="checkbox" id="npt-check-todos-recuperacion-insumo-${tipoId}" onchange="nptSeleccionarTodosEstudiantesRecuperacionInsumo('${tipoId}', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>`;
+                                    }).join('')}
                                 </tr>
                             </thead>
                             <tbody id="npt-gestion-estudiantes-body"></tbody>
@@ -4682,6 +4689,26 @@ video {
         function esInsumoConRubrica(tipo) { return NPT_TIPOS_RUBRICA.includes(tipo); }
         function bloqueaSinRubrica(tipo) { return NPT_TIPOS_BLOQUEA_SIN_RUBRICA.includes(tipo); }
 
+        // ==================== RECUPERACIÓN DE INSUMOS (Cuaderno/Libro/Tarea/Talleres) ====================
+        // Mismo principio que el examen de recuperación: la nota de recuperación de un insumo se
+        // guarda en un campo APARTE (sufijo "Recuperacion"), es informativa y NUNCA entra en la
+        // fórmula de promedio (calcularPromedioInsumosNPT solo lee los 4 tipos base). Reutiliza
+        // íntegramente la infraestructura de nptArchivos/nptEvaluacionesIA/nptNotas: basta con
+        // usar la "clave" `${tipo}Recuperacion` en vez de `tipo` al leer/guardar esos 3 nodos.
+        //   nptArchivos/{cedula}/trimestre{n}/{tipo}Recuperacion       → mismo formato que el insumo normal
+        //   nptEvaluacionesIA/{cedula}/trimestre{n}/{tipo}Recuperacion → mismo formato que el insumo normal
+        //   nptNotas/{cedula}/trimestre{n}/{tipo}Recuperacion          → mismo formato que el insumo normal
+        //   nptConfig/{curso}/{paralelo}/{n}/insumos/{tipo}/recuperacionHabilitado → bool (habilitación general)
+        //   nptInsumoRecuperacionHabilitacionEstudiantes/{curso}/{paralelo}/{n}/{tipo}/{cedula} → bool (por estudiante)
+        const NPT_SUFIJO_RECUPERACION = 'Recuperacion';
+        function nptEsClaveRecuperacionInsumo(clave) {
+            return typeof clave === 'string' && NPT_INSUMOS_ENTREGA.some(t => clave === t + NPT_SUFIJO_RECUPERACION);
+        }
+        function nptClaveRecuperacionInsumo(tipoBase) { return tipoBase + NPT_SUFIJO_RECUPERACION; }
+        function nptTipoBaseDeClaveInsumo(clave) {
+            return nptEsClaveRecuperacionInsumo(clave) ? clave.slice(0, -NPT_SUFIJO_RECUPERACION.length) : clave;
+        }
+
 
         // ⚠️ ENDPOINT DE EVALUACIÓN IA: por seguridad, esta constante NO debe contener una API key
         // embebida en este HTML. Debe apuntar a un endpoint propio (backend/proxy) que reciba
@@ -4698,6 +4725,7 @@ video {
         let nptHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [cedula]: bool } } } }
         let nptExamenHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [cedula]: bool } } } }
         let nptExamenRecuperacionHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [cedula]: bool } } } }
+        let nptInsumoRecuperacionHabilitacionEstudiantes = {}; // { [curso]: { [paralelo]: { [n]: { [tipo]: { [cedula]: bool } } } } }
         let nptExamenes = {}; // { [curso]: { [paralelo]: { [n]: [ {pregunta, opciones:[{id,texto}], correcta} ... ] } } }
         let nptRubricas = {};                // { [curso]: { [paralelo]: { [n]: { [tipo]: {texto, fecha} } } } }
         let nptArchivos = {};   // cache liviana: { cedula: { trimestre1: { cuaderno:{...}, libro:{...} }, ... } }
@@ -4794,6 +4822,10 @@ video {
         async function cargarExamenRecuperacionHabilitacionEstudiantesNPT() {
             try { nptExamenRecuperacionHabilitacionEstudiantes = (await leerValorRutaFirebase('nptExamenRecuperacionHabilitacionEstudiantes')) || {}; }
             catch(e) { nptExamenRecuperacionHabilitacionEstudiantes = {}; }
+        }
+        async function cargarInsumoRecuperacionHabilitacionEstudiantesNPT() {
+            try { nptInsumoRecuperacionHabilitacionEstudiantes = (await leerValorRutaFirebase('nptInsumoRecuperacionHabilitacionEstudiantes')) || {}; }
+            catch(e) { nptInsumoRecuperacionHabilitacionEstudiantes = {}; }
         }
         async function cargarExamenesNPT() {
             try { nptExamenes = (await leerValorRutaFirebase('nptExamenes')) || {}; }
@@ -4897,7 +4929,7 @@ video {
         async function iniciarModuloNPT() {
             await Promise.all([
                 cargarConfigNPT(), cargarHabilitacionEstudiantesNPT(), cargarExamenHabilitacionEstudiantesNPT(),
-                cargarExamenRecuperacionHabilitacionEstudiantesNPT(),
+                cargarExamenRecuperacionHabilitacionEstudiantesNPT(), cargarInsumoRecuperacionHabilitacionEstudiantesNPT(),
                 cargarExamenesNPT(), cargarRubricasNPT(), cargarArchivosNPT(), cargarNotasNPT(), cargarEvaluacionesIANPT(),
                 cargarObservacionesDevolucionNPT()
             ]);
@@ -4921,6 +4953,10 @@ video {
                 });
                 database.ref('nptExamenRecuperacionHabilitacionEstudiantes').on('value', snap => {
                     nptExamenRecuperacionHabilitacionEstudiantes = snap.val() || {};
+                    renderTrimestresEstudiante();
+                });
+                database.ref('nptInsumoRecuperacionHabilitacionEstudiantes').on('value', snap => {
+                    nptInsumoRecuperacionHabilitacionEstudiantes = snap.val() || {};
                     renderTrimestresEstudiante();
                 });
                 database.ref('nptExamenes').on('value', snap => {
@@ -5035,6 +5071,17 @@ video {
         }
         function nptExamenesPreguntas(curso, paralelo, n) {
             return nptNodoTrimestre(nptExamenes, curso, paralelo, n) || [];
+        }
+        // ---- Recuperación de INSUMOS: mismo mecanismo que el examen (general + override por estudiante),
+        // pero además diferenciado por tipo de insumo (cuaderno/libro/tarea/talleres) ----
+        function nptInsumoRecuperacionHabilitado(curso, paralelo, n, tipo) {
+            return !!nptInsumoInfo(curso, paralelo, n, tipo)?.recuperacionHabilitado;
+        }
+        function nptInsumoRecuperacionEstudianteHabilitado(curso, paralelo, n, tipo, cedula) {
+            const nodoTrim = nptNodoTrimestre(nptInsumoRecuperacionHabilitacionEstudiantes, curso, paralelo, n);
+            const mapa = nodoTrim?.[tipo];
+            if (!mapa || mapa[cedula] === undefined) return nptInsumoRecuperacionHabilitado(curso, paralelo, n, tipo);
+            return !!mapa[cedula];
         }
 
         // ---- Habilitación POR INSUMO + fecha máxima de entrega ----
@@ -5248,6 +5295,13 @@ video {
             document.querySelectorAll(`#npt-gestion-estudiantes-body ${sel}`).forEach(chk => chk.checked = estado);
             nptSyncMasterEstudiantes();
         }
+        function nptSeleccionarTodosEstudiantesRecuperacionInsumo(tipoId, estado) {
+            document.querySelectorAll(`#npt-gestion-estudiantes-body .npt-check-recuperacion-insumo-estudiante[data-insumo-rec="${tipoId}"]`).forEach(chk => chk.checked = estado);
+            nptSyncMasterEstudiantes();
+        }
+        function nptSeleccionarTodosEstudiantesRecuperacionInsumos(estado) {
+            NPT_INSUMOS_ENTREGA.forEach(tipoId => nptSeleccionarTodosEstudiantesRecuperacionInsumo(tipoId, estado));
+        }
         // Pestañas internas del modal de gestión
         function nptGestionTab(tab) {
             ['insumos','rubricas','examen','estudiantes'].forEach(t => {
@@ -5278,6 +5332,12 @@ video {
                 const checked = nptEstudianteHabilitado(cursoActual, paraleloActual, nptGestionCtx.trimestre, est.cedula);
                 const checkedExamen = nptExamenEstudianteHabilitado(cursoActual, paraleloActual, nptGestionCtx.trimestre, est.cedula);
                 const checkedRecuperacion = nptExamenRecuperacionEstudianteHabilitado(cursoActual, paraleloActual, nptGestionCtx.trimestre, est.cedula);
+                const celdasRecInsumos = NPT_INSUMOS_ENTREGA.map(tipoId => {
+                    const checkedRecInsumo = nptInsumoRecuperacionEstudianteHabilitado(cursoActual, paraleloActual, nptGestionCtx.trimestre, tipoId, est.cedula);
+                    return `<td class="p-2 text-center">
+                        <input type="checkbox" data-cedula="${escapeHtml(est.cedula)}" data-insumo-rec="${tipoId}" class="npt-check-recuperacion-insumo-estudiante w-4 h-4 align-middle" ${checkedRecInsumo ? 'checked' : ''} onchange="nptSyncMasterEstudiantes()">
+                    </td>`;
+                }).join('');
                 return `<tr class="border-b">
                     <td class="p-2 text-xs">${escapeHtml(est.nombre)}</td>
                     <td class="p-2 text-xs font-mono">${escapeHtml(est.cedula)}</td>
@@ -5290,8 +5350,9 @@ video {
                     <td class="p-2 text-center">
                         <input type="checkbox" data-cedula="${escapeHtml(est.cedula)}" class="npt-check-recuperacion-estudiante w-4 h-4 align-middle" ${checkedRecuperacion ? 'checked' : ''} onchange="nptSyncMasterEstudiantes()">
                     </td>
+                    ${celdasRecInsumos}
                 </tr>`;
-            }).join('') : `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Sin resultados para "${escapeHtml(term)}".</td></tr>`;
+            }).join('') : `<tr><td colspan="9" class="p-4 text-center text-slate-400 text-xs">Sin resultados para "${escapeHtml(term)}".</td></tr>`;
             nptSyncMasterEstudiantes();
         }
         function nptSyncMasterEstudiantes() {
@@ -5305,6 +5366,9 @@ video {
             sync('.npt-check-estudiante', 'npt-check-todos-insumos');
             sync('.npt-check-examen-estudiante', 'npt-check-todos-examen');
             sync('.npt-check-recuperacion-estudiante', 'npt-check-todos-recuperacion');
+            NPT_INSUMOS_ENTREGA.forEach(tipoId => {
+                sync(`.npt-check-recuperacion-insumo-estudiante[data-insumo-rec="${tipoId}"]`, `npt-check-todos-recuperacion-insumo-${tipoId}`);
+            });
         }
 
         // ---- Modal de gestión por trimestre: insumos+fechas, rúbricas, examen y estudiantes ----
@@ -5333,11 +5397,13 @@ video {
                 const fechaMaxima = nptInsumoFechaMaxima(cursoActual, paraleloActual, num, tipoId) || '';
                 const fVal = aDatetimeLocalValue(fechaMaxima);
                 const etiqueta = tp ? tp.label.replace(/^[^\s]+ /, '') : tipoId;
+                const recHabilitado = nptInsumoRecuperacionHabilitado(cursoActual, paraleloActual, num, tipoId);
                 return `<tr class="border-b">
                     <td class="p-2 font-semibold">${tp?.icono||''} ${escapeHtml(etiqueta)}</td>
                     <td class="p-2 text-center"><input type="checkbox" data-insumo="${tipoId}" class="npt-check-insumo w-4 h-4 align-middle" ${habilitado?'checked':''} onchange="nptActualizarEstadoInsumo('${tipoId}')"></td>
                     <td class="p-2"><input type="datetime-local" data-insumo="${tipoId}" value="${fVal}" class="npt-fecha-insumo w-full text-xs border rounded-lg px-2 py-1" onchange="nptActualizarEstadoInsumo('${tipoId}')"></td>
                     <td class="p-2 text-center" id="npt-estado-insumo-${tipoId}">${nptEstadoInsumoHtml(habilitado, fechaMaxima)}</td>
+                    <td class="p-2 text-center"><input type="checkbox" data-insumo-rec="${tipoId}" class="npt-check-insumo-recuperacion w-4 h-4 align-middle" ${recHabilitado?'checked':''}></td>
                 </tr>`;
             }).join('');
 
@@ -5399,10 +5465,12 @@ video {
                 for (const tipoId of NPT_INSUMOS_ENTREGA) {
                     const chk = document.querySelector(`#npt-gestion-insumos-body .npt-check-insumo[data-insumo="${tipoId}"]`);
                     const fInput = document.querySelector(`#npt-gestion-insumos-body .npt-fecha-insumo[data-insumo="${tipoId}"]`);
+                    const chkRec = document.querySelector(`#npt-gestion-insumos-body .npt-check-insumo-recuperacion[data-insumo-rec="${tipoId}"]`);
                     const habilitado = !!(chk && chk.checked);
                     const fechaMaxima = (fInput && fInput.value) ? fInput.value : null;
-                    nodoTrim.insumos[tipoId] = { habilitado, fechaMaxima };
-                    insumosAGuardar[tipoId] = { habilitado, fechaMaxima };
+                    const recuperacionHabilitado = !!(chkRec && chkRec.checked);
+                    nodoTrim.insumos[tipoId] = { habilitado, fechaMaxima, recuperacionHabilitado };
+                    insumosAGuardar[tipoId] = { habilitado, fechaMaxima, recuperacionHabilitado };
                 }
                 // master 'habilitado' del trimestre = true si algún insumo queda activo (solo para display/compat)
                 nodoTrim.habilitado = NPT_INSUMOS_ENTREGA.some(tipoId => nodoTrim.insumos[tipoId].habilitado);
@@ -5466,10 +5534,27 @@ video {
                 });
                 await guardarValorFirebase(`nptExamenRecuperacionHabilitacionEstudiantes/${cv}/${pv}/${trimestre}`, actualizacionRecuperacion);
 
+                // 6) Habilitación individual de estudiantes (recuperación de INSUMOS, por tipo)
+                if (!nptInsumoRecuperacionHabilitacionEstudiantes[cv]) nptInsumoRecuperacionHabilitacionEstudiantes[cv] = {};
+                if (!nptInsumoRecuperacionHabilitacionEstudiantes[cv][pv]) nptInsumoRecuperacionHabilitacionEstudiantes[cv][pv] = {};
+                if (!nptInsumoRecuperacionHabilitacionEstudiantes[cv][pv][trimestre]) nptInsumoRecuperacionHabilitacionEstudiantes[cv][pv][trimestre] = {};
+                const actualizacionRecInsumos = {};
+                for (const tipoId of NPT_INSUMOS_ENTREGA) {
+                    const checksRecInsumo = document.querySelectorAll(`#npt-gestion-estudiantes-body .npt-check-recuperacion-insumo-estudiante[data-insumo-rec="${tipoId}"]`);
+                    nptInsumoRecuperacionHabilitacionEstudiantes[cv][pv][trimestre][tipoId] = {};
+                    actualizacionRecInsumos[tipoId] = {};
+                    checksRecInsumo.forEach(chk => {
+                        const ced = chk.getAttribute('data-cedula');
+                        actualizacionRecInsumos[tipoId][ced] = chk.checked;
+                        nptInsumoRecuperacionHabilitacionEstudiantes[cv][pv][trimestre][tipoId][ced] = chk.checked;
+                    });
+                }
+                await guardarValorFirebase(`nptInsumoRecuperacionHabilitacionEstudiantes/${cv}/${pv}/${trimestre}`, actualizacionRecInsumos);
+
                 cerrarGestionTrimestreNPT();
                 renderControlTrimestres();
                 renderTrimestresEstudiante();
-                alert('Configuración guardada: insumos, fechas máximas, rúbricas, examen, recuperación y habilitación individual.');
+                alert('Configuración guardada: insumos, fechas máximas, rúbricas, examen, recuperación (examen e insumos) y habilitación individual.');
             } catch(e) {
                 console.error(e);
                 alert('Error al guardar. Revisa la conexión e intenta de nuevo.');
@@ -5541,22 +5626,29 @@ video {
                         const arch = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
                         const nota = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
                         const ia   = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
-                        if (arch) filas.push({ clase: 'insumo', estado: nota ? 'calificado' : (ia ? 'ia-pendiente' : 'no-calificado'), fechaOrden: fechaOrdenNPT(arch.fechaEntrega), est, t, tp, arch, nota, ia });
+                        if (arch) filas.push({ clase: 'insumo', esRecuperacion: false, claveInsumo: tp.id, estado: nota ? 'calificado' : (ia ? 'ia-pendiente' : 'no-calificado'), fechaOrden: fechaOrdenNPT(arch.fechaEntrega), est, t, tp, arch, nota, ia });
+                        // Recuperación de este insumo (clave "{tipo}Recuperacion"): misma forma de fila,
+                        // marcada con esRecuperacion para que la tabla la distinga visualmente.
+                        const claveRec = nptClaveRecuperacionInsumo(tp.id);
+                        const archRec = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
+                        const notaRec = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
+                        const iaRec   = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
+                        if (archRec) filas.push({ clase: 'insumoRecuperacion', esRecuperacion: true, claveInsumo: claveRec, estado: notaRec ? 'calificado' : (iaRec ? 'ia-pendiente' : 'no-calificado'), fechaOrden: fechaOrdenNPT(archRec.fechaEntrega), est, t, tp, arch: archRec, nota: notaRec, ia: iaRec });
                     });
                     // Examen: se gestiona igual que un insumo (ver/imprimir + eliminar para permitir repetir),
                     // aunque no hay archivo subido — es una evaluación automática.
                     const examen = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examen || null;
-                    if (examen) filas.push({ clase: 'examen', estado: 'calificado', fechaOrden: fechaOrdenNPT(examen.fecha), est, t, examen });
+                    if (examen) filas.push({ clase: 'examen', esRecuperacion: false, estado: 'calificado', fechaOrden: fechaOrdenNPT(examen.fecha), est, t, examen });
                     // Examen de RECUPERACIÓN: mismo tratamiento, campo separado (no entra en la nota ponderada).
                     const examenRecuperacion = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examenRecuperacion || null;
-                    if (examenRecuperacion) filas.push({ clase: 'examenRecuperacion', estado: 'calificado', fechaOrden: fechaOrdenNPT(examenRecuperacion.fecha), est, t, examenRecuperacion });
+                    if (examenRecuperacion) filas.push({ clase: 'examenRecuperacion', esRecuperacion: true, estado: 'calificado', fechaOrden: fechaOrdenNPT(examenRecuperacion.fecha), est, t, examenRecuperacion });
                 });
             });
 
             let filasFiltradas = filas.filter(fila => {
                 if (filtroTipoEnvio === 'insumos' && fila.clase !== 'insumo') return false;
                 if (filtroTipoEnvio === 'examen' && fila.clase !== 'examen') return false;
-                if (filtroTipoEnvio === 'examenRecuperacion' && fila.clase !== 'examenRecuperacion') return false;
+                if (filtroTipoEnvio === 'recuperacion' && !fila.esRecuperacion) return false;
                 if (['cuaderno','libro','talleres','tarea'].includes(filtroTipoEnvio) && fila.tp?.id !== filtroTipoEnvio) return false;
                 if (filtroEstadoEnvio === 'calificados' && fila.estado !== 'calificado') return false;
                 if (filtroEstadoEnvio === 'no-calificados' && fila.estado !== 'no-calificado') return false;
@@ -5655,7 +5747,7 @@ video {
                     tbody.appendChild(tr);
                     return;
                 }
-                const { est, t, tp, arch, nota, ia } = fila;
+                const { est, t, tp, arch, nota, ia, claveInsumo, esRecuperacion } = fila;
                 const notaVal   = nota ? numero(nota.nota) : (ia ? numero(ia.nota) : null);
                 const badgeClass = notaVal === null ? 'nota-badge-SIN' :
                     notaVal >= 9 ? 'nota-badge-DAR' :
@@ -5673,7 +5765,7 @@ video {
                             class="inline-flex items-center gap-1 text-xs bg-brand-50 text-brand-700 font-bold px-2 py-1 rounded-lg hover:bg-brand-100">
                             🔗 Abrir link</a>
                         <div class="text-[10px] text-slate-400 mt-0.5 truncate max-w-[120px]">${escapeHtml(arch.url||'')}</div>`
-                    : `<button onclick="verPDFDocente('${escapeHtml(est.cedula)}',${t.num},'${tp.id}')"
+                    : `<button onclick="verPDFDocente('${escapeHtml(est.cedula)}',${t.num},'${claveInsumo}')"
                             class="inline-flex items-center gap-1 text-xs bg-brand-50 text-brand-700 font-bold px-2 py-1 rounded-lg hover:bg-brand-100">
                             📄 Ver archivo</button>
                         <div class="text-[10px] text-slate-400 mt-0.5 truncate max-w-[120px]">${escapeHtml(arch.nombre||'archivo')}</div>`;
@@ -5689,8 +5781,8 @@ video {
                     <td class="p-2 font-medium text-xs">${escapeHtml(est.nombre)}</td>
                     <td class="p-2 font-mono text-xs">${escapeHtml(est.cedula)}</td>
                     <td class="p-2 text-center">
-                        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700">${t.label}</span><br>
-                        <span class="text-[10px] text-slate-500">${tp.label}</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full ${esRecuperacion ? 'bg-purple-50 text-purple-700' : 'bg-brand-50 text-brand-700'}">${t.label}</span><br>
+                        <span class="text-[10px] text-slate-500">${tp.label}${esRecuperacion ? ' · 🔁 Recuperación' : ''}</span>
                     </td>
                     <td class="p-2 text-center">${verBtn}</td>
                     <td class="p-2 text-center text-[11px] text-slate-500">${escapeHtml(arch.fechaEntrega||'-')}</td>
@@ -5699,16 +5791,17 @@ video {
                         ${verificado ? '<div class="text-[10px] text-emerald-600 font-bold mt-0.5">✔ Verificado</div>' : (ia ? '<div class="text-[10px] text-amber-600 font-bold mt-0.5">⏳ Eval. IA — pendiente verificar</div>' : '')}
                         ${ia?.comentario ? `<div class="text-[10px] text-slate-400 mt-0.5 max-w-[160px]">${escapeHtml(ia.comentario)}</div>` : ''}
                         ${(ia && ia.firmaDetectada !== null && ia.firmaDetectada !== undefined) ? `<div class="text-[10px] font-bold mt-0.5 ${ia.firmaCoincide ? 'text-emerald-600' : 'text-rose-600'}" title="${escapeHtml(ia.comentarioFirma || '')}">${ia.firmaCoincide ? '✅ Firma coincide' : (ia.firmaDetectada ? '⚠️ Firma no coincide' : '⚠️ Sin firma del docente')}</div>` : ''}
+                        ${esRecuperacion ? '<div class="text-[9px] text-slate-400 mt-0.5">(no afecta la nota final)</div>' : ''}
                     </td>
                     <td class="p-2 text-center space-y-1">
-                        ${tieneRubrica ? `<button onclick="evaluarConIA('${escapeHtml(est.cedula)}',${t.num},'${tp.id}',this)"
+                        ${tieneRubrica ? `<button onclick="evaluarConIA('${escapeHtml(est.cedula)}',${t.num},'${claveInsumo}',this)"
                             ${nptEvalMasivaEnCurso ? 'disabled' : ''}
                             class="block w-full text-xs px-2 py-1 rounded-lg ${nptEvalMasivaEnCurso ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}">
                             🤖 ${ia ? 'Re-evaluar IA' : 'Evaluar con IA'}</button>` : ''}
-                        <button onclick="abrirModalNotaNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'${tp.id}')"
+                        <button onclick="abrirModalNotaNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'${claveInsumo}')"
                             class="block w-full bg-brand-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-brand-700">
                             ${nota ? '✏️ Editar / Verificar' : '📝 Calificar'}</button>
-                        <button onclick="eliminarEntregaNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'${tp.id}')"
+                        <button onclick="eliminarEntregaNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'${claveInsumo}')"
                             class="block w-full bg-rose-100 text-rose-700 text-xs px-2 py-1 rounded-lg hover:bg-rose-200"
                             title="Elimina la entrega para que el estudiante pueda subirla de nuevo">
                             🗑️ Eliminar entrega</button>
@@ -5909,11 +6002,16 @@ video {
         // Núcleo reutilizable: hace la llamada al Worker y guarda el resultado. No muestra alerts ni toca el DOM,
         // para poder usarse tanto desde el botón individual como desde el lote masivo.
         async function evaluarConIACore(cedula, numTrimestre, tipo) {
-            if (!NPT_TIPOS_RUBRICA.includes(tipo)) throw new Error('Este tipo de entrega no usa evaluación automática por rúbrica.');
+            // "tipo" es la CLAVE de almacenamiento (nptArchivos/nptEvaluacionesIA): para un envío
+            // normal es el tipo base ('cuaderno'...); para una recuperación es "{tipo}Recuperacion".
+            // La rúbrica y la validación de NPT_TIPOS_RUBRICA SIEMPRE se resuelven sobre el tipo
+            // BASE, porque la recuperación reutiliza la misma rúbrica publicada del insumo original.
+            const tipoBase = nptTipoBaseDeClaveInsumo(tipo);
+            if (!NPT_TIPOS_RUBRICA.includes(tipoBase)) throw new Error('Este tipo de entrega no usa evaluación automática por rúbrica.');
             const est = estudiantes.find(e => e.cedula === cedula);
             if (!est) throw new Error('Estudiante no encontrado.');
-            const rubrica = nptRubricaTexto(est.curso, est.paralelo, numTrimestre, tipo);
-            if (!rubrica) throw new Error(`No hay una rúbrica de "${tipo}" guardada para ${est.curso} "${est.paralelo}" en este trimestre. Ve a "⚙️ Gestionar" y escríbela primero.`);
+            const rubrica = nptRubricaTexto(est.curso, est.paralelo, numTrimestre, tipoBase);
+            if (!rubrica) throw new Error(`No hay una rúbrica de "${tipoBase}" guardada para ${est.curso} "${est.paralelo}" en este trimestre. Ve a "⚙️ Gestionar" y escríbela primero.`);
             let arch = nptArchivos[cedula]?.[`trimestre${numTrimestre}`]?.[tipo];
             if (arch && !arch.url && (!arch.base64 || arch.base64 === '[cargado]')) {
                 arch = await leerValorRutaFirebase(`nptArchivos/${cedula}/trimestre${numTrimestre}/${tipo}`);
@@ -5926,9 +6024,9 @@ video {
             // usando Base64 tal como siempre; los nuevos usan "url" y el Worker decide él mismo
             // (por el dominio del enlace) si es Drive, GitHub, o una página web genérica.
             const payload = arch.url
-                ? { rubrica, url: arch.url, tipo, estudiante: est.nombre,
+                ? { rubrica, url: arch.url, tipo: tipoBase, estudiante: est.nombre,
                     firmaDocenteBase64: cfgFirmaDocente?.base64 || null, firmaDocenteMime: cfgFirmaDocente?.mime || 'image/png' }
-                : { rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo, estudiante: est.nombre,
+                : { rubrica, archivoBase64: arch.base64, mime: arch.mime || 'application/pdf', tipo: tipoBase, estudiante: est.nombre,
                     firmaDocenteBase64: cfgFirmaDocente?.base64 || null, firmaDocenteMime: cfgFirmaDocente?.mime || 'image/png' };
             if (!arch.url && !arch.base64) throw new Error('No se encontró el archivo subido por el estudiante.');
 
@@ -6285,14 +6383,16 @@ video {
         // Nodo de observaciones de devolución: nptObservacionesDevolucion/{cedula}/trimestre{N}/{tipo}
         async function eliminarEntregaNPT(cedula, nombre, trimestre, tipo) {
             const t = trimestresEfectivos().find(x => x.num === trimestre);
-            const tp = NPT_TIPOS.find(x => x.id === tipo);
+            const esRec = nptEsClaveRecuperacionInsumo(tipo);
+            const tp = NPT_TIPOS.find(x => x.id === nptTipoBaseDeClaveInsumo(tipo));
+            const etiquetaTp = tp ? `${tp.label}${esRec ? ' — Recuperación' : ''}` : tipo;
             const arch = nptArchivos[cedula]?.[`trimestre${trimestre}`]?.[tipo];
             const nota = nptNotas[cedula]?.[`trimestre${trimestre}`]?.[tipo];
             if (!arch && !nota) { alert('No hay entrega registrada para este insumo.'); return; }
 
             const motivo = prompt(
                 `🗑️ Eliminar entrega de ${nombre}\n` +
-                `${t?.label} · ${tp?.label}\n\n` +
+                `${t?.label} · ${etiquetaTp}\n\n` +
                 `Escribe la observación que verá el estudiante (obligatoria).\n` +
                 `Se eliminarán: archivo subido, calificación y evaluación IA. El estudiante podrá volver a subirlo.`
             );
@@ -6425,13 +6525,16 @@ video {
         function abrirModalNotaNPT(cedula, nombre, trimestre, tipo) {
             nptNotaModalCtx = { cedula, nombre, trimestre, tipo };
             const t = trimestresEfectivos().find(x => x.num === trimestre);
-            const tp = NPT_TIPOS.find(x => x.id === tipo);
+            const esRec = nptEsClaveRecuperacionInsumo(tipo);
+            const tp = NPT_TIPOS.find(x => x.id === nptTipoBaseDeClaveInsumo(tipo));
+            const etiquetaTp = tp ? `${tp.label}${esRec ? ' — <strong>Recuperación</strong>' : ''}` : tipo;
             const notaExistente = nptNotas[cedula]?.[`trimestre${trimestre}`]?.[tipo];
             const ia = nptEvaluacionesIA[cedula]?.[`trimestre${trimestre}`]?.[tipo];
             const arch = nptArchivos[cedula]?.[`trimestre${trimestre}`]?.[tipo];
             document.getElementById('npt-modal-info').innerHTML = `
                 <p><strong>Estudiante:</strong> ${escapeHtml(nombre)}</p>
-                <p><strong>Período:</strong> ${t?.label} · ${tp?.label}</p>
+                <p><strong>Período:</strong> ${t?.label} · ${etiquetaTp}</p>
+                ${esRec ? '<p class="text-purple-600 text-xs">🔁 Esta nota es informativa: no reemplaza ni promedia con la nota original del insumo.</p>' : ''}
                 ${arch?.nombre ? `<p><strong>Archivo:</strong> ${escapeHtml(arch.nombre)}</p>` : ''}
                 ${ia ? `<p><strong>Evaluación IA:</strong> ${formatearNota(ia.nota)} — ${escapeHtml(ia.comentario||'')}</p>` : ''}
                 ${ia ? `<div class="mt-3">${renderInformeEvaluacionNPT(ia)}</div>` : ''}`;
@@ -6671,9 +6774,58 @@ video {
                         ${fechaMax ? `<p class="text-[10px] text-amber-600 mt-1">⏳ Cierra el ${escapeHtml(formatearFechaMaxima(fechaMax))}</p>` : ''}`;
                     }
 
+                    // ---- Bloque de RECUPERACIÓN de este insumo (mismo principio que la del examen:
+                    // informativo, no reemplaza ni promedia con la nota original) ----
+                    const claveRec = nptClaveRecuperacionInsumo(tp.id);
+                    const archRec = nptArchivos[cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
+                    const notaRec = nptNotas[cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
+                    const iaRec = nptEvaluacionesIA[cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
+                    const notaRecVal = notaRec ? numero(notaRec.nota) : (iaRec ? numero(iaRec.nota) : null);
+                    const recHabGeneral = nptInsumoRecuperacionHabilitado(curso, paralelo, t.num, tp.id);
+                    const recHabEstudiante = nptInsumoRecuperacionEstudianteHabilitado(curso, paralelo, t.num, tp.id, cedula);
+                    const recHab = recHabGeneral && recHabEstudiante;
+                    const observacionDevRec = nptObservacionesDevolucion[cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
+                    const avisoDevolucionRec = observacionDevRec
+                        ? `<div class="bg-amber-50 border border-amber-300 rounded-xl p-3 mb-2 text-xs text-amber-800">
+                            <p class="font-bold">📨 El docente eliminó tu recuperación para que la vuelvas a subir:</p>
+                            <p class="italic mt-1">"${escapeHtml(observacionDevRec.motivo||'')}"</p>
+                            <p class="text-[10px] text-amber-600 mt-1">${escapeHtml(observacionDevRec.docente||'')} · ${escapeHtml(observacionDevRec.fecha||'')}</p>
+                        </div>`
+                        : '';
+                    let recuperacionHtml = '';
+                    if (archRec) {
+                        if (notaRec?.verificado) {
+                            recuperacionHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mt-2">
+                                <p class="text-xs text-slate-500 font-bold mb-1">🔁 Recuperación de ${escapeHtml(etiquetaTipo)} — nota informativa (no reemplaza la original):</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xl font-black ${notaRecVal >= 7 ? 'text-emerald-600' : 'text-rose-600'}">${formatearNota(notaRecVal)} <span class="text-sm text-slate-400 font-normal">/ 10</span></span>
+                                    <button onclick="imprimirReporteNPT('${claveRec}',${t.num})" class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg font-bold">🖨️ Imprimir reporte</button>
+                                </div>
+                                ${notaRec.observacion ? `<p class="text-xs text-slate-500 mt-1 italic">"${escapeHtml(notaRec.observacion)}"</p>` : ''}
+                            </div>`;
+                        } else if (iaRec) {
+                            recuperacionHtml = `<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-2 text-xs text-amber-700">
+                                🔁 Recuperación evaluada automáticamente (${formatearNota(numero(iaRec.nota))}/10) — pendiente de verificación por el docente.
+                            </div>`;
+                        } else {
+                            recuperacionHtml = `<div class="text-xs text-slate-400 mt-2">🔁 Recuperación enviada — pendiente de revisión por el docente.</div>`;
+                        }
+                    } else if (recHab) {
+                        recuperacionHtml = `${avisoDevolucionRec}
+                        <div class="bg-purple-50 border border-purple-200 rounded-xl p-3 mt-2">
+                            <p class="text-xs font-bold text-purple-700 mb-2">🔁 Recuperación de ${escapeHtml(etiquetaTipo)} habilitada para ti</p>
+                            <div class="flex gap-2">
+                                <input type="url" id="npt-url-rec-${t.num}-${tp.id}" placeholder="https://..."
+                                    class="flex-1 px-3 py-2 bg-white border rounded-xl text-xs focus:ring-2 focus:ring-purple-500">
+                                <button onclick="guardarURLInsumoRecuperacion(${t.num},'${tp.id}')" class="bg-purple-600 text-white text-xs font-bold px-3 py-2 rounded-xl hover:bg-purple-700">Enviar</button>
+                            </div>
+                        </div>`;
+                    }
+
                     return `<div class="mb-3">
                         <p class="text-xs font-bold text-slate-600 mb-1">${tp.label}</p>
                         ${estadoHtml}
+                        ${recuperacionHtml}
                     </div>`;
                 }).join('');
 
@@ -6816,6 +6968,87 @@ video {
             } catch(e) {
                 console.error(e);
                 alert(`Error al guardar el enlace: ${e.message}`);
+            }
+        }
+
+        // ---- Envío de RECUPERACIÓN de un insumo (mismo circuito que guardarURLInsumo, pero
+        // bajo la clave "{tipo}Recuperacion": no depende de la fecha máxima del insumo original,
+        // exige que el docente haya habilitado la recuperación para este estudiante, y solo
+        // admite un envío (si ya existe, debe pedir al docente que lo reabra) ----
+        async function guardarURLInsumoRecuperacion(numTrimestre, tipoBase) {
+            if (!estudianteActual) return;
+            if (!esInsumoURL(tipoBase)) { alert('Este insumo no acepta enlace URL.'); return; }
+            const cedula = estudianteActual.cedula;
+            const { curso, paralelo } = estudianteActual;
+            if (!nptInsumoRecuperacionEstudianteHabilitado(curso, paralelo, numTrimestre, tipoBase, cedula)) {
+                alert('La recuperación de este insumo no está habilitada para ti. Consulta con el docente.');
+                return;
+            }
+            const claveRec = nptClaveRecuperacionInsumo(tipoBase);
+            if (nptArchivos[cedula]?.[`trimestre${numTrimestre}`]?.[claveRec]) {
+                alert('Ya enviaste tu recuperación de este insumo. Si necesitas reenviarla, solicita al docente que la reabra.');
+                return;
+            }
+            if (bloqueaSinRubrica(tipoBase) && !nptRubricaTexto(curso, paralelo, numTrimestre, tipoBase)) {
+                alert('El docente aún no ha publicado la rúbrica de este insumo. No se puede enviar todavía.');
+                return;
+            }
+            const input = document.getElementById(`npt-url-rec-${numTrimestre}-${tipoBase}`);
+            const url = texto(input?.value).trim();
+            if (!url || !/^https?:\/\/.+/i.test(url)) {
+                alert('Ingresa un enlace válido que comience con http:// o https://');
+                return;
+            }
+
+            // ---- Misma validación en el acto contra el Worker que usa el envío normal ----
+            let validacion = null;
+            if (NPT_VALIDAR_ENVIO_ENDPOINT) {
+                try {
+                    const respValidar = await fetch(NPT_VALIDAR_ENVIO_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-NPT-Auth': NPT_AUTH_HEADER },
+                        body: JSON.stringify({ url, correoEsperado: estudianteActual.correo || '' })
+                    });
+                    validacion = await respValidar.json().catch(() => null);
+                } catch (e) {
+                    console.warn('No se pudo validar el enlace en el acto (se guardará de todos modos):', e);
+                }
+            }
+            if (validacion && validacion.ok === false) {
+                alert(`❌ No se pudo validar tu enlace:\n\n${validacion.error || 'Enlace no accesible.'}\n\nRevisa que esté dentro de tu carpeta compartida "Entregas NPT" (Cuaderno/Libro/Talleres) o que el enlace sea público (Tarea).`);
+                return;
+            }
+            if (validacion?.ok && validacion.coincideCorreo === false) {
+                if (!confirm(`⚠️ El archivo/carpeta pertenece a ${validacion.ownerEmail || 'otro correo'}, distinto de tu correo institucional (${estudianteActual.correo || 'no registrado'}).\n\n¿Confirmas que quieres enviarlo igual?`)) return;
+            }
+            if (validacion?.ok && validacion.requiereRevisionManual) {
+                if (!confirm(`⚠️ No pudimos leer automáticamente el contenido de ese enlace (${validacion.motivo || 'contenido insuficiente'}).\n\nSe puede enviar igual, pero si la IA tampoco encuentra evidencia al evaluar, registrará 0 según la rúbrica por falta de contenido evaluable. ¿Continuar?`)) return;
+            }
+
+            const registro = {
+                url, fechaEntrega: new Date().toLocaleString(),
+                cedula, nombreEstudiante: estudianteActual.nombre,
+                trimestre: numTrimestre, tipo: claveRec,
+                curso, paralelo, esRecuperacion: true,
+                validacionEnvio: validacion?.ok ? {
+                    tipo: validacion.tipo || null, modifiedTime: validacion.modifiedTime || null,
+                    ownerEmail: validacion.ownerEmail || null, coincideCorreo: validacion.coincideCorreo ?? null
+                } : null
+            };
+            try {
+                await guardarValorFirebase(`nptArchivos/${cedula}/trimestre${numTrimestre}/${claveRec}`, registro);
+                await guardarMetaArchivoNPT(cedula, numTrimestre, claveRec, registro);
+                if (nptObservacionesDevolucion[cedula]?.[`trimestre${numTrimestre}`]?.[claveRec]) {
+                    try { await borrarValorFirebase(`nptObservacionesDevolucion/${cedula}/trimestre${numTrimestre}/${claveRec}`); } catch(_) {}
+                    delete nptObservacionesDevolucion[cedula][`trimestre${numTrimestre}`][claveRec];
+                }
+                if (!nptArchivos[cedula]) nptArchivos[cedula] = {};
+                if (!nptArchivos[cedula][`trimestre${numTrimestre}`]) nptArchivos[cedula][`trimestre${numTrimestre}`] = {};
+                nptArchivos[cedula][`trimestre${numTrimestre}`][claveRec] = registro;
+                renderTrimestresEstudiante();
+            } catch(e) {
+                console.error(e);
+                alert(`Error al guardar el enlace de recuperación: ${e.message}`);
             }
         }
 
@@ -7761,7 +7994,7 @@ video {
         const NODOS_BACKUP = [
             'estudiantes', 'calificaciones', 'configuracion',
             'nptConfig', 'nptHabilitacionEstudiantes', 'nptExamenHabilitacionEstudiantes',
-            'nptExamenRecuperacionHabilitacionEstudiantes',
+            'nptExamenRecuperacionHabilitacionEstudiantes', 'nptInsumoRecuperacionHabilitacionEstudiantes',
             'nptExamenes', 'nptRubricas', 'nptNotas', 'nptArchivosMeta',
             'nptEvaluacionesIA', 'nptObservacionesDevolucion', 'auditoria',
             'contadoresEstudiantesIndividuales'
@@ -8163,7 +8396,9 @@ video {
                 return;
             }
             const t = trimestresEfectivos().find(x => x.num === numTrimestre);
-            const tp = NPT_TIPOS.find(x => x.id === tipo);
+            const esRec = nptEsClaveRecuperacionInsumo(tipo);
+            const tp = NPT_TIPOS.find(x => x.id === nptTipoBaseDeClaveInsumo(tipo));
+            const etiquetaTp = tp ? `${tp.label}${esRec ? ' (Recuperación)' : ''}` : tipo;
             const ventana = window.open('', '_blank');
             if (!ventana) { alert('El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'); return; }
             ventana.document.write(`
@@ -8184,10 +8419,11 @@ video {
                     <tr><th>Cédula</th><td>${escapeHtml(cedula)}</td></tr>
                     <tr><th>Curso / Paralelo</th><td>${escapeHtml(estudianteActual.curso)} "${escapeHtml(estudianteActual.paralelo)}"</td></tr>
                     <tr><th>Período</th><td>${t?.label || ''}</td></tr>
-                    <tr><th>Tipo de entrega</th><td>${tp?.label || ''}</td></tr>
+                    <tr><th>Tipo de entrega</th><td>${escapeHtml(etiquetaTp)}</td></tr>
                     <tr><th>Nota</th><td>${formatearNota(numero(nota.nota))} / 10</td></tr>
                     <tr><th>Observación del docente</th><td>${escapeHtml(nota.observacion||'-')}</td></tr>
                     <tr><th>Verificado por</th><td>${escapeHtml(nota.docente||'-')} — ${escapeHtml(nota.fechaVerificacion||'-')}</td></tr>
+                    ${esRec ? '<tr><th>Nota informativa</th><td>Esta nota de recuperación no reemplaza ni promedia con la nota original.</td></tr>' : ''}
                 </table>
                 </body></html>`);
             ventana.document.close();
@@ -8251,9 +8487,12 @@ video {
         window.toggleExamenTrimestre = toggleExamenTrimestre;
         window.toggleExamenRecuperacionTrimestre = toggleExamenRecuperacionTrimestre;
         window.guardarURLInsumo = guardarURLInsumo;
+        window.guardarURLInsumoRecuperacion = guardarURLInsumoRecuperacion;
         window.nptGestionTodosInsumos = nptGestionTodosInsumos;
         window.nptGestionQuitarFechas = nptGestionQuitarFechas;
         window.nptSeleccionarTodosEstudiantes = nptSeleccionarTodosEstudiantes;
+        window.nptSeleccionarTodosEstudiantesRecuperacionInsumo = nptSeleccionarTodosEstudiantesRecuperacionInsumo;
+        window.nptSeleccionarTodosEstudiantesRecuperacionInsumos = nptSeleccionarTodosEstudiantesRecuperacionInsumos;
         window.nptGestionTab = nptGestionTab;
         window.nptGestionFiltrarEstudiantes = nptGestionFiltrarEstudiantes;
         window.nptActualizarEstadoInsumo = nptActualizarEstadoInsumo;
