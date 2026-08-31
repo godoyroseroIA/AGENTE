@@ -2169,6 +2169,7 @@ video {
                         <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
                             <h4 class="font-bold text-sm">📥 Entregas Recibidas</h4>
                             <div class="flex gap-2 flex-wrap">
+                                <input type="text" id="npt-buscar-apellido" oninput="renderNPTDocente()" placeholder="🔎 Buscar por apellido..." class="text-xs border rounded-lg px-2 py-1 w-40">
                                 <select id="npt-filtro-trimestre" onchange="renderNPTDocente()" class="text-xs border rounded-lg px-2 py-1">
                                     <option value="">Todos los trimestres</option>
                                     <option value="1">1er Trimestre</option>
@@ -2265,6 +2266,7 @@ video {
                         </table>
                         <div id="cuadro-general-no-datos" class="hidden text-center py-8 text-slate-400">📭 No hay estudiantes para mostrar.</div>
                     </div>
+                    <p class="text-[11px] text-purple-600 mt-2">🔁 Cuando aparece bajo una nota, significa que esa nota ya es el <strong>promedio</strong> entre la nota original y la de recuperación (la nota efectiva que entra a la fórmula). Pasa el mouse sobre el badge para ver el detalle. El CSV exportado incluye además las notas originales y de recuperación por separado, como respaldo.</p>
                 </div>
 
                 <!-- TAB CONFIGURACIÓN -->
@@ -2644,7 +2646,7 @@ video {
                         </table>
                     </div>
                     <p class="text-[11px] text-slate-400 mt-2">Al cumplirse la fecha máxima, el estudiante ya no podrá subir ese insumo. Puedes cambiar la fecha en cualquier momento para reabrirlo. La fecha se valida también al guardar la entrega (defensa contra reloj manipulado).</p>
-                    <p class="text-[11px] text-purple-600 mt-1">🔁 La columna "Recuperación" habilita, a nivel general del trimestre, que el insumo pueda recuperarse. Además debes marcar individualmente a cada estudiante que rendirá esa recuperación en la pestaña "Estudiantes". La nota de recuperación es informativa y no reemplaza ni promedia con la nota original.</p>
+                    <p class="text-[11px] text-purple-600 mt-1">🔁 La columna "Recuperación" habilita, a nivel general del trimestre, que el insumo pueda recuperarse. Además debes marcar individualmente a cada estudiante que rendirá esa recuperación en la pestaña "Estudiantes". La nota de recuperación se promedia con la nota original para obtener la nota efectiva del insumo (si el estudiante no tenía nota original, se usa solo la de recuperación).</p>
                 </section>
 
                 <!-- Pestaña 2: Rúbricas -->
@@ -2708,10 +2710,10 @@ video {
                                     <th class="p-2 text-center">Insumos<br><input type="checkbox" id="npt-check-todos-insumos" onchange="nptSeleccionarTodosEstudiantes('insumos', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
                                     <th class="p-2 text-center">Examen<br><input type="checkbox" id="npt-check-todos-examen" onchange="nptSeleccionarTodosEstudiantes('examen', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
                                     <th class="p-2 text-center">Recup. examen<br><input type="checkbox" id="npt-check-todos-recuperacion" onchange="nptSeleccionarTodosEstudiantes('recuperacion', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
-                                    ${NPT_INSUMOS_ENTREGA.map(tipoId => {
-                                        const tp = NPT_TIPOS.find(x => x.id === tipoId);
-                                        return `<th class="p-2 text-center">Recup. ${tp?.icono||''}<br><input type="checkbox" id="npt-check-todos-recuperacion-insumo-${tipoId}" onchange="nptSeleccionarTodosEstudiantesRecuperacionInsumo('${tipoId}', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>`;
-                                    }).join('')}
+                                    <th class="p-2 text-center">Recup. 📓<br><input type="checkbox" id="npt-check-todos-recuperacion-insumo-cuaderno" onchange="nptSeleccionarTodosEstudiantesRecuperacionInsumo('cuaderno', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
+                                    <th class="p-2 text-center">Recup. 📘<br><input type="checkbox" id="npt-check-todos-recuperacion-insumo-libro" onchange="nptSeleccionarTodosEstudiantesRecuperacionInsumo('libro', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
+                                    <th class="p-2 text-center">Recup. 🔗<br><input type="checkbox" id="npt-check-todos-recuperacion-insumo-tarea" onchange="nptSeleccionarTodosEstudiantesRecuperacionInsumo('tarea', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
+                                    <th class="p-2 text-center">Recup. 🛠️<br><input type="checkbox" id="npt-check-todos-recuperacion-insumo-talleres" onchange="nptSeleccionarTodosEstudiantesRecuperacionInsumo('talleres', this.checked)" class="w-4 h-4 mt-1 align-middle" title="Seleccionar todos"></th>
                                 </tr>
                             </thead>
                             <tbody id="npt-gestion-estudiantes-body"></tbody>
@@ -4690,11 +4692,13 @@ video {
         function bloqueaSinRubrica(tipo) { return NPT_TIPOS_BLOQUEA_SIN_RUBRICA.includes(tipo); }
 
         // ==================== RECUPERACIÓN DE INSUMOS (Cuaderno/Libro/Tarea/Talleres) ====================
-        // Mismo principio que el examen de recuperación: la nota de recuperación de un insumo se
-        // guarda en un campo APARTE (sufijo "Recuperacion"), es informativa y NUNCA entra en la
-        // fórmula de promedio (calcularPromedioInsumosNPT solo lee los 4 tipos base). Reutiliza
-        // íntegramente la infraestructura de nptArchivos/nptEvaluacionesIA/nptNotas: basta con
-        // usar la "clave" `${tipo}Recuperacion` en vez de `tipo` al leer/guardar esos 3 nodos.
+        // La nota de recuperación de un insumo se guarda en un campo APARTE (sufijo "Recuperacion")
+        // como respaldo/auditoría de cómo se llegó a la nota final, pero SÍ afecta la nota del
+        // insumo: notaEfectivaNPT() la promedia con la nota original (ver más abajo) y ese
+        // promedio es el que usa calcularPromedioInsumosNPT/calcularPromedioNPT para la fórmula.
+        // Reutiliza íntegramente la infraestructura de nptArchivos/nptEvaluacionesIA/nptNotas:
+        // basta con usar la "clave" `${tipo}Recuperacion` en vez de `tipo` al leer/guardar esos
+        // 3 nodos.
         //   nptArchivos/{cedula}/trimestre{n}/{tipo}Recuperacion       → mismo formato que el insumo normal
         //   nptEvaluacionesIA/{cedula}/trimestre{n}/{tipo}Recuperacion → mismo formato que el insumo normal
         //   nptNotas/{cedula}/trimestre{n}/{tipo}Recuperacion          → mismo formato que el insumo normal
@@ -5610,6 +5614,7 @@ video {
             const filtroTipoEnvio = document.getElementById('npt-filtro-tipo-envio')?.value || '';
             const filtroEstadoEnvio = document.getElementById('npt-filtro-estado-envio')?.value || '';
             const ordenEnvios = document.getElementById('npt-orden-envios')?.value || 'fecha-desc';
+            const busquedaApellido = claveApellidoNPT(document.getElementById('npt-buscar-apellido')?.value || '');
             const alumnos = estudiantesFiltrados();
             const faltanMetadatos = alumnos.some(est => !nptArchivosMeta[est.cedula] && !nptArchivosCargadosPorCedula[est.cedula]);
             if (faltanMetadatos && !nptPrecargaDocenteEnCurso) {
@@ -5653,6 +5658,7 @@ video {
                 if (filtroEstadoEnvio === 'calificados' && fila.estado !== 'calificado') return false;
                 if (filtroEstadoEnvio === 'no-calificados' && fila.estado !== 'no-calificado') return false;
                 if (filtroEstadoEnvio === 'ia-pendiente' && fila.estado !== 'ia-pendiente') return false;
+                if (busquedaApellido && !claveApellidoNPT(fila.est?.nombre || '').includes(busquedaApellido)) return false;
                 return true;
             });
 
@@ -5670,7 +5676,11 @@ video {
             });
 
             tbody.innerHTML = '';
-            if (filasFiltradas.length === 0) { noData?.classList.remove('hidden'); return; }
+            if (filasFiltradas.length === 0) {
+                if (noData) noData.textContent = busquedaApellido ? `📭 Sin resultados para "${document.getElementById('npt-buscar-apellido').value}".` : '📭 No hay entregas registradas.';
+                noData?.classList.remove('hidden');
+                return;
+            }
             noData?.classList.add('hidden');
 
             filasFiltradas.forEach((fila, i) => {
@@ -5736,7 +5746,7 @@ video {
                         <td class="p-2 text-center">
                             <span class="text-xs font-bold px-2 py-0.5 rounded-full ${badgeClass}">${formatearNota(notaVal)}</span>
                             <div class="text-[10px] text-slate-400 mt-0.5">${examen.correctas}/${examen.total} aciertos</div>
-                            <div class="text-[9px] text-slate-400 mt-0.5">(no afecta la nota final)</div>
+                            <div class="text-[9px] text-purple-600 font-bold mt-0.5">(se promedia con la original)</div>
                         </td>
                         <td class="p-2 text-center space-y-1">
                             <button onclick="eliminarExamenNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'examenRecuperacion')"
@@ -5791,7 +5801,7 @@ video {
                         ${verificado ? '<div class="text-[10px] text-emerald-600 font-bold mt-0.5">✔ Verificado</div>' : (ia ? '<div class="text-[10px] text-amber-600 font-bold mt-0.5">⏳ Eval. IA — pendiente verificar</div>' : '')}
                         ${ia?.comentario ? `<div class="text-[10px] text-slate-400 mt-0.5 max-w-[160px]">${escapeHtml(ia.comentario)}</div>` : ''}
                         ${(ia && ia.firmaDetectada !== null && ia.firmaDetectada !== undefined) ? `<div class="text-[10px] font-bold mt-0.5 ${ia.firmaCoincide ? 'text-emerald-600' : 'text-rose-600'}" title="${escapeHtml(ia.comentarioFirma || '')}">${ia.firmaCoincide ? '✅ Firma coincide' : (ia.firmaDetectada ? '⚠️ Firma no coincide' : '⚠️ Sin firma del docente')}</div>` : ''}
-                        ${esRecuperacion ? '<div class="text-[9px] text-slate-400 mt-0.5">(no afecta la nota final)</div>' : ''}
+                        ${esRecuperacion ? '<div class="text-[9px] text-purple-600 font-bold mt-0.5">(se promedia con la original)</div>' : ''}
                     </td>
                     <td class="p-2 text-center space-y-1">
                         ${tieneRubrica ? `<button onclick="evaluarConIA('${escapeHtml(est.cedula)}',${t.num},'${claveInsumo}',this)"
@@ -5816,6 +5826,26 @@ video {
             if (nota && nota.nota !== undefined && nota.nota !== null) return numero(nota.nota);
             return null;
         }
+        // ---- Nota EFECTIVA de un insumo o del examen: la nota original promediada con su
+        // recuperación (si existe). Esta es la nota que se usa en TODA la fórmula y en TODOS
+        // los reportes/pantallas — la nota original y la de recuperación se siguen guardando
+        // aparte (nptNotas/.../{tipo} y nptNotas/.../{tipo}Recuperacion) solo como respaldo/
+        // auditoría de cómo se llegó a la nota efectiva.
+        //   • Sin recuperación registrada  → nota efectiva = nota original (igual que siempre).
+        //   • Con recuperación y original  → nota efectiva = promedio(original, recuperación).
+        //   • Con recuperación y SIN original (nunca entregó / no rindió) → nota efectiva =
+        //     la nota de recuperación sola, sin promediar (no tiene sentido promediar con nada).
+        // tipo acepta: 'cuaderno' | 'libro' | 'tarea' | 'talleres' | 'examen'.
+        function claveRecuperacionNPT(tipo) {
+            return tipo === 'examen' ? 'examenRecuperacion' : nptClaveRecuperacionInsumo(tipo);
+        }
+        function notaEfectivaNPT(cedula, numTrimestre, tipo) {
+            const original = notaNPTDe(cedula, numTrimestre, tipo);
+            const recuperacion = notaNPTDe(cedula, numTrimestre, claveRecuperacionNPT(tipo));
+            if (recuperacion === null) return original;
+            if (original === null) return recuperacion;
+            return (original + recuperacion) / 2;
+        }
         function renderCuadroGeneral() {
             const tbody = document.getElementById('cuadro-general-body');
             const noData = document.getElementById('cuadro-general-no-datos');
@@ -5835,10 +5865,24 @@ video {
                 const nExamen   = notaNPTDe(est.cedula, t, 'examen');
                 const promInsumos = calcularPromedioInsumosNPT(est.cedula, t);
                 const notaFinal = calcularPromedioNPT(est.cedula, t);
+                const nCuadernoRec = notaNPTDe(est.cedula, t, nptClaveRecuperacionInsumo('cuaderno'));
+                const nLibroRec    = notaNPTDe(est.cedula, t, nptClaveRecuperacionInsumo('libro'));
+                const nTalleresRec = notaNPTDe(est.cedula, t, nptClaveRecuperacionInsumo('talleres'));
+                const nTareaRec    = notaNPTDe(est.cedula, t, nptClaveRecuperacionInsumo('tarea'));
+                const nExamenRec   = notaNPTDe(est.cedula, t, 'examenRecuperacion');
 
-                const celda = (val) => val !== null
-                    ? `<span class="font-bold ${val >= 7 ? 'text-emerald-600' : 'text-rose-600'}">${formatearNota(val)}</span>`
-                    : `<span class="text-slate-300">—</span>`;
+                // La nota EFECTIVA (la que entra a la fórmula) es la que se muestra en grande;
+                // cuando hay recuperación, el detalle original/recuperación queda en el tooltip
+                // como respaldo de auditoría, y el badge 🔁 avisa que ya está promediada.
+                const celda = (original, rec) => {
+                    const efectiva = rec !== null ? (original !== null ? (original + rec) / 2 : rec) : original;
+                    if (efectiva === null) return `<span class="text-slate-300">—</span>`;
+                    const detalle = rec !== null
+                        ? `Original: ${original !== null ? formatearNota(original) : 'sin nota'} · Recuperación: ${formatearNota(rec)} → promedio`
+                        : '';
+                    return `<span class="font-bold ${efectiva >= 7 ? 'text-emerald-600' : 'text-rose-600'}">${formatearNota(efectiva)}</span>`
+                        + (rec !== null ? `<br><span class="text-[9px] font-bold text-purple-600" title="${escapeHtml(detalle)}">🔁 promediada</span>` : '');
+                };
 
                 const tr = document.createElement('tr');
                 tr.className = 'border-b hover:bg-slate-50';
@@ -5846,12 +5890,12 @@ video {
                     <td class="p-2 text-center text-slate-400">${i+1}</td>
                     <td class="p-2 font-medium text-xs">${escapeHtml(est.nombre)}</td>
                     <td class="p-2 font-mono text-xs">${escapeHtml(est.cedula)}</td>
-                    <td class="p-2 text-center">${celda(nCuaderno)}</td>
-                    <td class="p-2 text-center">${celda(nLibro)}</td>
-                    <td class="p-2 text-center">${celda(nTalleres)}</td>
-                    <td class="p-2 text-center">${celda(nTarea)}</td>
-                    <td class="p-2 text-center bg-indigo-50/50">${celda(promInsumos)}</td>
-                    <td class="p-2 text-center">${celda(nExamen)}${nExamen !== null ? `<br><button onclick="imprimirReporteExamenDocente('${escapeHtml(est.cedula)}',${t})" class="mt-1 text-[10px] bg-slate-800 text-white px-2 py-0.5 rounded-lg font-bold hover:bg-slate-900" title="Ver e imprimir el examen completo con aciertos y errores">🖨️ Ver examen</button>` : ''}</td>
+                    <td class="p-2 text-center">${celda(nCuaderno, nCuadernoRec)}</td>
+                    <td class="p-2 text-center">${celda(nLibro, nLibroRec)}</td>
+                    <td class="p-2 text-center">${celda(nTalleres, nTalleresRec)}</td>
+                    <td class="p-2 text-center">${celda(nTarea, nTareaRec)}</td>
+                    <td class="p-2 text-center bg-indigo-50/50">${celda(promInsumos, null)}</td>
+                    <td class="p-2 text-center">${celda(nExamen, nExamenRec)}${nExamen !== null ? `<br><button onclick="imprimirReporteExamenDocente('${escapeHtml(est.cedula)}',${t})" class="mt-1 text-[10px] bg-slate-800 text-white px-2 py-0.5 rounded-lg font-bold hover:bg-slate-900" title="Ver e imprimir el examen completo con aciertos y errores">🖨️ Ver examen</button>` : ''}</td>
                     <td class="p-2 text-center bg-emerald-50/50">${notaFinal !== null ? `<span class="px-2 py-0.5 rounded-full font-bold ${notaFinal >= 7 ? 'nota-badge-AAR' : 'nota-badge-NAR'}">${formatearNota(notaFinal)}</span>` : '<span class="text-slate-300">—</span>'}</td>`;
                 tbody.appendChild(tr);
             });
@@ -5860,15 +5904,31 @@ video {
             const t = parseInt(document.getElementById('cuadro-filtro-trimestre')?.value || '1', 10);
             const alumnos = estudiantesFiltrados();
             if (alumnos.length === 0) { alert('No hay estudiantes para exportar con el filtro actual.'); return; }
-            let csv = 'Estudiante,Cédula,Curso,Paralelo,Cuaderno,Libro,Talleres,Tarea,Promedio Insumos,Examen,Nota Final\n';
+            // Las columnas base (Cuaderno, Libro, ..., Examen) muestran la nota EFECTIVA (la que
+            // entra a la fórmula: original promediada con recuperación si esta existe). Las columnas
+            // "(Original)" y "(Rec.)" quedan aparte, solo como respaldo/auditoría de cómo se llegó
+            // a la nota efectiva.
+            let csv = 'Estudiante,Cédula,Curso,Paralelo,Cuaderno,Libro,Talleres,Tarea,Promedio Insumos,Examen,Nota Final,'
+                + 'Cuaderno (Original),Libro (Original),Talleres (Original),Tarea (Original),Examen (Original),'
+                + 'Cuaderno (Rec.),Libro (Rec.),Talleres (Rec.),Tarea (Rec.),Examen (Rec.)\n';
             alumnos.forEach(est => {
-                const nCuaderno = notaNPTDe(est.cedula, t, 'cuaderno');
-                const nLibro    = notaNPTDe(est.cedula, t, 'libro');
-                const nTalleres = notaNPTDe(est.cedula, t, 'talleres');
-                const nTarea    = notaNPTDe(est.cedula, t, 'tarea');
-                const nExamen   = notaNPTDe(est.cedula, t, 'examen');
+                const nCuaderno = notaEfectivaNPT(est.cedula, t, 'cuaderno');
+                const nLibro    = notaEfectivaNPT(est.cedula, t, 'libro');
+                const nTalleres = notaEfectivaNPT(est.cedula, t, 'talleres');
+                const nTarea    = notaEfectivaNPT(est.cedula, t, 'tarea');
+                const nExamen   = notaEfectivaNPT(est.cedula, t, 'examen');
                 const promInsumos = calcularPromedioInsumosNPT(est.cedula, t);
                 const notaFinal = calcularPromedioNPT(est.cedula, t);
+                const nCuadernoOrig = notaNPTDe(est.cedula, t, 'cuaderno');
+                const nLibroOrig    = notaNPTDe(est.cedula, t, 'libro');
+                const nTalleresOrig = notaNPTDe(est.cedula, t, 'talleres');
+                const nTareaOrig    = notaNPTDe(est.cedula, t, 'tarea');
+                const nExamenOrig   = notaNPTDe(est.cedula, t, 'examen');
+                const nCuadernoRec = notaNPTDe(est.cedula, t, nptClaveRecuperacionInsumo('cuaderno'));
+                const nLibroRec    = notaNPTDe(est.cedula, t, nptClaveRecuperacionInsumo('libro'));
+                const nTalleresRec = notaNPTDe(est.cedula, t, nptClaveRecuperacionInsumo('talleres'));
+                const nTareaRec    = notaNPTDe(est.cedula, t, nptClaveRecuperacionInsumo('tarea'));
+                const nExamenRec   = notaNPTDe(est.cedula, t, 'examenRecuperacion');
                 csv += [
                     csvCampo(est.nombre), csvCampo(est.cedula), csvCampo(est.curso), csvCampo(est.paralelo),
                     csvCampo(nCuaderno !== null ? formatearNota(nCuaderno) : ''),
@@ -5877,7 +5937,17 @@ video {
                     csvCampo(nTarea !== null ? formatearNota(nTarea) : ''),
                     csvCampo(promInsumos !== null ? formatearNota(promInsumos) : ''),
                     csvCampo(nExamen !== null ? formatearNota(nExamen) : ''),
-                    csvCampo(notaFinal !== null ? formatearNota(notaFinal) : '')
+                    csvCampo(notaFinal !== null ? formatearNota(notaFinal) : ''),
+                    csvCampo(nCuadernoOrig !== null ? formatearNota(nCuadernoOrig) : ''),
+                    csvCampo(nLibroOrig !== null ? formatearNota(nLibroOrig) : ''),
+                    csvCampo(nTalleresOrig !== null ? formatearNota(nTalleresOrig) : ''),
+                    csvCampo(nTareaOrig !== null ? formatearNota(nTareaOrig) : ''),
+                    csvCampo(nExamenOrig !== null ? formatearNota(nExamenOrig) : ''),
+                    csvCampo(nCuadernoRec !== null ? formatearNota(nCuadernoRec) : ''),
+                    csvCampo(nLibroRec !== null ? formatearNota(nLibroRec) : ''),
+                    csvCampo(nTalleresRec !== null ? formatearNota(nTalleresRec) : ''),
+                    csvCampo(nTareaRec !== null ? formatearNota(nTareaRec) : ''),
+                    csvCampo(nExamenRec !== null ? formatearNota(nExamenRec) : '')
                 ].join(',') + '\n';
             });
             descargarArchivo(`cuadro_general_T${t}_${fechaArchivo()}.csv`, csv, 'text/csv;charset=utf-8');
@@ -6526,15 +6596,17 @@ video {
             nptNotaModalCtx = { cedula, nombre, trimestre, tipo };
             const t = trimestresEfectivos().find(x => x.num === trimestre);
             const esRec = nptEsClaveRecuperacionInsumo(tipo);
-            const tp = NPT_TIPOS.find(x => x.id === nptTipoBaseDeClaveInsumo(tipo));
+            const tipoBase = nptTipoBaseDeClaveInsumo(tipo);
+            const tp = NPT_TIPOS.find(x => x.id === tipoBase);
             const etiquetaTp = tp ? `${tp.label}${esRec ? ' — <strong>Recuperación</strong>' : ''}` : tipo;
             const notaExistente = nptNotas[cedula]?.[`trimestre${trimestre}`]?.[tipo];
             const ia = nptEvaluacionesIA[cedula]?.[`trimestre${trimestre}`]?.[tipo];
             const arch = nptArchivos[cedula]?.[`trimestre${trimestre}`]?.[tipo];
+            const notaOriginalDeReferencia = esRec ? notaNPTDe(cedula, trimestre, tipoBase) : null;
             document.getElementById('npt-modal-info').innerHTML = `
                 <p><strong>Estudiante:</strong> ${escapeHtml(nombre)}</p>
                 <p><strong>Período:</strong> ${t?.label} · ${etiquetaTp}</p>
-                ${esRec ? '<p class="text-purple-600 text-xs">🔁 Esta nota es informativa: no reemplaza ni promedia con la nota original del insumo.</p>' : ''}
+                ${esRec ? `<p class="text-purple-600 text-xs">🔁 Esta nota se promediará con la nota original (${notaOriginalDeReferencia !== null ? formatearNota(notaOriginalDeReferencia) : 'aún no registrada'}) para dar la nota efectiva del insumo.</p>` : ''}
                 ${arch?.nombre ? `<p><strong>Archivo:</strong> ${escapeHtml(arch.nombre)}</p>` : ''}
                 ${ia ? `<p><strong>Evaluación IA:</strong> ${formatearNota(ia.nota)} — ${escapeHtml(ia.comentario||'')}</p>` : ''}
                 ${ia ? `<div class="mt-3">${renderInformeEvaluacionNPT(ia)}</div>` : ''}`;
@@ -6602,35 +6674,55 @@ video {
             const alumnos = estudiantesFiltrados();
             let csv = 'Estudiante,Cédula,Curso,Paralelo,Trimestre,Tipo,Archivo,Fecha Entrega,Nota,Verificado,Observación,Desglose IA (criterio: obtenido/máximo),Observaciones IA (ubicación — aspecto: hallazgo)\n';
             let total = 0;
+            const agregarFila = (est, t, etiquetaTipo, arch, nota, ia) => {
+                // El desglose/observaciones se aplanan a texto porque la cantidad de criterios y su
+                // nombre varían según la rúbrica activa de cada insumo/trimestre: una columna por
+                // criterio no funcionaría igual para todos los insumos.
+                const desgloseTexto = (ia?.desglose || [])
+                    .map(d => `${d.criterio}: ${formatearNota(d.obtenido)}/${formatearNota(d.maximo)}`).join('; ');
+                const observacionesTexto = (ia?.observaciones || [])
+                    .map(o => `${o.ubicacion ? o.ubicacion + ' — ' : ''}${o.aspecto ? o.aspecto + ': ' : ''}${o.observacion}`).join(' | ');
+                csv += [
+                    csvCampo(est.nombre), csvCampo(est.cedula),
+                    csvCampo(est.curso), csvCampo(est.paralelo),
+                    csvCampo(t.label), csvCampo(etiquetaTipo),
+                    csvCampo(arch?.nombre || 'Sin entrega'),
+                    csvCampo(arch?.fechaEntrega || '-'),
+                    csvCampo(nota ? formatearNota(nota.nota) : 'Sin calificar'),
+                    csvCampo(nota?.verificado ? 'Sí' : 'No'),
+                    csvCampo(nota?.observacion || ''),
+                    csvCampo(desgloseTexto),
+                    csvCampo(observacionesTexto)
+                ].join(',') + '\n';
+                total++;
+            };
             alumnos.forEach(est => {
                 trimestresEfectivos().forEach(t => {
                     if (filtroT && String(t.num) !== filtroT) return;
                     NPT_TIPOS.forEach(tp => {
                         const arch = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[tp.id];
                         const nota = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[tp.id];
-                        if (!arch && !nota) return;
-                        const ia = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[tp.id];
-                        // El desglose/observaciones se aplanan a texto porque la cantidad de criterios y su
-                        // nombre varían según la rúbrica activa de cada insumo/trimestre: una columna por
-                        // criterio no funcionaría igual para todos los insumos.
-                        const desgloseTexto = (ia?.desglose || [])
-                            .map(d => `${d.criterio}: ${formatearNota(d.obtenido)}/${formatearNota(d.maximo)}`).join('; ');
-                        const observacionesTexto = (ia?.observaciones || [])
-                            .map(o => `${o.ubicacion ? o.ubicacion + ' — ' : ''}${o.aspecto ? o.aspecto + ': ' : ''}${o.observacion}`).join(' | ');
-                        csv += [
-                            csvCampo(est.nombre), csvCampo(est.cedula),
-                            csvCampo(est.curso), csvCampo(est.paralelo),
-                            csvCampo(t.label), csvCampo(tp.label),
-                            csvCampo(arch?.nombre || 'Sin entrega'),
-                            csvCampo(arch?.fechaEntrega || '-'),
-                            csvCampo(nota ? formatearNota(nota.nota) : 'Sin calificar'),
-                            csvCampo(nota?.verificado ? 'Sí' : 'No'),
-                            csvCampo(nota?.observacion || ''),
-                            csvCampo(desgloseTexto),
-                            csvCampo(observacionesTexto)
-                        ].join(',') + '\n';
-                        total++;
+                        if (arch || nota) {
+                            const ia = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[tp.id];
+                            agregarFila(est, t, tp.label, arch, nota, ia);
+                        }
+                        // Recuperación de este insumo: fila aparte marcada "(Recuperación)". Su nota
+                        // ya está incorporada en la nota efectiva (promedio) que se ve en las
+                        // columnas de nota EFECTIVA de los otros reportes; esta fila es el respaldo
+                        // en detalle de esa recuperación puntual.
+                        const claveRec = nptClaveRecuperacionInsumo(tp.id);
+                        const archRec = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[claveRec];
+                        const notaRec = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[claveRec];
+                        if (archRec || notaRec) {
+                            const iaRec = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[claveRec];
+                            agregarFila(est, t, `${tp.label} (Recuperación)`, archRec, notaRec, iaRec);
+                        }
                     });
+                    // Examen y su recuperación (no tienen "archivo" propio, pero sí nota/observación).
+                    const notaExamen = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examen;
+                    if (notaExamen) agregarFila(est, t, '📝 Examen', null, notaExamen, null);
+                    const notaExamenRec = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examenRecuperacion;
+                    if (notaExamenRec) agregarFila(est, t, '📝 Examen (Recuperación)', null, notaExamenRec, null);
                 });
             });
             if (total === 0) { alert('No hay datos para exportar con el filtro actual.'); return; }
@@ -6774,13 +6866,18 @@ video {
                         ${fechaMax ? `<p class="text-[10px] text-amber-600 mt-1">⏳ Cierra el ${escapeHtml(formatearFechaMaxima(fechaMax))}</p>` : ''}`;
                     }
 
-                    // ---- Bloque de RECUPERACIÓN de este insumo (mismo principio que la del examen:
-                    // informativo, no reemplaza ni promedia con la nota original) ----
+                    // ---- Bloque de RECUPERACIÓN de este insumo: la nota de recuperación se
+                    // promedia con la nota original para dar la nota EFECTIVA del insumo (si no
+                    // había nota original, la efectiva es la recuperación sola) ----
                     const claveRec = nptClaveRecuperacionInsumo(tp.id);
                     const archRec = nptArchivos[cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
                     const notaRec = nptNotas[cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
                     const iaRec = nptEvaluacionesIA[cedula]?.[`trimestre${t.num}`]?.[claveRec] || null;
                     const notaRecVal = notaRec ? numero(notaRec.nota) : (iaRec ? numero(iaRec.nota) : null);
+                    const notaOriginalVal = notaNPTDe(cedula, t.num, tp.id);
+                    const notaEfectivaVal = notaRec?.verificado
+                        ? (notaOriginalVal !== null ? (notaOriginalVal + notaRecVal) / 2 : notaRecVal)
+                        : null;
                     const recHabGeneral = nptInsumoRecuperacionHabilitado(curso, paralelo, t.num, tp.id);
                     const recHabEstudiante = nptInsumoRecuperacionEstudianteHabilitado(curso, paralelo, t.num, tp.id, cedula);
                     const recHab = recHabGeneral && recHabEstudiante;
@@ -6796,16 +6893,19 @@ video {
                     if (archRec) {
                         if (notaRec?.verificado) {
                             recuperacionHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mt-2">
-                                <p class="text-xs text-slate-500 font-bold mb-1">🔁 Recuperación de ${escapeHtml(etiquetaTipo)} — nota informativa (no reemplaza la original):</p>
+                                <p class="text-xs text-slate-500 font-bold mb-1">🔁 Recuperación de ${escapeHtml(etiquetaTipo)}:</p>
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xl font-black ${notaRecVal >= 7 ? 'text-emerald-600' : 'text-rose-600'}">${formatearNota(notaRecVal)} <span class="text-sm text-slate-400 font-normal">/ 10</span></span>
+                                    <div>
+                                        <span class="text-xl font-black ${notaEfectivaVal >= 7 ? 'text-emerald-600' : 'text-rose-600'}">${formatearNota(notaEfectivaVal)} <span class="text-sm text-slate-400 font-normal">/ 10</span></span>
+                                        <p class="text-[10px] text-purple-600 font-bold mt-0.5">Nota efectiva del insumo${notaOriginalVal !== null ? ` (promedio: original ${formatearNota(notaOriginalVal)} + recuperación ${formatearNota(notaRecVal)})` : ' (sin nota original: se tomó solo la recuperación)'}</p>
+                                    </div>
                                     <button onclick="imprimirReporteNPT('${claveRec}',${t.num})" class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg font-bold">🖨️ Imprimir reporte</button>
                                 </div>
                                 ${notaRec.observacion ? `<p class="text-xs text-slate-500 mt-1 italic">"${escapeHtml(notaRec.observacion)}"</p>` : ''}
                             </div>`;
                         } else if (iaRec) {
                             recuperacionHtml = `<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-2 text-xs text-amber-700">
-                                🔁 Recuperación evaluada automáticamente (${formatearNota(numero(iaRec.nota))}/10) — pendiente de verificación por el docente.
+                                🔁 Recuperación evaluada automáticamente (${formatearNota(numero(iaRec.nota))}/10) — pendiente de verificación por el docente. Una vez verificada, se promediará con tu nota original para dar tu nota final de este insumo.
                             </div>`;
                         } else {
                             recuperacionHtml = `<div class="text-xs text-slate-400 mt-2">🔁 Recuperación enviada — pendiente de revisión por el docente.</div>`;
@@ -6814,6 +6914,7 @@ video {
                         recuperacionHtml = `${avisoDevolucionRec}
                         <div class="bg-purple-50 border border-purple-200 rounded-xl p-3 mt-2">
                             <p class="text-xs font-bold text-purple-700 mb-2">🔁 Recuperación de ${escapeHtml(etiquetaTipo)} habilitada para ti</p>
+                            <p class="text-[10px] text-purple-500 mb-2">${notaOriginalVal !== null ? `Tu nota actual es ${formatearNota(notaOriginalVal)}/10. Al calificarse la recuperación, tu nota final de este insumo será el promedio de ambas.` : 'Aún no tienes nota original de este insumo: tu nota final será la de esta recuperación.'}</p>
                             <div class="flex gap-2">
                                 <input type="url" id="npt-url-rec-${t.num}-${tp.id}" placeholder="https://..."
                                     class="flex-1 px-3 py-2 bg-white border rounded-xl text-xs focus:ring-2 focus:ring-purple-500">
@@ -6864,10 +6965,11 @@ video {
                     examenRecHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center mt-2">
                         <p class="text-xs text-slate-500 font-bold mb-1">Examen de recuperación rendido</p>
                         <p class="text-sm font-black text-slate-700">${escapeHtml(mensajeCualitativoExamen(numero(notaExamenRecuperacion.nota)))}</p>
-                        <p class="text-[10px] text-slate-400 mt-1">Tu docente tiene el detalle completo de tu examen de recuperación.</p>
+                        <p class="text-[10px] text-purple-600 font-bold mt-1">🔁 Tu nota de recuperación se promedió con tu nota del examen original para dar tu nota final del examen.</p>
                     </div>`;
                 } else if (examenRecHab) {
-                    examenRecHtml = `<button onclick="comenzarExamenRecuperacionTrimestre(${t.num})" class="w-full bg-purple-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-purple-700 mt-2">🔁 Realizar examen de recuperación</button>`;
+                    examenRecHtml = `<button onclick="comenzarExamenRecuperacionTrimestre(${t.num})" class="w-full bg-purple-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-purple-700 mt-2">🔁 Realizar examen de recuperación</button>
+                    <p class="text-[10px] text-purple-500 mt-1 text-center">${notaExamen ? 'Al calificarse, se promediará con tu nota del examen original.' : 'Aún no tienes nota del examen original: tu nota final será la de esta recuperación.'}</p>`;
                 }
 
                 return `<div class="bg-white rounded-2xl shadow-md border-2 ${hab ? 'trimestre-card habilitado' : 'trimestre-card bloqueado border-slate-100'} p-5">
@@ -7363,19 +7465,45 @@ video {
             Object.entries(grupos).forEach(([g, lista]) => {
                 html += `<h2>${escapeHtml(g)} (${lista.length})</h2><table><tr><th class="col-num">#</th><th class="col-nombre">Estudiante</th><th class="col-cedula">Cédula</th><th class="col-abrev">📓 Cuaderno</th><th class="col-abrev">📘 Libro</th><th class="col-abrev">🛠️ Talleres</th><th class="col-abrev">🔗 Tarea</th><th class="col-abrev right">Prom. Insumos (70%)</th><th class="col-abrev">📝 Examen (30%)</th><th class="col-abrev right">Nota Final</th></tr>`;
                 const promediosGrupo = [];
+                const recuperacionesGrupo = [];
                 lista.forEach((e, i) => {
-                    const nC = notaNPTDe(e.cedula, t.num, 'cuaderno');
-                    const nL = notaNPTDe(e.cedula, t.num, 'libro');
-                    const nW = notaNPTDe(e.cedula, t.num, 'talleres');
-                    const nT = notaNPTDe(e.cedula, t.num, 'tarea');
-                    const nE = notaNPTDe(e.cedula, t.num, 'examen');
+                    const nC = notaEfectivaNPT(e.cedula, t.num, 'cuaderno');
+                    const nL = notaEfectivaNPT(e.cedula, t.num, 'libro');
+                    const nW = notaEfectivaNPT(e.cedula, t.num, 'talleres');
+                    const nT = notaEfectivaNPT(e.cedula, t.num, 'tarea');
+                    const nE = notaEfectivaNPT(e.cedula, t.num, 'examen');
                     const promIns = calcularPromedioInsumosNPT(e.cedula, t.num);
                     const notaFinal = calcularPromedioNPT(e.cedula, t.num);
                     if (notaFinal !== null) promediosGrupo.push(notaFinal);
-                    const c = v => v !== null ? formatearNota(v) : '—';
-                    html += `<tr><td class="center">${i+1}</td><td>${escapeHtml(e.nombre)}</td><td>${escapeHtml(e.cedula)}</td><td class="center">${c(nC)}</td><td class="center">${c(nL)}</td><td class="center">${c(nW)}</td><td class="center">${c(nT)}</td><td class="right">${c(promIns)}</td><td class="center">${c(nE)}</td><td class="right"><strong>${c(notaFinal)}</strong></td></tr>`;
+                    // "🔁" marca las celdas cuya nota ya incluye el promedio con una recuperación.
+                    const c = (v, tipo) => {
+                        if (v === null) return '—';
+                        const tieneRec = tipo && notaNPTDe(e.cedula, t.num, claveRecuperacionNPT(tipo)) !== null;
+                        return formatearNota(v) + (tieneRec ? ' 🔁' : '');
+                    };
+                    html += `<tr><td class="center">${i+1}</td><td>${escapeHtml(e.nombre)}</td><td>${escapeHtml(e.cedula)}</td><td class="center">${c(nC,'cuaderno')}</td><td class="center">${c(nL,'libro')}</td><td class="center">${c(nW,'talleres')}</td><td class="center">${c(nT,'tarea')}</td><td class="right">${c(promIns)}</td><td class="center">${c(nE,'examen')}</td><td class="right"><strong>${c(notaFinal)}</strong></td></tr>`;
+                    // Recopilar recuperaciones (insumos + examen) de este estudiante para la tabla aparte.
+                    NPT_TIPOS.forEach(tp => {
+                        const nRec = notaNPTDe(e.cedula, t.num, nptClaveRecuperacionInsumo(tp.id));
+                        if (nRec !== null) recuperacionesGrupo.push({ e, etiqueta: tp.label, tipo: tp.id, nota: nRec });
+                    });
+                    const nERec = notaNPTDe(e.cedula, t.num, 'examenRecuperacion');
+                    if (nERec !== null) recuperacionesGrupo.push({ e, etiqueta: '📝 Examen', tipo: 'examen', nota: nERec });
                 });
                 html += `</table>`;
+                // ---- Recuperaciones registradas: detalle de cómo se llegó a la nota efectiva ----
+                html += `<h3>🔁 Recuperaciones registradas — ${escapeHtml(g)}</h3>`;
+                if (recuperacionesGrupo.length) {
+                    html += `<table><tr><th class="col-num">#</th><th class="col-nombre">Estudiante</th><th class="col-cedula">Cédula</th><th>Insumo / Examen</th><th class="right">Nota original</th><th class="right">Nota recuperación</th><th class="right">Nota efectiva (promedio)</th></tr>`;
+                    recuperacionesGrupo.forEach((r, i) => {
+                        const original = notaNPTDe(r.e.cedula, t.num, r.tipo);
+                        const efectiva = notaEfectivaNPT(r.e.cedula, t.num, r.tipo);
+                        html += `<tr><td class="center">${i+1}</td><td>${escapeHtml(r.e.nombre)}</td><td>${escapeHtml(r.e.cedula)}</td><td>${r.etiqueta}</td><td class="right">${original !== null ? formatearNota(original) : '—'}</td><td class="right">${formatearNota(r.nota)}</td><td class="right"><strong>${formatearNota(efectiva)}</strong></td></tr>`;
+                    });
+                    html += `</table><p class="meta">La nota efectiva (promedio) es la que se usó en la fórmula del Promedio de Insumos / del Examen de este trimestre. Cuando no hay nota original, la efectiva es la de recuperación sola.</p>`;
+                } else {
+                    html += `<p class="meta">Sin recuperaciones registradas en este trimestre para ${escapeHtml(g)}.</p>`;
+                }
                 if (promediosGrupo.length) {
                     const promCurso = promediosGrupo.reduce((a,b) => a+b, 0) / promediosGrupo.length;
                     html += `<p class="meta">Nota final promedio del curso/paralelo en este trimestre: <strong>${promCurso.toFixed(2)}</strong> · Estudiantes con notas: ${promediosGrupo.length} de ${lista.length}</p>`;
@@ -7395,15 +7523,27 @@ video {
             const numTrim = trimestreActivoParaReportes();
             const t = trimestresEfectivos().find(x => x.num === numTrim);
             if (!t) { alert('No se encontró el trimestre seleccionado.'); return; }
-            let csv = 'Estudiante,Cédula,Curso,Paralelo,Cuaderno,Libro,Talleres,Tarea,Promedio Insumos,Examen,Nota Final\n';
+            let csv = 'Estudiante,Cédula,Curso,Paralelo,Cuaderno,Libro,Talleres,Tarea,Promedio Insumos,Examen,Nota Final,'
+                + 'Cuaderno (Original),Libro (Original),Talleres (Original),Tarea (Original),Examen (Original),'
+                + 'Cuaderno (Rec.),Libro (Rec.),Talleres (Rec.),Tarea (Rec.),Examen (Rec.)\n';
             alumnos.forEach(e => {
-                const nC = notaNPTDe(e.cedula, t.num, 'cuaderno');
-                const nL = notaNPTDe(e.cedula, t.num, 'libro');
-                const nW = notaNPTDe(e.cedula, t.num, 'talleres');
-                const nT = notaNPTDe(e.cedula, t.num, 'tarea');
-                const nE = notaNPTDe(e.cedula, t.num, 'examen');
+                const nC = notaEfectivaNPT(e.cedula, t.num, 'cuaderno');
+                const nL = notaEfectivaNPT(e.cedula, t.num, 'libro');
+                const nW = notaEfectivaNPT(e.cedula, t.num, 'talleres');
+                const nT = notaEfectivaNPT(e.cedula, t.num, 'tarea');
+                const nE = notaEfectivaNPT(e.cedula, t.num, 'examen');
                 const promIns = calcularPromedioInsumosNPT(e.cedula, t.num);
                 const notaFinal = calcularPromedioNPT(e.cedula, t.num);
+                const nCOrig = notaNPTDe(e.cedula, t.num, 'cuaderno');
+                const nLOrig = notaNPTDe(e.cedula, t.num, 'libro');
+                const nWOrig = notaNPTDe(e.cedula, t.num, 'talleres');
+                const nTOrig = notaNPTDe(e.cedula, t.num, 'tarea');
+                const nEOrig = notaNPTDe(e.cedula, t.num, 'examen');
+                const nCRec = notaNPTDe(e.cedula, t.num, nptClaveRecuperacionInsumo('cuaderno'));
+                const nLRec = notaNPTDe(e.cedula, t.num, nptClaveRecuperacionInsumo('libro'));
+                const nWRec = notaNPTDe(e.cedula, t.num, nptClaveRecuperacionInsumo('talleres'));
+                const nTRec = notaNPTDe(e.cedula, t.num, nptClaveRecuperacionInsumo('tarea'));
+                const nERec = notaNPTDe(e.cedula, t.num, 'examenRecuperacion');
                 csv += [
                     csvCampo(e.nombre), csvCampo(e.cedula), csvCampo(e.curso), csvCampo(e.paralelo),
                     csvCampo(nC !== null ? formatearNota(nC) : ''),
@@ -7412,7 +7552,17 @@ video {
                     csvCampo(nT !== null ? formatearNota(nT) : ''),
                     csvCampo(promIns !== null ? formatearNota(promIns) : ''),
                     csvCampo(nE !== null ? formatearNota(nE) : ''),
-                    csvCampo(notaFinal !== null ? formatearNota(notaFinal) : '')
+                    csvCampo(notaFinal !== null ? formatearNota(notaFinal) : ''),
+                    csvCampo(nCOrig !== null ? formatearNota(nCOrig) : ''),
+                    csvCampo(nLOrig !== null ? formatearNota(nLOrig) : ''),
+                    csvCampo(nWOrig !== null ? formatearNota(nWOrig) : ''),
+                    csvCampo(nTOrig !== null ? formatearNota(nTOrig) : ''),
+                    csvCampo(nEOrig !== null ? formatearNota(nEOrig) : ''),
+                    csvCampo(nCRec !== null ? formatearNota(nCRec) : ''),
+                    csvCampo(nLRec !== null ? formatearNota(nLRec) : ''),
+                    csvCampo(nWRec !== null ? formatearNota(nWRec) : ''),
+                    csvCampo(nTRec !== null ? formatearNota(nTRec) : ''),
+                    csvCampo(nERec !== null ? formatearNota(nERec) : '')
                 ].join(',') + '\n';
             });
             descargarArchivo(`reporte_trimestre_${t.num}_${fechaArchivo()}.csv`, csv, 'text/csv;charset=utf-8');
@@ -7439,14 +7589,19 @@ video {
             let html = `<div class="filtro"><strong>Estudiante:</strong> ${escapeHtml(est.nombre)}<br><strong>Cédula:</strong> ${escapeHtml(est.cedula)}<br><strong>Curso/Paralelo:</strong> ${escapeHtml(est.curso||'-')} "${escapeHtml(est.paralelo||'-')}"<br><strong>Período académico:</strong> ${escapeHtml(periodo)}<br><strong>Trimestre:</strong> ${escapeHtml(t.label)}${t.meses ? ' ('+escapeHtml(t.meses)+')' : ''}<br><strong>Fórmula aplicada:</strong> ${escapeHtml(formulaTxt)}</div>`;
             html += `<table><tr><th>Estudiante</th><td>${escapeHtml(est.nombre)}</td></tr><tr><th>Cédula</th><td>${escapeHtml(est.cedula)}</td></tr><tr><th>Curso / Paralelo</th><td>${escapeHtml(est.curso||'-')} "${escapeHtml(est.paralelo||'-')}"</td></tr><tr><th>Correo</th><td>${escapeHtml(est.correo||'-')}</td></tr><tr><th>Representante</th><td>${escapeHtml(est.repNombre||'-')} — ${escapeHtml(est.repCelular||'-')}</td></tr></table>`;
 
-            const nC = notaNPTDe(est.cedula, t.num, 'cuaderno');
-            const nL = notaNPTDe(est.cedula, t.num, 'libro');
-            const nW = notaNPTDe(est.cedula, t.num, 'talleres');
-            const nT = notaNPTDe(est.cedula, t.num, 'tarea');
-            const nE = notaNPTDe(est.cedula, t.num, 'examen');
+            const nC = notaEfectivaNPT(est.cedula, t.num, 'cuaderno');
+            const nL = notaEfectivaNPT(est.cedula, t.num, 'libro');
+            const nW = notaEfectivaNPT(est.cedula, t.num, 'talleres');
+            const nT = notaEfectivaNPT(est.cedula, t.num, 'tarea');
+            const nE = notaEfectivaNPT(est.cedula, t.num, 'examen');
             const promIns = calcularPromedioInsumosNPT(est.cedula, t.num);
             const prom = calcularPromedioNPT(est.cedula, t.num);
-            const c = v => v !== null ? formatearNota(v) : '—';
+            // "🔁" marca las notas que ya incluyen el promedio con una recuperación.
+            const c = (v, tipo) => {
+                if (v === null) return '—';
+                const tieneRec = tipo && notaNPTDe(est.cedula, t.num, claveRecuperacionNPT(tipo)) !== null;
+                return formatearNota(v) + (tieneRec ? ' 🔁' : '');
+            };
             const colorBarra = v => v === null ? '#cbd5e1' : (v >= 9 ? '#059669' : v >= 7 ? '#10b981' : v >= 4 ? '#f59e0b' : '#ef4444');
             const barra = (v) => {
                 if (v === null) return '<div style="background:#f1f5f9;height:10px;border-radius:5px;width:100%"></div>';
@@ -7455,18 +7610,41 @@ video {
             };
             html += `<h2>${escapeHtml(t.label)} ${t.meses ? '<span class="meta">('+escapeHtml(t.meses)+')</span>' : ''}</h2>`;
             html += `<table><tr><th>Insumo</th><th>Nota</th><th style="width:45%">Visual</th></tr>`;
-            html += `<tr><td>📓 Cuaderno</td><td class="right">${c(nC)}</td><td>${barra(nC)}</td></tr>`;
-            html += `<tr><td>📘 Libro</td><td class="right">${c(nL)}</td><td>${barra(nL)}</td></tr>`;
-            html += `<tr><td>🛠️ Talleres</td><td class="right">${c(nW)}</td><td>${barra(nW)}</td></tr>`;
-            html += `<tr><td>🔗 Tarea</td><td class="right">${c(nT)}</td><td>${barra(nT)}</td></tr>`;
+            html += `<tr><td>📓 Cuaderno</td><td class="right">${c(nC,'cuaderno')}</td><td>${barra(nC)}</td></tr>`;
+            html += `<tr><td>📘 Libro</td><td class="right">${c(nL,'libro')}</td><td>${barra(nL)}</td></tr>`;
+            html += `<tr><td>🛠️ Talleres</td><td class="right">${c(nW,'talleres')}</td><td>${barra(nW)}</td></tr>`;
+            html += `<tr><td>🔗 Tarea</td><td class="right">${c(nT,'tarea')}</td><td>${barra(nT)}</td></tr>`;
             html += `<tr><th>Promedio de Insumos (70%)</th><td class="right"><strong>${c(promIns)}</strong></td><td>${barra(promIns)}</td></tr>`;
-            html += `<tr><td>📝 Examen (30%)</td><td class="right">${c(nE)}</td><td>${barra(nE)}</td></tr>`;
+            html += `<tr><td>📝 Examen (30%)</td><td class="right">${c(nE,'examen')}</td><td>${barra(nE)}</td></tr>`;
             html += `<tr><th>Nota Final del trimestre</th><td class="right"><strong>${prom !== null ? formatearNota(prom) : '—'}</strong></td><td>${barra(prom)}</td></tr></table>`;
+            html += `<p class="meta">🔁 = esta nota ya es el promedio entre la nota original y su recuperación (ver detalle abajo).</p>`;
 
             if (prom !== null) {
                 html += `<div class="resumen"><h2>NOTA FINAL — ${escapeHtml(t.label)}</h2><p style="font-size:22px"><strong>${formatearNota(prom)} / 10</strong></p></div>`;
                 html += tablaResultadosEvaluacion([prom], `RESULTADOS DEL DIAGNÓSTICO — ${escapeHtml(est.nombre)} · ${escapeHtml(t.label)}`);
             }
+
+            // ---- Recuperaciones registradas (insumos + examen): detalle de cómo se llegó a la nota efectiva ----
+            const recuperaciones = [];
+            NPT_TIPOS.forEach(tp => {
+                const nRec = notaNPTDe(est.cedula, t.num, nptClaveRecuperacionInsumo(tp.id));
+                if (nRec !== null) recuperaciones.push({ etiqueta: tp.label, tipo: tp.id, nota: nRec });
+            });
+            const nERecInd = notaNPTDe(est.cedula, t.num, 'examenRecuperacion');
+            if (nERecInd !== null) recuperaciones.push({ etiqueta: '📝 Examen', tipo: 'examen', nota: nERecInd });
+            html += `<h2>🔁 Recuperaciones registradas</h2>`;
+            if (recuperaciones.length) {
+                html += `<table><tr><th>Insumo / Examen</th><th class="right">Nota original</th><th class="right">Nota recuperación</th><th class="right">Nota efectiva (promedio)</th></tr>`;
+                recuperaciones.forEach(r => {
+                    const original = notaNPTDe(est.cedula, t.num, r.tipo);
+                    const efectiva = notaEfectivaNPT(est.cedula, t.num, r.tipo);
+                    html += `<tr><td>${r.etiqueta}</td><td class="right">${original !== null ? formatearNota(original) : '—'}</td><td class="right">${formatearNota(r.nota)}</td><td class="right"><strong>${formatearNota(efectiva)}</strong></td></tr>`;
+                });
+                html += `</table><p class="meta">La nota efectiva (promedio) es la que se usó arriba, en la tabla principal y en la Nota Final del trimestre. Cuando no hay nota original, la efectiva es la de recuperación sola.</p>`;
+            } else {
+                html += `<p class="meta">Sin recuperaciones registradas en este trimestre.</p>`;
+            }
+
             abrirODescargarReporte(`Reporte Individual — ${est.nombre} — ${t.label}`, html, `reporte_individual_${est.cedula}_t${t.num}_${fechaArchivo()}.html`);
         }
 
@@ -7640,7 +7818,7 @@ video {
             const tipos = ['cuaderno', 'libro', 'talleres', 'tarea'];
             let suma = 0, hayAlguno = false;
             tipos.forEach(tipo => {
-                const nota = notaNPTDe(cedula, numTrimestre, tipo);
+                const nota = notaEfectivaNPT(cedula, numTrimestre, tipo);
                 if (nota !== null) { suma += nota; hayAlguno = true; }
             });
             if (!hayAlguno) return null; // ningún insumo registrado todavía: aún no hay nada que mostrar
@@ -7657,7 +7835,7 @@ video {
             const pesoExamen = numero(formula.examen, 30);
             const pesoInsumos = 100 - pesoExamen;
             const promIns = calcularPromedioInsumosNPT(cedula, numTrimestre);
-            const examen = notaNPTDe(cedula, numTrimestre, 'examen');
+            const examen = notaEfectivaNPT(cedula, numTrimestre, 'examen');
             if (promIns === null && examen === null) return null;
             if (examen === null) return promIns;
             if (promIns === null) return examen;
@@ -8397,8 +8575,11 @@ video {
             }
             const t = trimestresEfectivos().find(x => x.num === numTrimestre);
             const esRec = nptEsClaveRecuperacionInsumo(tipo);
-            const tp = NPT_TIPOS.find(x => x.id === nptTipoBaseDeClaveInsumo(tipo));
+            const tipoBase = nptTipoBaseDeClaveInsumo(tipo);
+            const tp = NPT_TIPOS.find(x => x.id === tipoBase);
             const etiquetaTp = tp ? `${tp.label}${esRec ? ' (Recuperación)' : ''}` : tipo;
+            const notaOriginalRef = esRec ? notaNPTDe(cedula, numTrimestre, tipoBase) : null;
+            const notaEfectivaRef = esRec ? notaEfectivaNPT(cedula, numTrimestre, tipoBase) : null;
             const ventana = window.open('', '_blank');
             if (!ventana) { alert('El navegador bloqueó la ventana de impresión. Habilita las ventanas emergentes.'); return; }
             ventana.document.write(`
@@ -8423,7 +8604,8 @@ video {
                     <tr><th>Nota</th><td>${formatearNota(numero(nota.nota))} / 10</td></tr>
                     <tr><th>Observación del docente</th><td>${escapeHtml(nota.observacion||'-')}</td></tr>
                     <tr><th>Verificado por</th><td>${escapeHtml(nota.docente||'-')} — ${escapeHtml(nota.fechaVerificacion||'-')}</td></tr>
-                    ${esRec ? '<tr><th>Nota informativa</th><td>Esta nota de recuperación no reemplaza ni promedia con la nota original.</td></tr>' : ''}
+                    ${esRec ? `<tr><th>Nota original</th><td>${notaOriginalRef !== null ? formatearNota(notaOriginalRef) + ' / 10' : 'No registrada'}</td></tr>
+                    <tr><th>🔁 Nota efectiva del insumo</th><td><strong>${formatearNota(notaEfectivaRef)} / 10</strong> — ${notaOriginalRef !== null ? 'promedio entre la nota original y esta recuperación' : 'no había nota original: se tomó solo esta recuperación'}. Esta es la nota que entra a la fórmula del trimestre.</td></tr>` : ''}
                 </table>
                 </body></html>`);
             ventana.document.close();
