@@ -2139,8 +2139,6 @@ video {
                 <select id="select-filtro-curso" onchange="cambiarFiltro()" class="px-3 py-2 bg-slate-50 border rounded-lg text-sm"></select>
                 <select id="select-filtro-paralelo" onchange="cambiarFiltro()" class="px-3 py-2 bg-slate-50 border rounded-lg text-sm"></select>
                 <button onclick="limpiarNominaCompleta()" class="ml-auto bg-rose-50 text-rose-600 px-3 py-2 rounded-lg text-xs">🗑️ Vaciar Nómina</button>
-                <button onclick="migrarFormatoCursoLegacy()" class="bg-amber-50 text-amber-700 px-3 py-2 rounded-lg text-xs" title="Actualiza registros guardados como 1do./2do/3ro. al nuevo formato 1°/2°/3°">🔄 Corregir formato de curso</button>
-                <button onclick="migrarNodosNPTLegacy()" class="bg-amber-50 text-amber-700 px-3 py-2 rounded-lg text-xs" title="Copia los datos guardados bajo ppeConfig/ppeNotas/etc. a los nuevos nodos nptConfig/nptNotas/etc.">🔄 Migrar nodos NPT (ppe→npt)</button>
                 <button onclick="asignarPeriodoActivoALegacy()" class="bg-amber-50 text-amber-700 px-3 py-2 rounded-lg text-xs" title="Asigna el período académico activo a los estudiantes importados antes de activar esta función">🔄 Asignar período a nómina existente</button>
             </div>
 
@@ -2167,7 +2165,10 @@ video {
                     <!-- Entregas recibidas -->
                     <div class="bg-white rounded-xl border p-4">
                         <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
-                            <h4 class="font-bold text-sm">📥 Entregas Recibidas</h4>
+                            <div class="flex gap-2">
+                                <button id="npt-tab-entregas-sistema" onclick="cambiarModoEntregasNPT('sistema')" class="px-3 py-2 rounded-xl text-sm font-bold border-2 border-brand-600 bg-brand-600 text-white">📥 Entregas recibidas en sistema</button>
+                                <button id="npt-tab-entregas-otros" onclick="cambiarModoEntregasNPT('otros_medios')" class="px-3 py-2 rounded-xl text-sm font-bold border-2 border-amber-500 text-amber-700 bg-white hover:bg-amber-50">📋 Entregas recibidas otros medios</button>
+                            </div>
                             <div class="flex gap-2 flex-wrap">
                                 <input type="text" id="npt-buscar-apellido" oninput="renderNPTDocente()" placeholder="🔎 Buscar por apellido..." class="text-xs border rounded-lg px-2 py-1 w-40">
                                 <select id="npt-filtro-trimestre" onchange="renderNPTDocente()" class="text-xs border rounded-lg px-2 py-1">
@@ -2202,6 +2203,9 @@ video {
                                 <button id="npt-btn-reevaluar-pendientes-verificar" onclick="reevaluarTodosPendientesVerificarIA()" class="bg-violet-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-violet-700">🔁 Re-evaluar IA pendientes de verificar</button>
                                 <button onclick="exportarNPTCSV()" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold">📎 Exportar CSV</button>
                             </div>
+                        </div>
+                        <div id="npt-otros-medios-info" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs text-amber-800">
+                            📋 Aquí aparecen los estudiantes que, al cierre de la fecha de entrega (o al cerrarse el examen), <strong>no</strong> entregaron el insumo o rindieron el examen en el sistema. Ingresa la nota directamente; el campo de enlace es opcional y sirve para registrar la evidencia de la calificación asignada (foto, escaneo, etc.). Puedes editarla luego de guardarla.
                         </div>
                         <div id="npt-eval-progreso" class="hidden mb-3">
                             <div class="flex items-center justify-between text-xs text-indigo-700 font-bold mb-1">
@@ -2570,6 +2574,12 @@ video {
                 <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Observación (opcional)</label>
                 <textarea id="npt-input-obs" rows="2" placeholder="Comentario sobre la evidencia entregada..."
                     class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-sm focus:ring-2 focus:ring-brand-500"></textarea>
+            </div>
+            <div id="npt-otros-medios-link-wrap" class="hidden mb-4">
+                <label class="block text-xs font-bold text-amber-700 uppercase mb-1">🔗 Enlace de evidencia (opcional)</label>
+                <input type="url" id="npt-input-link-evidencia" placeholder="https://..."
+                    class="w-full px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                <p class="text-[11px] text-amber-600 mt-1">Foto, escaneo o cualquier respaldo de esta calificación asignada por otros medios.</p>
             </div>
             <label class="flex items-center gap-2 mb-4 text-sm font-bold text-slate-700">
                 <input type="checkbox" id="npt-input-verificado" class="w-4 h-4">
@@ -3409,108 +3419,6 @@ video {
             guardarBackup();
             actualizarSelectores();
             actualizarPaneles();
-        }
-
-        /**
-         * Migración de formato de curso: registros antiguos guardados como
-         * "1do.", "2do" o "3ro." se actualizan a "1°", "2°", "3°". Necesaria
-         * porque `curso` es texto libre replicado en cada registro de
-         * estudiantes y calificaciones (no es una lista maestra), así que
-         * cambiar solo el <select> del formulario no corrige lo ya guardado.
-         * Es segura de ejecutar más de una vez: si no encuentra coincidencias
-         * con el formato antiguo, no hace nada.
-         */
-        const MAPA_CURSO_LEGACY = {
-            '1do.': '1°', '1do': '1°', '1ro.': '1°', '1ro': '1°',
-            '2do.': '2°', '2do': '2°',
-            '3ro.': '3°', '3ro': '3°'
-        };
-        async function migrarFormatoCursoLegacy() {
-            const afectadosEst = estudiantes.filter(e => MAPA_CURSO_LEGACY[e.curso]);
-            const afectadosCal = calificaciones.filter(c => MAPA_CURSO_LEGACY[c.curso]);
-            const total = afectadosEst.length + afectadosCal.length;
-            if (total === 0) {
-                alert('No se encontraron registros con el formato antiguo de curso (1do., 2do, 3ro.). No hay nada que migrar.');
-                return;
-            }
-            if (!confirm(`Se encontraron ${afectadosEst.length} estudiante(s) y ${afectadosCal.length} calificación(es) con el formato antiguo de curso. Se actualizarán a "1°", "2°" o "3°". ¿Continuar?`)) return;
-
-            const authOk = await ensureAuth();
-            let okEst = 0, okCal = 0;
-            for (const est of afectadosEst) {
-                const nuevoCurso = MAPA_CURSO_LEGACY[est.curso];
-                est.curso = nuevoCurso;
-                if (authOk) {
-                    try { await guardarValorFirebase(`${rutaEstudiantes}/${est.cedula}/curso`, nuevoCurso); okEst++; }
-                    catch (e) { console.error('No se pudo migrar estudiante', est.cedula, e); }
-                } else okEst++;
-            }
-            for (const cal of afectadosCal) {
-                const nuevoCurso = MAPA_CURSO_LEGACY[cal.curso];
-                cal.curso = nuevoCurso;
-                if (authOk) {
-                    try { await guardarValorFirebase(`${rutaCalificaciones}/${cal.cedula}/curso`, nuevoCurso); okCal++; }
-                    catch (e) { console.error('No se pudo migrar calificación', cal.cedula, e); }
-                } else okCal++;
-            }
-            guardarBackup();
-            actualizarSelectores();
-            actualizarPaneles();
-            alert(`Migración completada: ${okEst} de ${afectadosEst.length} estudiante(s) y ${okCal} de ${afectadosCal.length} calificación(es) actualizados.`);
-        }
-
-        /**
-         * Migración de nodos raíz de Firebase: el módulo de notas por
-         * trimestre usaba el prefijo interno "ppe" (ppeConfig, ppeNotas,
-         * ppeArchivos, etc.), sin relación con el sistema. Se renombró a
-         * "npt" en el código; esta función copia los datos ya guardados
-         * bajo los nombres antiguos a los nuevos nodos y borra los
-         * antiguos. Segura de ejecutar más de una vez: si no encuentra
-         * datos en los nombres antiguos, no hace nada.
-         */
-        const MAPA_NODOS_NPT_LEGACY = {
-            ppeConfig: 'nptConfig',
-            ppeHabilitacionEstudiantes: 'nptHabilitacionEstudiantes',
-            ppeExamenHabilitacionEstudiantes: 'nptExamenHabilitacionEstudiantes',
-            ppeExamenes: 'nptExamenes',
-            ppeRubricas: 'nptRubricas',
-            ppeNotas: 'nptNotas',
-            ppeArchivos: 'nptArchivos',
-            ppeEvaluacionesIA: 'nptEvaluacionesIA'
-        };
-        async function migrarNodosNPTLegacy() {
-            const authOk = await ensureAuth();
-            if (!authOk) {
-                alert('No se pudo autenticar con Firebase. La migración de nodos requiere conexión activa.');
-                return;
-            }
-            const encontrados = [];
-            for (const viejo of Object.keys(MAPA_NODOS_NPT_LEGACY)) {
-                try {
-                    const datos = await leerValorRutaFirebase(viejo);
-                    if (datos !== null && datos !== undefined) encontrados.push(viejo);
-                } catch (e) { console.error('Error revisando', viejo, e); }
-            }
-            if (encontrados.length === 0) {
-                alert('No se encontró ningún dato bajo los nombres antiguos (ppeConfig, ppeNotas, etc.). No hay nada que migrar.');
-                return;
-            }
-            if (!confirm(`Se encontraron datos en ${encontrados.length} nodo(s) con el nombre antiguo: ${encontrados.join(', ')}.\n\nSe copiarán a los nuevos nombres (npt...) y luego se borrarán los nodos antiguos. Esta acción no se puede deshacer. ¿Continuar?`)) return;
-
-            const resultados = [];
-            for (const viejo of encontrados) {
-                const nuevo = MAPA_NODOS_NPT_LEGACY[viejo];
-                try {
-                    const datos = await leerValorRutaFirebase(viejo);
-                    await guardarValorFirebase(nuevo, datos);
-                    await borrarValorFirebase(viejo);
-                    resultados.push(`✅ ${viejo} → ${nuevo}`);
-                } catch (e) {
-                    console.error('Error migrando', viejo, e);
-                    resultados.push(`❌ ${viejo}: ${e.message}`);
-                }
-            }
-            alert('Migración de nodos completada:\n\n' + resultados.join('\n') + '\n\nRecarga la página para ver los datos migrados.');
         }
 
         // ==================== UI Y FILTROS ====================
@@ -5604,6 +5512,64 @@ video {
         }
 
         // ---- Tabla docente de entregas NPT ----
+        let nptModoEntregas = 'sistema'; // 'sistema' | 'otros_medios'
+        function cambiarModoEntregasNPT(modo) {
+            nptModoEntregas = modo === 'otros_medios' ? 'otros_medios' : 'sistema';
+            const btnSistema = document.getElementById('npt-tab-entregas-sistema');
+            const btnOtros = document.getElementById('npt-tab-entregas-otros');
+            const info = document.getElementById('npt-otros-medios-info');
+            const btnEvaluarTodos = document.getElementById('npt-btn-evaluar-todos');
+            const btnReevaluar = document.getElementById('npt-btn-reevaluar-pendientes-verificar');
+            const esOtros = nptModoEntregas === 'otros_medios';
+            if (btnSistema) btnSistema.className = `px-3 py-2 rounded-xl text-sm font-bold border-2 ${esOtros ? 'border-slate-200 text-slate-500 bg-white hover:bg-slate-50' : 'border-brand-600 bg-brand-600 text-white'}`;
+            if (btnOtros) btnOtros.className = `px-3 py-2 rounded-xl text-sm font-bold border-2 ${esOtros ? 'border-amber-500 bg-amber-500 text-white' : 'border-amber-500 text-amber-700 bg-white hover:bg-amber-50'}`;
+            info?.classList.toggle('hidden', !esOtros);
+            btnEvaluarTodos?.classList.toggle('hidden', esOtros);
+            btnReevaluar?.classList.toggle('hidden', esOtros);
+            renderNPTDocente();
+        }
+
+        // Pseudo-tipo "examen" para el modo "Otros medios": el examen no tiene fecha máxima propia
+        // (solo habilitación on/off), así que "cerrado" para el examen significa que el docente ya
+        // no lo tiene habilitado para ese estudiante — equivalente a que el plazo del insumo venza.
+        const NPT_TP_EXAMEN_PSEUDOTIPO = { id: 'examen', label: '📝 Examen', icono: '📝' };
+        function nptTipoOInsumoCerrado(curso, paralelo, n, tipoId, cedula) {
+            if (tipoId === 'examen') return !nptExamenEstudianteHabilitado(curso, paralelo, n, cedula);
+            return fechaMaximaVencida(nptInsumoFechaMaxima(curso, paralelo, n, tipoId)) || !nptInsumoHabilitado(curso, paralelo, n, tipoId);
+        }
+        // Construye las filas de "Entregas recibidas OTROS MEDIOS": un candidato por cada
+        // (estudiante × insumo/examen × trimestre) que ya cerró su plazo Y el estudiante no lo
+        // entregó por el sistema (arch ausente, o arch existente pero registrado como otros_medios
+        // — para permitir editar lo ya calificado por esta vía).
+        function construirFilasOtrosMediosNPT(alumnos, filtroT) {
+            const filas = [];
+            const tiposConExamen = [...NPT_TIPOS.map(tp => tp.id), 'examen'];
+            alumnos.forEach(est => {
+                trimestresEfectivos().forEach(t => {
+                    if (filtroT && String(t.num) !== filtroT) return;
+                    tiposConExamen.forEach(tipoId => {
+                        if (!nptTipoOInsumoCerrado(est.curso, est.paralelo, t.num, tipoId, est.cedula)) return;
+                        const arch = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[tipoId] || null;
+                        const nota = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[tipoId] || null;
+                        // El examen real (rendido en el sistema) NUNCA pasa por nptArchivos — solo
+                        // queda registrado en nptNotas (con correctas/total/detalle). Los insumos, en
+                        // cambio, siempre dejan un registro en nptArchivos apenas se suben, incluso
+                        // antes de calificarse. Por eso el "¿ya lo entregó por el sistema?" se verifica
+                        // en un nodo distinto según el tipo.
+                        const registroSistema = tipoId === 'examen' ? nota : arch;
+                        if (registroSistema && registroSistema.origen !== 'otros_medios') return; // ya lo entregó por el sistema
+                        const tp = tipoId === 'examen' ? NPT_TP_EXAMEN_PSEUDOTIPO : NPT_TIPOS.find(x => x.id === tipoId);
+                        filas.push({
+                            clase: 'otrosMedios', esRecuperacion: false, claveInsumo: tipoId,
+                            estado: nota ? 'calificado' : 'no-calificado',
+                            fechaOrden: fechaOrdenNPT(nota?.fechaNota || arch?.fechaEntrega || null),
+                            est, t, tp, arch, nota, ia: null
+                        });
+                    });
+                });
+            });
+            return filas;
+        }
         function renderNPTDocente() {
             iniciarEscuchaBloqueosExamenDocente();
             const tbody  = document.getElementById('npt-tabla-body');
@@ -5623,6 +5589,71 @@ video {
                     .catch(e => console.warn('[NPT] Precarga docente:', e.message));
             }
 
+            if (nptModoEntregas === 'otros_medios') {
+                let filasFiltradas = construirFilasOtrosMediosNPT(alumnos, filtroT).filter(fila => {
+                    if (filtroTipoEnvio === 'insumos' && fila.claveInsumo === 'examen') return false;
+                    if (filtroTipoEnvio === 'examen' && fila.claveInsumo !== 'examen') return false;
+                    if (filtroTipoEnvio === 'recuperacion') return false; // "Otros medios" no maneja recuperaciones
+                    if (['cuaderno','libro','talleres','tarea'].includes(filtroTipoEnvio) && fila.claveInsumo !== filtroTipoEnvio) return false;
+                    if (filtroEstadoEnvio === 'calificados' && fila.estado !== 'calificado') return false;
+                    if (filtroEstadoEnvio === 'no-calificados' && fila.estado !== 'no-calificado') return false;
+                    if (filtroEstadoEnvio === 'ia-pendiente') return false; // "Otros medios" nunca pasa por IA
+                    if (busquedaApellido && !claveApellidoNPT(fila.est?.nombre || '').includes(busquedaApellido)) return false;
+                    return true;
+                });
+                filasFiltradas.sort((a, b) => {
+                    const nombreA = claveApellidoNPT(a.est?.nombre || '');
+                    const nombreB = claveApellidoNPT(b.est?.nombre || '');
+                    if (ordenEnvios === 'apellido-asc' || ordenEnvios === 'apellido-desc') {
+                        const cmp = nombreA.localeCompare(nombreB, 'es', { sensitivity: 'base' });
+                        return ordenEnvios === 'apellido-asc' ? cmp : -cmp;
+                    }
+                    return nombreA.localeCompare(nombreB, 'es', { sensitivity: 'base' });
+                });
+                tbody.innerHTML = '';
+                if (filasFiltradas.length === 0) {
+                    if (noData) noData.textContent = busquedaApellido ? `📭 Sin resultados para "${document.getElementById('npt-buscar-apellido').value}".` : '📭 No hay estudiantes pendientes por otros medios con este filtro.';
+                    noData?.classList.remove('hidden');
+                    return;
+                }
+                noData?.classList.add('hidden');
+                filasFiltradas.forEach((fila, i) => {
+                    const { est, t, tp, arch, nota, claveInsumo } = fila;
+                    const notaVal = nota ? numero(nota.nota) : null;
+                    const badgeClass = notaVal === null ? 'nota-badge-SIN' :
+                        notaVal >= 9 ? 'nota-badge-DAR' : notaVal >= 7 ? 'nota-badge-AAR' :
+                        notaVal >= 4 ? 'nota-badge-PAR' : 'nota-badge-NAR';
+                    const notaTexto = notaVal !== null ? formatearNota(notaVal) : 'Sin calificar';
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b hover:bg-amber-50/40';
+                    tr.innerHTML = `
+                        <td class="p-2 text-center text-slate-400">${i+1}</td>
+                        <td class="p-2 font-medium text-xs">${escapeHtml(est.nombre)}</td>
+                        <td class="p-2 font-mono text-xs">${escapeHtml(est.cedula)}</td>
+                        <td class="p-2 text-center">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">${t.label}</span><br>
+                            <span class="text-[10px] text-slate-500">${tp.label}</span>
+                        </td>
+                        <td class="p-2 text-center">
+                            ${arch?.url
+                                ? `<a href="${escapeHtml(arch.url)}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-xs bg-brand-50 text-brand-700 font-bold px-2 py-1 rounded-lg hover:bg-brand-100">🔗 Ver evidencia</a>`
+                                : `<span class="text-[11px] text-slate-400">Sin evidencia</span>`}
+                        </td>
+                        <td class="p-2 text-center text-[11px] text-slate-500">${escapeHtml(nota?.fechaNota || arch?.fechaEntrega || '-')}</td>
+                        <td class="p-2 text-center">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full ${badgeClass}">${notaTexto}</span>
+                            ${nota ? '<div class="text-[10px] text-emerald-600 font-bold mt-0.5">✔ Registrada</div>' : '<div class="text-[10px] text-amber-600 font-bold mt-0.5">⏳ Pendiente</div>'}
+                        </td>
+                        <td class="p-2 text-center space-y-1">
+                            <button onclick="abrirModalNotaNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'${claveInsumo}',true)"
+                                class="block w-full bg-amber-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-amber-700">
+                                ${nota ? '✏️ Editar' : '📝 Calificar'}</button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+                return;
+            }
+
             const filas = [];
             alumnos.forEach(est => {
                 trimestresEfectivos().forEach(t => {
@@ -5631,7 +5662,8 @@ video {
                         const arch = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
                         const nota = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
                         const ia   = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
-                        if (arch) filas.push({ clase: 'insumo', esRecuperacion: false, claveInsumo: tp.id, estado: nota ? 'calificado' : (ia ? 'ia-pendiente' : 'no-calificado'), fechaOrden: fechaOrdenNPT(arch.fechaEntrega), est, t, tp, arch, nota, ia });
+                        // Excluye lo registrado por "Otros medios": eso solo aparece en esa pestaña.
+                        if (arch && arch.origen !== 'otros_medios') filas.push({ clase: 'insumo', esRecuperacion: false, claveInsumo: tp.id, estado: nota ? 'calificado' : (ia ? 'ia-pendiente' : 'no-calificado'), fechaOrden: fechaOrdenNPT(arch.fechaEntrega), est, t, tp, arch, nota, ia });
                         // Recuperación de este insumo (clave "{tipo}Recuperacion"): misma forma de fila,
                         // marcada con esRecuperacion para que la tabla la distinga visualmente.
                         const claveRec = nptClaveRecuperacionInsumo(tp.id);
@@ -5641,9 +5673,11 @@ video {
                         if (archRec) filas.push({ clase: 'insumoRecuperacion', esRecuperacion: true, claveInsumo: claveRec, estado: notaRec ? 'calificado' : (iaRec ? 'ia-pendiente' : 'no-calificado'), fechaOrden: fechaOrdenNPT(archRec.fechaEntrega), est, t, tp, arch: archRec, nota: notaRec, ia: iaRec });
                     });
                     // Examen: se gestiona igual que un insumo (ver/imprimir + eliminar para permitir repetir),
-                    // aunque no hay archivo subido — es una evaluación automática.
+                    // aunque no hay archivo subido — es una evaluación automática. Excluye lo registrado
+                    // por "Otros medios" (no tiene correctas/total/fecha del intento real): eso solo
+                    // aparece en esa pestaña.
                     const examen = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examen || null;
-                    if (examen) filas.push({ clase: 'examen', esRecuperacion: false, estado: 'calificado', fechaOrden: fechaOrdenNPT(examen.fecha), est, t, examen });
+                    if (examen && examen.origen !== 'otros_medios') filas.push({ clase: 'examen', esRecuperacion: false, estado: 'calificado', fechaOrden: fechaOrdenNPT(examen.fecha), est, t, examen });
                     // Examen de RECUPERACIÓN: mismo tratamiento, campo separado (no entra en la nota ponderada).
                     const examenRecuperacion = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examenRecuperacion || null;
                     if (examenRecuperacion) filas.push({ clase: 'examenRecuperacion', esRecuperacion: true, estado: 'calificado', fechaOrden: fechaOrdenNPT(examenRecuperacion.fecha), est, t, examenRecuperacion });
@@ -5782,7 +5816,7 @@ video {
 
                 // No basta con que el TIPO admita IA (NPT_TIPOS_RUBRICA): se exige que ya exista
                 // una rúbrica publicada para este curso/paralelo/trimestre específico, para no
-                // mostrar el botón "Evaluar con IA" cuando aún fallaría con un mensaje de error.
+                // mostrar el botón "Ejecutar rúbrica" cuando aún fallaría con un mensaje de error.
                 const tieneRubrica = NPT_TIPOS_RUBRICA.includes(tp.id) && !!nptRubricaTexto(est.curso, est.paralelo, t.num, tp.id);
                 const tr = document.createElement('tr');
                 tr.className = 'border-b hover:bg-slate-50';
@@ -5807,7 +5841,7 @@ video {
                         ${tieneRubrica ? `<button onclick="evaluarConIA('${escapeHtml(est.cedula)}',${t.num},'${claveInsumo}',this)"
                             ${nptEvalMasivaEnCurso ? 'disabled' : ''}
                             class="block w-full text-xs px-2 py-1 rounded-lg ${nptEvalMasivaEnCurso ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700'}">
-                            🤖 ${ia ? 'Re-evaluar IA' : 'Evaluar con IA'}</button>` : ''}
+                            🤖 ${ia ? 'Re-ejecutar rúbrica' : 'Ejecutar rúbrica'}</button>` : ''}
                         <button onclick="abrirModalNotaNPT('${escapeHtml(est.cedula)}','${escapeHtml(est.nombre).replace(/'/g,"\\'")}',${t.num},'${claveInsumo}')"
                             class="block w-full bg-brand-600 text-white text-xs px-2 py-1 rounded-lg hover:bg-brand-700">
                             ${nota ? '✏️ Editar / Verificar' : '📝 Calificar'}</button>
@@ -6242,7 +6276,7 @@ video {
                         const nota = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
                         if (nota?.verificado) return; // ya calificado y verificado manualmente, no se toca
                         const ia = nptEvaluacionesIA[est.cedula]?.[`trimestre${t.num}`]?.[tp.id] || null;
-                        if (ia) return; // ya tiene evaluación IA pendiente de verificar; para reintentar una puntual se usa "🔁 Re-evaluar IA" en su fila
+                        if (ia) return; // ya tiene evaluación IA pendiente de verificar; para reintentar una puntual se usa "🤖 Re-ejecutar rúbrica" en su fila
                         pendientes.push({ cedula: est.cedula, numTrimestre: t.num, tipo: tp.id });
                     });
                 });
@@ -6381,7 +6415,7 @@ video {
                     `Completadas: ${ok}. Quedan ${restantes} sin procesar. Espera un rato y vuelve a presionar el botón del lote — retomará justo donde quedó.${resumenErrores}`);
             } else {
                 alert(`${opciones.tituloFinal || 'Evaluación masiva terminada'}: ${ok} completadas por IA, ${fallidas} fallidas.` +
-                    (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Evaluar con IA" de cada fila.' : '') +
+                    (fallidas ? ' Puedes reintentar las fallidas individualmente con el botón "🤖 Ejecutar rúbrica" de cada fila.' : '') +
                     resumenErrores);
             }
         }
@@ -6592,12 +6626,13 @@ video {
         }
 
         // ---- Modal calificación / verificación NPT ----
-        function abrirModalNotaNPT(cedula, nombre, trimestre, tipo) {
-            nptNotaModalCtx = { cedula, nombre, trimestre, tipo };
+        function abrirModalNotaNPT(cedula, nombre, trimestre, tipo, otrosMedios) {
+            otrosMedios = !!otrosMedios;
+            nptNotaModalCtx = { cedula, nombre, trimestre, tipo, otrosMedios };
             const t = trimestresEfectivos().find(x => x.num === trimestre);
             const esRec = nptEsClaveRecuperacionInsumo(tipo);
             const tipoBase = nptTipoBaseDeClaveInsumo(tipo);
-            const tp = NPT_TIPOS.find(x => x.id === tipoBase);
+            const tp = tipoBase === 'examen' ? { id: 'examen', label: '📝 Examen' } : NPT_TIPOS.find(x => x.id === tipoBase);
             const etiquetaTp = tp ? `${tp.label}${esRec ? ' — <strong>Recuperación</strong>' : ''}` : tipo;
             const notaExistente = nptNotas[cedula]?.[`trimestre${trimestre}`]?.[tipo];
             const ia = nptEvaluacionesIA[cedula]?.[`trimestre${trimestre}`]?.[tipo];
@@ -6606,6 +6641,7 @@ video {
             document.getElementById('npt-modal-info').innerHTML = `
                 <p><strong>Estudiante:</strong> ${escapeHtml(nombre)}</p>
                 <p><strong>Período:</strong> ${t?.label} · ${etiquetaTp}</p>
+                ${otrosMedios ? `<p class="text-amber-700 text-xs">📋 No entregó en el sistema al cierre del plazo. Ingresa la nota directamente; puedes editarla luego de guardarla.</p>` : ''}
                 ${esRec ? `<p class="text-purple-600 text-xs">🔁 Esta nota se promediará con la nota original (${notaOriginalDeReferencia !== null ? formatearNota(notaOriginalDeReferencia) : 'aún no registrada'}) para dar la nota efectiva del insumo.</p>` : ''}
                 ${arch?.nombre ? `<p><strong>Archivo:</strong> ${escapeHtml(arch.nombre)}</p>` : ''}
                 ${ia ? `<p><strong>Evaluación IA:</strong> ${formatearNota(ia.nota)} — ${escapeHtml(ia.comentario||'')}</p>` : ''}
@@ -6613,7 +6649,11 @@ video {
             document.getElementById('npt-input-nota').value = notaExistente ? formatearNota(notaExistente.nota) : (ia ? formatearNota(ia.nota) : '');
             document.getElementById('npt-input-obs').value = notaExistente?.observacion || ia?.comentario || '';
             const chkVerificar = document.getElementById('npt-input-verificado');
-            if (chkVerificar) chkVerificar.checked = !!notaExistente?.verificado;
+            if (chkVerificar) chkVerificar.checked = otrosMedios ? (notaExistente ? !!notaExistente.verificado : true) : !!notaExistente?.verificado;
+            const linkWrap = document.getElementById('npt-otros-medios-link-wrap');
+            const linkInput = document.getElementById('npt-input-link-evidencia');
+            if (linkWrap) linkWrap.classList.toggle('hidden', !otrosMedios);
+            if (linkInput) linkInput.value = otrosMedios ? (arch?.url || '') : '';
             document.getElementById('npt-modal-error').classList.add('hidden');
             document.getElementById('npt-nota-modal').classList.remove('hidden');
         }
@@ -6625,7 +6665,7 @@ video {
 
         async function guardarNotaNPT() {
             if (!nptNotaModalCtx) return;
-            const { cedula, nombre, trimestre, tipo } = nptNotaModalCtx;
+            const { cedula, nombre, trimestre, tipo, otrosMedios } = nptNotaModalCtx;
             const rawNota = parseFloat(document.getElementById('npt-input-nota').value);
             const obs = document.getElementById('npt-input-obs').value.trim();
             const verificado = !!document.getElementById('npt-input-verificado')?.checked;
@@ -6648,7 +6688,8 @@ video {
                 docente: 'Ing. César Godoy Rosero, Mgt.',
                 cedula, nombre, trimestre, tipo,
                 verificado,
-                fechaVerificacion: verificado ? new Date().toLocaleString() : null
+                fechaVerificacion: verificado ? new Date().toLocaleString() : null,
+                origen: otrosMedios ? 'otros_medios' : null
             };
 
             try {
@@ -6657,6 +6698,29 @@ video {
                 if (!nptNotas[cedula]) nptNotas[cedula] = {};
                 if (!nptNotas[cedula][`trimestre${trimestre}`]) nptNotas[cedula][`trimestre${trimestre}`] = {};
                 nptNotas[cedula][`trimestre${trimestre}`][tipo] = registro;
+
+                // ---- Modo "Otros medios": además de la nota, se registra (o actualiza) el enlace
+                // de evidencia en el MISMO nodo nptArchivos que usa una entrega normal, marcado con
+                // origen:'otros_medios' para que "Entregas recibidas en sistema" no lo confunda con
+                // una entrega real del estudiante y "Entregas recibidas otros medios" sí lo liste.
+                if (otrosMedios) {
+                    const est = estudiantes.find(e => e.cedula === cedula);
+                    const linkEvidencia = texto(document.getElementById('npt-input-link-evidencia')?.value).trim();
+                    const archExistente = nptArchivos[cedula]?.[`trimestre${trimestre}`]?.[tipo];
+                    const registroArch = {
+                        url: linkEvidencia || null,
+                        fechaEntrega: archExistente?.fechaEntrega || new Date().toLocaleString(),
+                        cedula, nombreEstudiante: nombre, trimestre, tipo,
+                        curso: est?.curso || archExistente?.curso || null,
+                        paralelo: est?.paralelo || archExistente?.paralelo || null,
+                        origen: 'otros_medios'
+                    };
+                    await guardarValorFirebase(`nptArchivos/${cedula}/trimestre${trimestre}/${tipo}`, registroArch);
+                    if (!nptArchivos[cedula]) nptArchivos[cedula] = {};
+                    if (!nptArchivos[cedula][`trimestre${trimestre}`]) nptArchivos[cedula][`trimestre${trimestre}`] = {};
+                    nptArchivos[cedula][`trimestre${trimestre}`][tipo] = registroArch;
+                }
+
                 cerrarModalNotaNPT();
                 renderNPTDocente();
             } catch(e) {
@@ -6686,7 +6750,7 @@ video {
                     csvCampo(est.nombre), csvCampo(est.cedula),
                     csvCampo(est.curso), csvCampo(est.paralelo),
                     csvCampo(t.label), csvCampo(etiquetaTipo),
-                    csvCampo(arch?.nombre || 'Sin entrega'),
+                    csvCampo(arch?.nombre || (arch?.origen === 'otros_medios' ? (arch?.url ? `Evidencia (otros medios): ${arch.url}` : 'Otros medios (sin evidencia)') : 'Sin entrega')),
                     csvCampo(arch?.fechaEntrega || '-'),
                     csvCampo(nota ? formatearNota(nota.nota) : 'Sin calificar'),
                     csvCampo(nota?.verificado ? 'Sí' : 'No'),
@@ -6718,9 +6782,12 @@ video {
                             agregarFila(est, t, `${tp.label} (Recuperación)`, archRec, notaRec, iaRec);
                         }
                     });
-                    // Examen y su recuperación (no tienen "archivo" propio, pero sí nota/observación).
+                    // Examen y su recuperación: normalmente no tienen "archivo" propio (es una
+                    // evaluación automática dentro del sistema), salvo que la nota se haya
+                    // registrado por "Otros medios" — en ese caso sí existe un enlace de evidencia.
                     const notaExamen = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examen;
-                    if (notaExamen) agregarFila(est, t, '📝 Examen', null, notaExamen, null);
+                    const archExamen = nptArchivos[est.cedula]?.[`trimestre${t.num}`]?.examen || null;
+                    if (notaExamen) agregarFila(est, t, '📝 Examen', archExamen, notaExamen, null);
                     const notaExamenRec = nptNotas[est.cedula]?.[`trimestre${t.num}`]?.examenRecuperacion;
                     if (notaExamenRec) agregarFila(est, t, '📝 Examen (Recuperación)', null, notaExamenRec, null);
                 });
@@ -8636,8 +8703,6 @@ video {
         window.confirmarImportacion = confirmarImportacion;
         window.agregarEstudiante = agregarEstudiante;
         window.limpiarNominaCompleta = limpiarNominaCompleta;
-        window.migrarFormatoCursoLegacy = migrarFormatoCursoLegacy;
-        window.migrarNodosNPTLegacy = migrarNodosNPTLegacy;
         window.eliminarEstudiante = eliminarEstudiante;
         window.verDetalle = verDetalle;
         window.cerrarDetalle = cerrarDetalle;
@@ -8649,6 +8714,7 @@ video {
         // NPT
         window.toggleHabilitacionTrimestre = toggleHabilitacionTrimestre;
         window.renderNPTDocente = renderNPTDocente;
+        window.cambiarModoEntregasNPT = cambiarModoEntregasNPT;
         window.abrirModalNotaNPT = abrirModalNotaNPT;
         window.cerrarModalNotaNPT = cerrarModalNotaNPT;
         window.guardarNotaNPT = guardarNotaNPT;
