@@ -2689,6 +2689,12 @@ video {
 
                 <!-- Pestaña 3: Examen -->
                 <section id="npt-gt-panel-examen" class="npt-gt-panel hidden">
+                    <div class="mb-4 p-3 bg-slate-50 rounded-xl border">
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Fecha y hora máxima para rendir el examen</label>
+                        <input type="datetime-local" id="npt-examen-fecha-maxima" onchange="nptActualizarEstadoExamenTab()" class="w-full md:w-72 px-3 py-2 bg-white border rounded-xl text-sm">
+                        <p id="npt-examen-estado-fecha" class="mt-2"></p>
+                        <p class="text-[11px] text-slate-400 mt-1">Al cumplirse esta fecha, el estudiante ya no podrá <strong>iniciar</strong> el examen, aunque esté habilitado. Déjala vacía para "sin límite". El interruptor de habilitar/cerrar el examen sigue estando en la tarjeta del trimestre, en el panel principal.</p>
+                    </div>
                     <h4 class="font-bold text-sm mb-3">📝 Preguntas del Examen Trimestral</h4>
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Preguntas (formato JSON)</label>
                     <textarea id="npt-examen-json" rows="10" class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs font-mono focus:ring-2 focus:ring-brand-500"></textarea>
@@ -3917,6 +3923,10 @@ video {
                 alert('Ya rendiste el examen de este trimestre. No es posible repetirlo.');
                 return;
             }
+            if (fechaMaximaVencida(nptExamenFechaMaxima(estudianteActual.curso, estudianteActual.paralelo, numTrimestre))) {
+                alert('El plazo para rendir este examen ya venció.');
+                return;
+            }
             if (!confirm(`Vas a iniciar el examen del trimestre. Se te presentarán ${Math.min(NPT_EXAMEN_NUM_PREGUNTAS, bancoOriginal.length)} preguntas, una a la vez, con 60 segundos para responder cada una.\n\nEl examen se abre en pantalla completa y no debes salir de ella, cambiar de pestaña ni minimizar la ventana: si lo haces, el examen se finalizará automáticamente con lo que hayas respondido hasta ese momento.\n\nUna vez iniciado no podrás pausarlo ni repetirlo. ¿Deseas continuar?`)) return;
 
             // Etiquetamos cada pregunta con su índice original en el banco para no repetirla nunca en este intento
@@ -4967,6 +4977,17 @@ video {
         function nptExamenHabilitado(curso, paralelo, n) {
             return !!nptTrimestreInfo(curso, paralelo, n)?.examenHabilitado;
         }
+        // Fecha máxima para RENDIR el examen (independiente de la habilitación on/off): mismo
+        // concepto y mismo helper de vencimiento (fechaMaximaVencida) que ya usan los insumos.
+        function nptExamenFechaMaxima(curso, paralelo, n) {
+            return nptTrimestreInfo(curso, paralelo, n)?.examenFechaMaxima || null;
+        }
+        // ¿Puede el estudiante rendir el examen ahora? (habilitado + no vencida su fecha máxima)
+        function nptExamenPuedeRendir(curso, paralelo, n, cedula) {
+            if (!nptExamenEstudianteHabilitado(curso, paralelo, n, cedula)) return false;
+            if (fechaMaximaVencida(nptExamenFechaMaxima(curso, paralelo, n))) return false;
+            return true;
+        }
         function nptExamenEstudianteHabilitado(curso, paralelo, n, cedula) {
             const mapa = nptNodoTrimestre(nptExamenHabilitacionEstudiantes, curso, paralelo, n);
             if (!mapa || mapa[cedula] === undefined) return nptExamenHabilitado(curso, paralelo, n);
@@ -5284,6 +5305,13 @@ video {
         }
 
         // ---- Modal de gestión por trimestre: insumos+fechas, rúbricas, examen y estudiantes ----
+        function nptActualizarEstadoExamenTab() {
+            const fInput = document.getElementById('npt-examen-fecha-maxima');
+            const cell = document.getElementById('npt-examen-estado-fecha');
+            if (!cell || !cursoActual || !paraleloActual || !nptGestionCtx) return;
+            const habilitado = nptExamenHabilitado(cursoActual, paraleloActual, nptGestionCtx.trimestre);
+            cell.innerHTML = nptEstadoInsumoHtml(habilitado, fInput?.value || null);
+        }
         function abrirGestionTrimestreNPT(num) {
             if (!cursoActual || !paraleloActual) { alert('Selecciona curso y paralelo primero.'); return; }
             nptGestionCtx = { trimestre: num };
@@ -5300,6 +5328,11 @@ video {
             const banco = nptExamenesPreguntas(cursoActual, paraleloActual, num);
             document.getElementById('npt-examen-json').value = banco.length ? JSON.stringify(banco, null, 2) : '';
             document.getElementById('npt-examen-json-error')?.classList.add('hidden');
+
+            // Fecha máxima para rendir el examen
+            const examenFechaMaxima = nptExamenFechaMaxima(cursoActual, paraleloActual, num) || '';
+            document.getElementById('npt-examen-fecha-maxima').value = aDatetimeLocalValue(examenFechaMaxima);
+            nptActualizarEstadoExamenTab();
 
             // (1) Tabla de insumos: habilitado + fecha máxima por insumo
             const insumosBody = document.getElementById('npt-gestion-insumos-body');
@@ -5406,6 +5439,11 @@ video {
                 if (!nptExamenes[cv][pv]) nptExamenes[cv][pv] = {};
                 nptExamenes[cv][pv][trimestre] = banco;
                 await guardarValorFirebase(`nptExamenes/${cv}/${pv}/${trimestre}`, banco);
+
+                // 2.1) Fecha máxima para rendir el examen
+                const examenFechaMaximaInput = document.getElementById('npt-examen-fecha-maxima')?.value || null;
+                nodoTrim.examenFechaMaxima = examenFechaMaximaInput;
+                await guardarValorFirebase(`nptConfig/${cv}/${pv}/${trimestre}/examenFechaMaxima`, examenFechaMaximaInput);
 
                 // 3) Habilitación individual de estudiantes (insumos)
                 const checks = document.querySelectorAll('#npt-gestion-estudiantes-body .npt-check-estudiante');
@@ -5529,12 +5567,12 @@ video {
             renderNPTDocente();
         }
 
-        // Pseudo-tipo "examen" para el modo "Otros medios": el examen no tiene fecha máxima propia
-        // (solo habilitación on/off), así que "cerrado" para el examen significa que el docente ya
-        // no lo tiene habilitado para ese estudiante — equivalente a que el plazo del insumo venza.
+        // Pseudo-tipo "examen" para el modo "Otros medios": ahora que el examen sí tiene su propia
+        // fecha máxima, "cerrado" para el examen usa el mismo criterio que un insumo (vencido O no
+        // habilitado para ese estudiante) en vez de depender solo del interruptor on/off.
         const NPT_TP_EXAMEN_PSEUDOTIPO = { id: 'examen', label: '📝 Examen', icono: '📝' };
         function nptTipoOInsumoCerrado(curso, paralelo, n, tipoId, cedula) {
-            if (tipoId === 'examen') return !nptExamenEstudianteHabilitado(curso, paralelo, n, cedula);
+            if (tipoId === 'examen') return !nptExamenPuedeRendir(curso, paralelo, n, cedula);
             return fechaMaximaVencida(nptInsumoFechaMaxima(curso, paralelo, n, tipoId)) || !nptInsumoHabilitado(curso, paralelo, n, tipoId);
         }
         // Construye las filas de "Entregas recibidas OTROS MEDIOS": un candidato por cada
@@ -7007,7 +7045,9 @@ video {
                 // ---- Bloque de Examen del trimestre ----
                 const examenHabGeneral = nptExamenHabilitado(curso, paralelo, t.num);
                 const examenHabEstudiante = nptExamenEstudianteHabilitado(curso, paralelo, t.num, cedula);
-                const examenHab = examenHabGeneral && examenHabEstudiante;
+                const examenFechaMax = nptExamenFechaMaxima(curso, paralelo, t.num);
+                const examenVencido = fechaMaximaVencida(examenFechaMax);
+                const examenHab = examenHabGeneral && examenHabEstudiante && !examenVencido;
                 const notaExamen = nptNotas[cedula]?.[`trimestre${t.num}`]?.examen || null;
                 let examenHtml = '';
                 if (notaExamen) {
@@ -7017,7 +7057,10 @@ video {
                         <p class="text-[10px] text-slate-400 mt-1">Tu docente tiene el detalle completo de tu examen.</p>
                     </div>`;
                 } else if (examenHab) {
-                    examenHtml = `<button onclick="comenzarExamenTrimestre(${t.num})" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">📝 Realizar examen del trimestre</button>`;
+                    examenHtml = `<button onclick="comenzarExamenTrimestre(${t.num})" class="w-full bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700">📝 Realizar examen del trimestre</button>
+                    ${examenFechaMax ? `<p class="text-[10px] text-amber-600 mt-1 text-center">⏳ Cierra el ${escapeHtml(formatearFechaMaxima(examenFechaMax))}</p>` : ''}`;
+                } else if (examenHabGeneral && examenHabEstudiante && examenVencido) {
+                    examenHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center text-xs text-rose-600">⏰ El plazo para rendir el examen venció el ${escapeHtml(formatearFechaMaxima(examenFechaMax))}.</div>`;
                 } else {
                     examenHtml = `<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center text-xs text-slate-500">El docente aún no ha habilitado el examen de este trimestre.</div>`;
                 }
@@ -8727,6 +8770,7 @@ video {
         window.nptArchivoSeleccionado = nptArchivoSeleccionado;
         window.verPDFDocente = verPDFDocente;
         window.abrirGestionTrimestreNPT = abrirGestionTrimestreNPT;
+        window.nptActualizarEstadoExamenTab = nptActualizarEstadoExamenTab;
         window.cerrarGestionTrimestreNPT = cerrarGestionTrimestreNPT;
         window.guardarGestionTrimestreNPT = guardarGestionTrimestreNPT;
         window.evaluarConIA = evaluarConIA;
